@@ -14,12 +14,13 @@ import Input;
 import Vertex;
 import TimeManager;
 import Model;
+import Renderer;
 
 using DirectX::XMMATRIX;
 
 namespace gg 
 {
-	export class VulkanRenderer {
+	export class VulkanRenderer : public Renderer {
 	public:
 		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
 		~VulkanRenderer();
@@ -102,9 +103,6 @@ namespace gg
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 		static constexpr int8_t MAX_FRAMES_IN_FLIGHT{ 2 };
-		uint32_t mWidth{};
-		uint32_t mHeight{};
-		SDL_Window* mWindowHandle{};
 		bool mWindowResized{ true };
 
 		VkCommandPool mCommandPool{};

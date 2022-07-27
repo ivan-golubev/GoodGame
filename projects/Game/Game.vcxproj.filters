@@ -10,15 +10,26 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="Modules">
-      <UniqueIdentifier>{05162825-a049-4c83-9ee3-d77540fcb689}</UniqueIdentifier>
+      <UniqueIdentifier>{082936c7-672a-4a93-af2d-285b1a397aad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{9a2eaf63-85e6-4133-a4ea-5d3e7500ff02}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\VulkanRenderer.cpp">
+    <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\VulkanRenderer.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="$(SolutionDir)shaders\textured_surface.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(SolutionDir)shaders\compile_shaders.ps1">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{0cf92c53-d22d-4ec7-829e-2e1650108517}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="modules\Application.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\Camera.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\ErrorHandling.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\GlobalSettings.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\Input.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\Logging.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\Model.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\ModelLoader.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\ShaderProgram.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\TimeManager.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\Vertex.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ErrorHandling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logging.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ModelLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShaderProgram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TimeManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Vertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\Renderer.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

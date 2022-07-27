@@ -55,7 +55,9 @@ namespace gg
 		BreakIfFalse(vertexShaderBlob.size() != 0);
 		BreakIfFalse(fragmentShaderBlob.size() != 0);
 
-		device = Application::Get()->GetRenderer()->GetDevice();
+		//device = Application::Get()->GetRenderer()->GetDevice();
+		// TODO: fix
+		__debugbreak();
 		vertexShader = createShaderModule(device, vertexShaderBlob);
 		fragmentShader = createShaderModule(device, fragmentShaderBlob);
 

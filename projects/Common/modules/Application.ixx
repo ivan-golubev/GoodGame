@@ -6,7 +6,7 @@ module;
 #include <SDL2/SDL_keycode.h>
 export module Application;
 
-import VulkanRenderer;
+import Renderer;
 import Input;
 import TimeManager;
 import ModelLoader;
@@ -16,12 +16,12 @@ namespace gg
 	export class Application 
 	{
 	public:
-		static std::shared_ptr<Application> Init(uint32_t width, uint32_t height, SDL_Window*);
+		static std::shared_ptr<Application> Init(std::unique_ptr<Renderer>);
 		static void Destroy();
 		static bool IsInitialized();
 		static std::shared_ptr<Application> Get();
 
-		Application(uint32_t width, uint32_t height, SDL_Window*);
+		Application(std::unique_ptr<Renderer>);
 		~Application();
 		void Tick();
 		void OnWindowResized(uint32_t width, uint32_t height);
@@ -32,7 +32,7 @@ namespace gg
 		std::shared_ptr<InputManager> GetInputManager();
 		std::shared_ptr<ModelLoader> GetModelLoader();
 		std::shared_ptr<TimeManager> GetTimeManager();
-		std::shared_ptr<VulkanRenderer> GetRenderer();
+		std::shared_ptr<Renderer> GetRenderer();
 	private:
 
 		static std::shared_ptr<Application> INSTANCE;
@@ -42,6 +42,6 @@ namespace gg
 		std::shared_ptr<InputManager> mInputManager;
 		std::shared_ptr<ModelLoader> mModelLoader;
 		std::shared_ptr<TimeManager> mTimeManager;
-		std::shared_ptr<VulkanRenderer> mRenderer;
+		std::shared_ptr<Renderer> mRenderer;
 	};
 } // namespace gg 

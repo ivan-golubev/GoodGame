@@ -1,0 +1,10 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\code\\ggame\\projects\\common\\modules\\globalsettings.ixx",
+        "ProvidedModule": "GlobalSettings",
+        "Includes": [],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

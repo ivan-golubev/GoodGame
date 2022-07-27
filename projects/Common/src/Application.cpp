@@ -6,7 +6,7 @@ module;
 #include <SDL2/SDL_video.h>
 module Application;
 
-import VulkanRenderer;
+import Renderer;
 import Input;
 import Logging;
 import TimeManager;
@@ -16,10 +16,10 @@ namespace gg
 {
 	std::shared_ptr<Application> Application::INSTANCE{ nullptr };
 
-	std::shared_ptr<Application> Application::Init(uint32_t width, uint32_t height, SDL_Window* windowHandle)
+	std::shared_ptr<Application> Application::Init(std::unique_ptr<Renderer> renderer)
 	{
 		BreakIfFalse(!Application::IsInitialized());
-		INSTANCE = std::make_shared<Application>(width, height, windowHandle);
+		INSTANCE = std::make_shared<Application>(std::move(renderer));
 		return INSTANCE;
 	}
 
@@ -40,12 +40,12 @@ namespace gg
 		return INSTANCE;
 	}
 
-	Application::Application(uint32_t width, uint32_t height, SDL_Window* windowHandle)
+	Application::Application(std::unique_ptr<Renderer> renderer)
 		: mTimeManager{ std::make_unique<TimeManager>() }
 		, mInputManager{ std::make_unique<InputManager>() }
-		, mRenderer{ std::make_unique<VulkanRenderer>(width, height, windowHandle)}
 		, mModelLoader{ std::make_unique<ModelLoader>() }
 	{
+		mRenderer = std::move(renderer);
 		/* Check for DirectX Math library support. */
 		if (!DirectX::XMVerifyCPUSupport())
 			throw std::exception("Failed to verify DirectX Math library support");
@@ -71,7 +71,7 @@ namespace gg
 		return mModelLoader;
 	}
 
-	std::shared_ptr<VulkanRenderer> Application::GetRenderer()
+	std::shared_ptr<Renderer> Application::GetRenderer()
 	{
 		return mRenderer;
 	}

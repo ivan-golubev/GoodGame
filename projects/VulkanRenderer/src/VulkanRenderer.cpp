@@ -18,7 +18,7 @@ module;
 #include <vulkan/vulkan.h>
 
 #include <windows.h>
-#include <pix3.h> // has to be the last - depends on types in windows.h
+#include <WinPixEventRuntime/pix3.h> // has to be the last - depends on types in windows.h
 
 module VulkanRenderer;
 
@@ -35,9 +35,7 @@ using namespace DirectX;
 namespace gg
 {
 	VulkanRenderer::VulkanRenderer(uint32_t width, uint32_t height, SDL_Window* windowHandle)
-		: mWidth{ width }
-		, mHeight{ height }
-		, mWindowHandle{ windowHandle }
+		: Renderer{width, height, windowHandle}
 		, mCamera{ std::make_unique<Camera>() }
 	{
 		uint32_t extension_count;

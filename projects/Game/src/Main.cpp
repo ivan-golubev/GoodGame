@@ -10,6 +10,7 @@ import Application;
 import ErrorHandling;
 import Logging;
 import ModelLoader;
+import VulkanRenderer;
 
 using namespace gg;
 
@@ -96,7 +97,8 @@ int main()
 
     try
     {
-        auto app = Application::Init(width, height, window);
+        std::unique_ptr<Renderer> renderer = std::make_unique<VulkanRenderer>(width, height, window);
+        auto app = Application::Init(std::move(renderer));
         auto modelLoader = app->GetModelLoader();
         std::unique_ptr<Model> model{ modelLoader->LoadModel("../../assets/runtime/models/textured_cube.glb", "shaders/textured_surface_VS.spv", "shaders/textured_surface_PS.spv") };
         app->GetRenderer()->UploadGeometry(std::move(model));
