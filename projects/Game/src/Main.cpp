@@ -1,5 +1,4 @@
 #include <SDL2/SDL.h>
-#undef main // ignore the main from SDL
 #include <exception>
 #include <format>
 #include <cstdlib>

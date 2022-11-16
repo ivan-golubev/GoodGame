@@ -55,10 +55,11 @@ namespace gg
 		BreakIfFalse(vertexShaderBlob.size() != 0);
 		BreakIfFalse(fragmentShaderBlob.size() != 0);
 
-		device = Application::Get()->GetRenderer()->GetDevice();
+		//device = Application::Get()->GetRenderer()->GetDevice();
 		// how can I get a VK device then ?
 		// I think createShaderModule should be polymorhipc too
 		// TODO: stopped here
+		__debugbreak();
 		vertexShader = createShaderModule(device, vertexShaderBlob);
 		fragmentShader = createShaderModule(device, fragmentShaderBlob);
 
