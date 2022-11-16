@@ -1,19 +1,19 @@
 module;
 #include <cstdint>
+#include <chrono>
 export module TimeManager;
 
 namespace gg 
 {
+	using namespace std::chrono;
 	export class TimeManager {
 	public:
 		TimeManager();
-		uint64_t Tick();
-		uint64_t GetCurrentTimeTicks() const;
-		uint64_t GetCurrentTimeMs() const;
-		float GetCurrentTimeSec() const;
+		milliseconds Tick();
+		milliseconds GetCurrentTimeMs() const;
+		seconds GetCurrentTimeSec() const;
 	private:
-		uint64_t ticksPerSec{};
-		uint64_t currentTimeTicks{};
-		uint64_t startTimeTicks{};
+		time_point<system_clock> currentTime{};
+		time_point<system_clock> startTime{};
 	};
 } // namespace gg

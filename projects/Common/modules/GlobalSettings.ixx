@@ -2,7 +2,7 @@ export module GlobalSettings;
 
 export namespace gg 
 {
-    inline constexpr bool IsDebug() 
+    inline consteval bool IsDebug() 
     {
 #ifdef _DEBUG
         return true;
@@ -11,7 +11,7 @@ export namespace gg
 #endif
     }
 
-    inline constexpr bool IsFinal()
+    inline consteval bool IsFinal()
     {
 #ifdef FINAL
         return true;
@@ -20,7 +20,7 @@ export namespace gg
 #endif
     }
 
-    inline constexpr bool IsWindowsSubSystem()
+    inline consteval bool IsWindowsSubSystem()
     {
 #ifdef _CONSOLE
         return false;

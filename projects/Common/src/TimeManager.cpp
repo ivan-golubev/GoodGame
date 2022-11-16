@@ -1,46 +1,35 @@
 module;
 #include <cstdint>
 #include <cstdlib>
+#include <chrono>
 #include <windows.h>
 module TimeManager;
 
 namespace gg
 {
-	TimeManager::TimeManager() 
-	{
-		LARGE_INTEGER Frequency;
-		if (!QueryPerformanceFrequency(&Frequency))
-			exit(-1); // Hardware does not support high-res counter
-		ticksPerSec = Frequency.QuadPart;
+	using namespace std::chrono;
 
-		LARGE_INTEGER perfCount;
-		QueryPerformanceCounter(&perfCount);
-		startTimeTicks = currentTimeTicks = perfCount.QuadPart;
+	TimeManager::TimeManager()
+		: startTime{ system_clock::now() }
+		, currentTime{ startTime }
+	{
 	}
 
-	uint64_t TimeManager::Tick() 
+	milliseconds TimeManager::Tick()
 	{
-		uint64_t prevTimeTicks = currentTimeTicks;
-		LARGE_INTEGER perfCount;
-		QueryPerformanceCounter(&perfCount);
-		currentTimeTicks = perfCount.QuadPart;
-		uint64_t deltaMs = (currentTimeTicks - prevTimeTicks) * 1000ULL / ticksPerSec;
-		//deltaMs = std::max(deltaMs, 7ULL); /* make sure the first frame is at least 7 ms (144 FPS) */
-		return deltaMs;
+		time_point<system_clock> now = system_clock::now();
+		milliseconds elapsed = duration_cast<milliseconds>(currentTime - now);
+		currentTime = now;
+		return elapsed;
 	}
 
-	uint64_t TimeManager::GetCurrentTimeTicks() const 
+	milliseconds TimeManager::GetCurrentTimeMs() const
 	{
-		return currentTimeTicks - startTimeTicks;
+		return duration_cast<milliseconds>(currentTime - startTime);
 	}
 
-	uint64_t TimeManager::GetCurrentTimeMs() const 
+	seconds TimeManager::GetCurrentTimeSec() const
 	{
-		return GetCurrentTimeTicks() * 1000ULL / ticksPerSec;
-	}
-
-	float TimeManager::GetCurrentTimeSec() const 
-	{
-		return static_cast<float> (GetCurrentTimeTicks() / ticksPerSec);
+		return duration_cast<seconds>(currentTime - startTime);
 	}
 } // namespace gg

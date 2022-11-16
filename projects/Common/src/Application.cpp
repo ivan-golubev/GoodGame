@@ -78,9 +78,8 @@ namespace gg
 
 	void Application::Tick()
 	{
-		uint64_t dt = mTimeManager->Tick();
 		if (!mPaused)
-			mRenderer->Render(dt);
+			mRenderer->Render(mTimeManager->Tick());
 	}
 
 	void Application::OnWindowResized(uint32_t width, uint32_t height)

@@ -2,6 +2,7 @@ module;
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <chrono>
 #include <DirectXMath.h>
 #include <filesystem>
 #include <format>
@@ -974,7 +975,7 @@ namespace gg
 
 	VkDevice VulkanRenderer::GetDevice() { return mDevice; }
 
-	void VulkanRenderer::Render(uint64_t deltaTimeMs)
+	void VulkanRenderer::Render(std::chrono::milliseconds deltaTime)
 	{
 		vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
@@ -990,11 +991,11 @@ namespace gg
 			throw std::runtime_error("failed to acquire swap chain image!");
 
 		/* Rotate the model */
-		auto const elapsedTimeMs = Application::Get()->GetTimeManager()->GetCurrentTimeMs();
+		auto const elapsedTimeMs = Application::Get()->GetTimeManager()->GetCurrentTimeMs().count();
 		auto const rotation = 0.0002f * DirectX::XM_PI * elapsedTimeMs;
 		XMMATRIX const modelMatrix = XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation));
 
-		mCamera->UpdateCamera(deltaTimeMs);
+		mCamera->UpdateCamera(deltaTime);
 		XMMATRIX const& viewMatrix = mCamera->GetViewMatrix();
 		XMMATRIX const& mProjectionMatrix = mCamera->GetProjectionMatrix();
 

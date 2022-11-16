@@ -1,5 +1,6 @@
 module;
 #include <cstdint>
+#include <chrono>
 #include <DirectXMath.h>
 export module Camera;
 
@@ -11,7 +12,7 @@ export namespace gg {
 	class Camera
 	{
 	public:
-		void UpdateCamera(uint64_t deltaTimeMs);
+		void UpdateCamera(std::chrono::milliseconds deltaTime);
 		void UpdateProjectionMatrix(float windowAspectRatio);
 		XMMATRIX const & GetViewMatrix() const;
 		XMMATRIX const & GetProjectionMatrix() const;

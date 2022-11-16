@@ -1,5 +1,6 @@
 module;
 #include <cstdint>
+#include <chrono>
 #include <DirectXMath.h>
 #include <memory>
 #include <optional>
@@ -26,7 +27,7 @@ namespace gg
 		~VulkanRenderer();
 		void UploadGeometry(std::unique_ptr<Model>);
 		void OnWindowResized(uint32_t width, uint32_t height);
-		void Render(uint64_t deltaTimeMs);
+		void Render(std::chrono::milliseconds deltaTime);
 		VkDevice GetDevice();
 	private:
 		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);

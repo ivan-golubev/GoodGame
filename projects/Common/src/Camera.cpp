@@ -1,5 +1,6 @@
 module;
 #include <DirectXMath.h>
+#include <chrono>
 module Camera;
 
 import Input;
@@ -18,10 +19,10 @@ namespace gg {
     constexpr XMVECTOR up{ 0.f, 1.f, 0.f, 0.f };
     constexpr XMVECTOR right{ 1.f, 0.f, 0.f };
 
-    void Camera::UpdateCamera(uint64_t deltaTimeMs) 
+    void Camera::UpdateCamera(std::chrono::milliseconds deltaTime)
     {
         auto inputManager = Application::Get()->GetInputManager();
-        float const CAM_MOVE_AMOUNT{ CAM_MOVE_SPEED * deltaTimeMs / 1000.0f };
+        float const CAM_MOVE_AMOUNT{ CAM_MOVE_SPEED * deltaTime.count() / 1000.0f };
         {
             XMVECTOR const moveFB{ XMVectorScale(forward, CAM_MOVE_AMOUNT) };
             if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
@@ -48,7 +49,7 @@ namespace gg {
             }
         }
         {
-            float const CAM_TURN_AMOUNT{ CAM_TURN_SPEED * deltaTimeMs / 1000.0f };
+            float const CAM_TURN_AMOUNT{ CAM_TURN_SPEED * deltaTime.count() / 1000.0f };
             XMVECTOR const moveLR{ XMVectorScale(right, CAM_TURN_AMOUNT) };
             if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
                 mFocusPoint = XMVectorAdd(mFocusPoint, moveLR);

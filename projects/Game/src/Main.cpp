@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#undef main // ignore the main from SDL
 #include <exception>
 #include <format>
 #include <cstdlib>
@@ -27,7 +28,7 @@ void MainLoop(std::shared_ptr<Application> app)
 
     while (isRunning)
     {
-        uint64_t currentTimeMs{ timeManager->GetCurrentTimeMs() };
+        int64_t currentTimeMs{ timeManager->GetCurrentTimeMs().count()};
         bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
 
         if (needToPollEvents)
@@ -72,7 +73,7 @@ void MainLoop(std::shared_ptr<Application> app)
         }
         app->Tick();
         /* Don't do the next tick immediately */
-        std::this_thread::sleep_for(0.25ms);
+        std::this_thread::sleep_for(0.25ms); // TODO: why we need this ? maybe just the input polling has to be slower ? 250ms is a lot
     }
 }
 
