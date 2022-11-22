@@ -6,7 +6,14 @@ module Camera;
 import Input;
 import Application;
 
-using namespace DirectX;
+using DirectX::XMVECTOR;
+using DirectX::XMMATRIX;
+using DirectX::XMVectorScale;
+using DirectX::XMVectorAdd;
+using DirectX::XMVectorSubtract;
+using DirectX::XMMatrixLookAtLH;
+using DirectX::XMConvertToRadians;
+using DirectX::XMMatrixPerspectiveFovLH;
 
 namespace gg {
     constexpr float CAM_MOVE_SPEED{ 5.f }; // in metres per second

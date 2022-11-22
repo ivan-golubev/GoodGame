@@ -5,10 +5,13 @@ module;
 #include <windows.h>
 module TimeManager;
 
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::system_clock;
+using std::chrono::time_point;
+
 namespace gg
 {
-	using namespace std::chrono;
-
 	TimeManager::TimeManager()
 		: startTime{ system_clock::now() }
 		, currentTime{ startTime }

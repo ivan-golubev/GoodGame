@@ -20,7 +20,7 @@ namespace gg
 	protected:
 		uint32_t mWidth{};
 		uint32_t mHeight{};
-		SDL_Window* mWindowHandle{};
+		SDL_Window* mWindowHandle{ nullptr };
 	};
 
 } // namespace gg

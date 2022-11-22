@@ -17,17 +17,16 @@ import ShaderProgram;
 import ErrorHandling;
 
 using DirectX::XMFLOAT2;
+using gg::Mesh;
 
 namespace
 {
-	using namespace gg;
-
-	void readVertices(aiMesh const* assimpMesh, Mesh& outMesh, unsigned int UVsetNumber)
+	void readVertices(aiMesh const* assimpMesh, Mesh& outMesh, uint32_t UVsetNumber)
 	{
-		for (unsigned int faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
+		for (uint32_t faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
 		{
 			aiFace* face{ &assimpMesh->mFaces[faceIndex] };
-			for (unsigned int j{ 0 }; j < face->mNumIndices; ++j)
+			for (uint32_t j{ 0 }; j < face->mNumIndices; ++j)
 			{
 				auto vertexIndex = face->mIndices[j];
 				auto assimpVertex = assimpMesh->mVertices[vertexIndex];
@@ -89,7 +88,7 @@ namespace gg
 		);
 		if (!scene)
 			throw std::runtime_error(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
-		for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
+		for (uint32_t i{ 0 }; i < scene->mNumMeshes; ++i)
 			outModel.meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
 		return true;
 	}

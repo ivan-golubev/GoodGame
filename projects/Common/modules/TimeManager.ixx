@@ -3,9 +3,13 @@ module;
 #include <chrono>
 export module TimeManager;
 
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::system_clock;
+using std::chrono::time_point;
+
 namespace gg 
 {
-	using namespace std::chrono;
 	export class TimeManager {
 	public:
 		TimeManager();

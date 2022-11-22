@@ -11,8 +11,10 @@ namespace gg
 {
 	export struct Vertex
 	{
-		XMVECTOR Position;
+		XMVECTOR Position{};
 		XMFLOAT2 TextureCoords0{};
+
+		Vertex() = default;
 
 		Vertex(float x, float y, float z, float w)
 			: Position{x, y, z, w}

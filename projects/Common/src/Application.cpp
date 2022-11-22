@@ -14,6 +14,7 @@ import ErrorHandling;
 
 namespace gg
 {
+	// TODO: get rid of this, hate singletons !
 	std::shared_ptr<Application> Application::INSTANCE{ nullptr };
 
 	std::shared_ptr<Application> Application::Init(std::unique_ptr<Renderer> renderer)

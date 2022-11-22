@@ -11,16 +11,19 @@ namespace gg
 	export struct Mesh
 	{
 		Mesh() = default;
+		~Mesh() noexcept = default;
+		Mesh(Mesh const&) = delete;
+		Mesh& operator=(Mesh const&) = delete;
 		Mesh(Mesh&&) noexcept;
 		Mesh& operator=(Mesh&&) noexcept;
 
 		std::vector<Vertex> Vertices{};
 		std::vector<uint32_t> Indices{};
 
-		unsigned char* Texture{ nullptr };
-		unsigned int TextureColorFormat{ 0 }; /* GL_RGB or GL_RGBA */
-		int TextureWidth{ 0 };
-		int TextureHeight{ 0 };
+		uint8_t* Texture{ nullptr };
+		uint32_t TextureColorFormat{ 0 }; /* GL_RGB or GL_RGBA */
+		uint32_t TextureWidth{ 0 };
+		uint32_t TextureHeight{ 0 };
 
 		uint32_t VerticesSizeBytes() const;
 		uint32_t IndicesSizeBytes() const;
@@ -32,6 +35,9 @@ namespace gg
 	{
 	public:
 		Model() = default;
+		~Model() noexcept = default;
+		Model(Model const&) = delete;
+		Model& operator=(Model const&) = delete;
 		Model(Model&&) noexcept;
 		Model& operator=(Model&&) noexcept;
 

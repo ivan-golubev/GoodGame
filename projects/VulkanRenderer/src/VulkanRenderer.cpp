@@ -137,17 +137,15 @@ namespace gg
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 			return capabilities.currentExtent;
-		else
-		{
-			int width, height;
-			SDL_Vulkan_GetDrawableSize(mWindowHandle, &width, &height);
 
-			return
-			{
-				std::clamp(static_cast<uint32_t>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
-				std::clamp(static_cast<uint32_t>(height), capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
-			};
-		}
+		int width, height;
+		SDL_Vulkan_GetDrawableSize(mWindowHandle, &width, &height);
+
+		return
+		{
+			std::clamp(static_cast<uint32_t>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+			std::clamp(static_cast<uint32_t>(height), capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
+		};
 	}
 
 	void VulkanRenderer::CreateSwapChain()
