@@ -34,14 +34,14 @@ namespace gg
 		std::shared_ptr<TimeManager> GetTimeManager();
 		std::shared_ptr<Renderer> GetRenderer();
 	private:
-
+		// TODO: remove the singleton !
 		static std::shared_ptr<Application> INSTANCE;
 
 		bool mPaused{ false };
 
-		std::shared_ptr<InputManager> mInputManager;
-		std::shared_ptr<ModelLoader> mModelLoader;
-		std::shared_ptr<TimeManager> mTimeManager;
+		std::shared_ptr<InputManager> mInputManager{ std::make_unique<InputManager>() };
+		std::shared_ptr<ModelLoader> mModelLoader{ std::make_unique<ModelLoader>() };
+		std::shared_ptr<TimeManager> mTimeManager{ std::make_unique<TimeManager>() };
 		std::shared_ptr<Renderer> mRenderer;
 	};
 } // namespace gg 

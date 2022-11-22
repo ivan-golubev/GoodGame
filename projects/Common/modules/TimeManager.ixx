@@ -12,12 +12,11 @@ namespace gg
 {
 	export class TimeManager {
 	public:
-		TimeManager();
 		milliseconds Tick();
 		milliseconds GetCurrentTimeMs() const;
 		seconds GetCurrentTimeSec() const;
 	private:
-		time_point<system_clock> currentTime{};
-		time_point<system_clock> startTime{};
+		time_point<system_clock> startTime{ system_clock::now() };
+		time_point<system_clock> currentTime{ startTime };
 	};
 } // namespace gg

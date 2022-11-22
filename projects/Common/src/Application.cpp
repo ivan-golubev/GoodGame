@@ -42,9 +42,6 @@ namespace gg
 	}
 
 	Application::Application(std::unique_ptr<Renderer> renderer)
-		: mTimeManager{ std::make_unique<TimeManager>() }
-		, mInputManager{ std::make_unique<InputManager>() }
-		, mModelLoader{ std::make_unique<ModelLoader>() }
 	{
 		mRenderer = std::move(renderer);
 		/* Check for DirectX Math library support. */

@@ -12,12 +12,6 @@ using std::chrono::time_point;
 
 namespace gg
 {
-	TimeManager::TimeManager()
-		: startTime{ system_clock::now() }
-		, currentTime{ startTime }
-	{
-	}
-
 	milliseconds TimeManager::Tick()
 	{
 		time_point<system_clock> now = system_clock::now();
