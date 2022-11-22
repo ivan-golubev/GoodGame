@@ -95,7 +95,7 @@ namespace gg
 		return *this;
 	}
 
-	VkShaderModule ShaderProgram::GetVertexShader() { return vertexShader; }
-	VkShaderModule ShaderProgram::GetFragmentShader() { return fragmentShader; }
+	VkShaderModule ShaderProgram::GetVertexShader() const { return vertexShader; }
+	VkShaderModule ShaderProgram::GetFragmentShader() const { return fragmentShader; }
 
 } // namespace gg

@@ -29,8 +29,22 @@ namespace gg
 		void UploadGeometry(std::unique_ptr<Model>);
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void Render(std::chrono::milliseconds deltaTime);
-		VkDevice GetDevice();
+		VkDevice GetDevice() const;
 	private:
+		struct QueueFamilyIndices
+		{
+			std::optional<uint32_t> graphicsFamily;
+			std::optional<uint32_t> presentFamily;
+			bool IsComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
+		};
+
+		struct SwapChainSupportDetails
+		{
+			VkSurfaceCapabilitiesKHR capabilities;
+			std::vector<VkSurfaceFormatKHR> formats;
+			std::vector<VkPresentModeKHR> presentModes;
+		};
+
 		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);
 		void SelectPhysicalDevice();
 		void CreateLogicalDevice();
@@ -70,20 +84,6 @@ namespace gg
 		void RecreateSwapChain();
 		void ResizeWindow();
 
-		struct QueueFamilyIndices
-		{
-			std::optional<uint32_t> graphicsFamily;
-			std::optional<uint32_t> presentFamily;
-			bool IsComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
-		};
-
-		struct SwapChainSupportDetails
-		{
-			VkSurfaceCapabilitiesKHR capabilities;
-			std::vector<VkSurfaceFormatKHR> formats;
-			std::vector<VkPresentModeKHR> presentModes;
-		};
-
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const) const;
 		uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
 		bool IsDeviceSuitable(VkPhysicalDevice const) const;
@@ -104,7 +104,7 @@ namespace gg
 
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-		static constexpr int8_t MAX_FRAMES_IN_FLIGHT{ 2 };
+		static constexpr int32_t MAX_FRAMES_IN_FLIGHT{ 2 };
 		bool mWindowResized{ true };
 
 		VkCommandPool mCommandPool{};
@@ -133,10 +133,10 @@ namespace gg
 		VkImageView mTextureImageView;
 		VkSampler mTextureSampler;
 
-		std::vector<VkBuffer> mUniformBuffers;
-		std::vector<VkDeviceMemory> mUniformBuffersMemory;
+		std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> mUniformBuffers;
+		std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> mUniformBuffersMemory;
 		VkDescriptorPool mDescriptorPool;
-		std::vector<VkDescriptorSet> mDescriptorSets;
+		std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> mDescriptorSets;
 
 		std::unique_ptr<Model> mModel;
 		std::unique_ptr<Camera> mCamera;

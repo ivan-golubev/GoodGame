@@ -33,7 +33,6 @@ namespace gg
 
 	export struct Model
 	{
-	public:
 		Model() = default;
 		~Model() noexcept = default;
 		Model(Model const&) = delete;

@@ -16,7 +16,7 @@ namespace gg
 		std::unique_ptr<Model> LoadModel(std::string const& modelRelativePath, std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
 	private:
-		bool LoadMeshes(std::string const& modelAbsolutePath, Model & outModel);
+		bool LoadMeshes(std::string const& modelAbsolutePath, Model& outModel);
 	};
 
 } // namespace gg

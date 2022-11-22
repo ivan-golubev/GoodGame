@@ -5,8 +5,8 @@ export module ShaderProgram;
 
 export namespace gg
 {
-	char const* VS_ENTRY_POINT{ "vs_main" };
-	char const* FS_ENTRY_POINT{ "ps_main" };
+	constexpr char const* VS_ENTRY_POINT{ "vs_main" };
+	constexpr char const* FS_ENTRY_POINT{ "ps_main" };
 
 	class ShaderProgram
 	{
@@ -23,8 +23,8 @@ export namespace gg
 
 		~ShaderProgram();
 
-		VkShaderModule GetVertexShader();
-		VkShaderModule GetFragmentShader();
+		VkShaderModule GetVertexShader() const;
+		VkShaderModule GetFragmentShader() const;
 
 	private:
 		std::string vertexShaderBlob;

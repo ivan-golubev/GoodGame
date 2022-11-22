@@ -768,8 +768,6 @@ namespace gg
 	void VulkanRenderer::CreateUniformBuffers()
 	{
 		VkDeviceSize const bufferSize = sizeof(XMMATRIX);
-		mUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-		mUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
 
 		for (size_t i{ 0 }; i < MAX_FRAMES_IN_FLIGHT; ++i)
 			CreateBuffer(mUniformBuffers[i], mUniformBuffersMemory[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -779,15 +777,15 @@ namespace gg
 	{
 		std::array<VkDescriptorPoolSize, 2> poolSizes{};
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		poolSizes[0].descriptorCount = MAX_FRAMES_IN_FLIGHT;
 		poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		poolSizes[1].descriptorCount = MAX_FRAMES_IN_FLIGHT;
 
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
-		poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		poolInfo.maxSets = MAX_FRAMES_IN_FLIGHT;
 
 		if (VK_SUCCESS != vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool))
 			throw std::runtime_error("failed to create descriptor pool!");
@@ -795,14 +793,13 @@ namespace gg
 
 	void VulkanRenderer::CreateDescriptorSets()
 	{
-		std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, mDescriptorSetLayout);
+		std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> const layouts{ mDescriptorSetLayout, mDescriptorSetLayout };
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		allocInfo.descriptorPool = mDescriptorPool;
-		allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		allocInfo.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
 		allocInfo.pSetLayouts = layouts.data();
 
-		mDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 		if (VK_SUCCESS != vkAllocateDescriptorSets(mDevice, &allocInfo, mDescriptorSets.data()))
 		{
 			throw std::runtime_error("failed to allocate descriptor sets!");
@@ -968,7 +965,7 @@ namespace gg
 		mHeight = std::max(8u, height);
 	}
 
-	VkDevice VulkanRenderer::GetDevice() { return mDevice; }
+	VkDevice VulkanRenderer::GetDevice() const { return mDevice; }
 
 	void VulkanRenderer::Render(std::chrono::milliseconds deltaTime)
 	{
