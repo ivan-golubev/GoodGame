@@ -27,7 +27,7 @@ void MainLoop(std::shared_ptr<Application> app)
 
     while (isRunning)
     {
-        int64_t currentTimeMs{ timeManager->GetCurrentTimeMs().count()};
+        int64_t const currentTimeMs{ timeManager->GetCurrentTimeMs().count()};
         bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
 
         if (needToPollEvents)
@@ -97,12 +97,16 @@ int main()
 
     try
     {
-        std::unique_ptr<Renderer> renderer = std::make_unique<VulkanRenderer>(width, height, window);
-        auto app = Application::Init(std::move(renderer));
-        auto modelLoader = app->GetModelLoader();
-        std::unique_ptr<Model> model{ modelLoader->LoadModel("../../assets/runtime/models/textured_cube.glb", "shaders/textured_surface_VS.spv", "shaders/textured_surface_PS.spv") };
-        app->GetRenderer()->UploadGeometry(std::move(model));
+        auto app = Application::Init(std::make_unique<VulkanRenderer>(width, height, window));
+        app->GetRenderer()->UploadGeometry(
+            app->GetModelLoader()->LoadModel(
+                "../../assets/runtime/models/textured_cube.glb",
+                "shaders/textured_surface_VS.spv",
+                "shaders/textured_surface_PS.spv"
+            )
+        );
         DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
+        MainLoop(app);
     }
     catch (std::exception const& e)
     {
@@ -110,7 +114,6 @@ int main()
         return EXIT_FAILURE;
     }
 
-    MainLoop(Application::Get());
     Application::Destroy();
     return EXIT_SUCCESS;
 }

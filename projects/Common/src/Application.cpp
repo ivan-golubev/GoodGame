@@ -42,8 +42,8 @@ namespace gg
 	}
 
 	Application::Application(std::unique_ptr<Renderer> renderer)
+		: mRenderer{ std::move(renderer) }
 	{
-		mRenderer = std::move(renderer);
 		/* Check for DirectX Math library support. */
 		if (!DirectX::XMVerifyCPUSupport())
 			throw std::exception("Failed to verify DirectX Math library support");

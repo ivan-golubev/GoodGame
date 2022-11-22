@@ -33,6 +33,47 @@ import ModelLoader;
 
 using namespace DirectX;
 
+namespace {
+	constexpr std::array<char const*, 1> deviceExtensions
+	{
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
+	{
+		for (auto const& availableFormat : availableFormats)
+			if (VK_FORMAT_B8G8R8A8_UNORM == availableFormat.format && VK_COLOR_SPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace)
+				return availableFormat;
+		return availableFormats[0];
+	}
+
+	VkPresentModeKHR chooseSwapPresentMode(std::vector<VkPresentModeKHR> const& availablePresentModes)
+	{
+		for (auto const& m : availablePresentModes)
+			if (VK_PRESENT_MODE_MAILBOX_KHR == m)
+				return m;
+		return VK_PRESENT_MODE_FIFO_KHR;
+	}
+
+	bool checkDeviceExtensionSupport(VkPhysicalDevice const device)
+	{
+		uint32_t extensionCount;
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+		std::set<std::string> availableExtensionNames{};
+		for (auto& ext : availableExtensions)
+			availableExtensionNames.insert(ext.extensionName);
+
+		for (auto& ext : deviceExtensions)
+			if (!availableExtensionNames.contains(ext))
+				return false;
+		return true;
+	}
+} // namespace
+
 namespace gg
 {
 	VulkanRenderer::VulkanRenderer(uint32_t width, uint32_t height, SDL_Window* windowHandle)
@@ -117,22 +158,6 @@ namespace gg
 		}
 	}
 
-	static VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
-	{
-		for (auto const& availableFormat : availableFormats)
-			if (VK_FORMAT_B8G8R8A8_UNORM == availableFormat.format && VK_COLOR_SPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace)
-				return availableFormat;
-		return availableFormats[0];
-	}
-
-	static VkPresentModeKHR chooseSwapPresentMode(std::vector<VkPresentModeKHR> const& availablePresentModes)
-	{
-		for (auto const& m : availablePresentModes)
-			if (VK_PRESENT_MODE_MAILBOX_KHR == m)
-				return m;
-		return VK_PRESENT_MODE_FIFO_KHR;
-	}
-
 	VkExtent2D VulkanRenderer::ChooseSwapExtent(VkSurfaceCapabilitiesKHR const& capabilities) const
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
@@ -201,7 +226,7 @@ namespace gg
 	void VulkanRenderer::CreateImageViews()
 	{
 		mSwapChainImageViews.resize(mSwapChainImages.size());
-		for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+		for (size_t i{ 0 }; i < mSwapChainImages.size(); ++i)
 			mSwapChainImageViews[i] = CreateImageView(mSwapChainImages[i], mSwapChainImageFormat);
 	}
 
@@ -509,7 +534,6 @@ namespace gg
 
 	void VulkanRenderer::CreateCommandBuffers()
 	{
-		mCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.commandPool = mCommandPool;
@@ -523,10 +547,6 @@ namespace gg
 
 	void VulkanRenderer::CreateSyncObjects()
 	{
-		mImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		mRenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		mInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -553,7 +573,7 @@ namespace gg
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
 		QueueFamilyIndices indices{};
-		int i = 0;
+		uint32_t i{ 0 };
 		for (auto const& q : queueFamilies)
 		{
 			if (q.queueFlags & VK_QUEUE_GRAPHICS_BIT)
@@ -578,7 +598,7 @@ namespace gg
 	{
 		VkPhysicalDeviceMemoryProperties memProperties;
 		vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
-		for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
+		for (uint32_t i{ 0 }; i < memProperties.memoryTypeCount; ++i)
 		{
 			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
 			{
@@ -586,29 +606,6 @@ namespace gg
 			}
 		}
 		throw std::runtime_error("failed to find suitable memory type!");
-	}
-
-	static std::vector<char const*> const deviceExtensions
-	{
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
-	};
-
-	static bool checkDeviceExtensionSupport(VkPhysicalDevice const device)
-	{
-		uint32_t extensionCount;
-		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-		std::set<std::string> availableExtensionNames{};
-		for (auto& ext : availableExtensions)
-			availableExtensionNames.insert(ext.extensionName);
-
-		for (auto& ext : deviceExtensions)
-			if (!availableExtensionNames.contains(ext))
-				return false;
-		return true;
 	}
 
 	VulkanRenderer::SwapChainSupportDetails VulkanRenderer::QuerySwapChainSupport(VkPhysicalDevice device) const

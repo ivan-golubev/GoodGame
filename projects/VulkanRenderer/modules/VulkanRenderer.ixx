@@ -1,4 +1,5 @@
 module;
+#include <array>
 #include <cstdint>
 #include <chrono>
 #include <DirectXMath.h>
@@ -107,7 +108,7 @@ namespace gg
 		bool mWindowResized{ true };
 
 		VkCommandPool mCommandPool{};
-		std::vector<VkCommandBuffer> mCommandBuffers;
+		std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> mCommandBuffers;
 		VkRenderPass mRenderPass{};
 		VkDescriptorSetLayout mDescriptorSetLayout{};
 		VkPipelineLayout mPipelineLayout{};
@@ -147,9 +148,9 @@ namespace gg
 		VkSurfaceKHR mSurface{};
 		VkSwapchainKHR mSwapChain{};
 		/* Synchronization objects */
-		std::vector<VkSemaphore> mImageAvailableSemaphores;
-		std::vector<VkSemaphore> mRenderFinishedSemaphores;
-		std::vector<VkFence> mInFlightFences;
+		std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mImageAvailableSemaphores;
+		std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mRenderFinishedSemaphores;
+		std::array<VkFence, MAX_FRAMES_IN_FLIGHT> mInFlightFences;
 	};
 
 } // namespace gg
