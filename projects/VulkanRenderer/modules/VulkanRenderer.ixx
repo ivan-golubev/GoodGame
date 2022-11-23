@@ -22,7 +22,8 @@ using DirectX::XMMATRIX;
 
 namespace gg 
 {
-	export class VulkanRenderer : public Renderer {
+	export class VulkanRenderer : public Renderer 
+	{
 	public:
 		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
 		~VulkanRenderer();

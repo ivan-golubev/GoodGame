@@ -7,8 +7,8 @@ export module Camera;
 using DirectX::XMMATRIX;
 using DirectX::XMVECTOR;
 
-export namespace gg {
-
+export namespace gg 
+{
 	class Camera
 	{
 	public:

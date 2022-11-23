@@ -15,7 +15,8 @@ using DirectX::XMMatrixLookAtLH;
 using DirectX::XMConvertToRadians;
 using DirectX::XMMatrixPerspectiveFovLH;
 
-namespace gg {
+namespace gg 
+{
     constexpr float cameraMoveSpeed{ 5.f }; // in metres per second
     constexpr float cameraTurnSpeed{ DirectX::XM_PI }; // in radians per second
     constexpr float fieldOfView{ 90.f };
@@ -46,11 +47,13 @@ namespace gg {
         }
         {
             XMVECTOR const moveUD{ XMVectorScale(up, cameraMoveAmount) };
-            if (inputManager->IsKeyDown(InputAction::RaiseCamera)) {
+            if (inputManager->IsKeyDown(InputAction::RaiseCamera)) 
+            {
                 cameraPosition = XMVectorAdd(cameraPosition, moveUD);
                 focusPoint = XMVectorAdd(focusPoint, moveUD);
             }
-            if (inputManager->IsKeyDown(InputAction::LowerCamera)) {
+            if (inputManager->IsKeyDown(InputAction::LowerCamera)) 
+            {
                 cameraPosition = XMVectorSubtract(cameraPosition, moveUD);
                 focusPoint = XMVectorSubtract(focusPoint, moveUD);
             }

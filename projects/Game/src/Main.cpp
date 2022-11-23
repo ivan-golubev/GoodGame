@@ -17,7 +17,8 @@ using gg::VulkanRenderer;
 using gg::BreakIfFalse;
 using gg::DebugLevel;
 
-namespace {
+namespace 
+{
     void MainLoop(std::shared_ptr<Application> app)
     {
         using namespace std::chrono_literals;

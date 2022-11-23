@@ -10,7 +10,8 @@ using std::chrono::time_point;
 
 namespace gg 
 {
-	export class TimeManager {
+	export class TimeManager 
+	{
 	public:
 		milliseconds Tick();
 		milliseconds GetCurrentTimeMs() const;

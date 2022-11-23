@@ -33,7 +33,8 @@ import ModelLoader;
 
 using namespace DirectX;
 
-namespace {
+namespace 
+{
 	constexpr std::array<char const*, 1> deviceExtensions
 	{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -1192,11 +1193,7 @@ namespace gg
 		region.imageSubresource.layerCount = 1;
 
 		region.imageOffset = { 0, 0, 0 };
-		region.imageExtent = {
-			width,
-			height,
-			1
-		};
+		region.imageExtent = { width, height, 1 };
 
 		vkCmdCopyBufferToImage(
 			commandBuffer,
