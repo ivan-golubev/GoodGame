@@ -16,11 +16,11 @@ using DirectX::XMConvertToRadians;
 using DirectX::XMMatrixPerspectiveFovLH;
 
 namespace gg {
-    constexpr float CAM_MOVE_SPEED{ 5.f }; // in metres per second
-    constexpr float CAM_TURN_SPEED{ DirectX::XM_PI }; // in radians per second
-    constexpr float FOV{ 90.f };
-    constexpr float NEAR{ 0.1f };
-    constexpr float FAR{ 100.f };
+    constexpr float cameraMoveSpeed{ 5.f }; // in metres per second
+    constexpr float cameraTurnSpeed{ DirectX::XM_PI }; // in radians per second
+    constexpr float fieldOfView{ 90.f };
+    constexpr float near{ 0.1f };
+    constexpr float far{ 100.f };
 
     constexpr XMVECTOR forward{ 0.f, 0.f, 1.f };
     constexpr XMVECTOR up{ 0.f, 1.f, 0.f, 0.f };
@@ -29,55 +29,55 @@ namespace gg {
     void Camera::UpdateCamera(std::chrono::milliseconds deltaTime)
     {
         auto inputManager = Application::Get()->GetInputManager();
-        float const CAM_MOVE_AMOUNT{ CAM_MOVE_SPEED * deltaTime.count() / 1000.0f };
+        float const cameraMoveAmount{ cameraMoveSpeed * deltaTime.count() / 1000.0f };
         {
-            XMVECTOR const moveFB{ XMVectorScale(forward, CAM_MOVE_AMOUNT) };
+            XMVECTOR const moveFB{ XMVectorScale(forward, cameraMoveAmount) };
             if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
-                mCameraPos = XMVectorAdd(mCameraPos, moveFB);
+                cameraPosition = XMVectorAdd(cameraPosition, moveFB);
             if (inputManager->IsKeyDown(InputAction::MoveCameraBack))
-                mCameraPos = XMVectorSubtract(mCameraPos, moveFB);
+                cameraPosition = XMVectorSubtract(cameraPosition, moveFB);
         }
         {
-            XMVECTOR const moveLR{ XMVectorScale(right, CAM_MOVE_AMOUNT) };
+            XMVECTOR const moveLR{ XMVectorScale(right, cameraMoveAmount) };
             if (inputManager->IsKeyDown(InputAction::MoveCameraRight))
-                mFocusPoint = XMVectorAdd(mFocusPoint, moveLR);
+                focusPoint = XMVectorAdd(focusPoint, moveLR);
             if (inputManager->IsKeyDown(InputAction::MoveCameraLeft))
-                mFocusPoint = XMVectorSubtract(mFocusPoint, moveLR);
+                focusPoint = XMVectorSubtract(focusPoint, moveLR);
         }
         {
-            XMVECTOR const moveUD{ XMVectorScale(up, CAM_MOVE_AMOUNT) };
+            XMVECTOR const moveUD{ XMVectorScale(up, cameraMoveAmount) };
             if (inputManager->IsKeyDown(InputAction::RaiseCamera)) {
-                mCameraPos = XMVectorAdd(mCameraPos, moveUD);
-                mFocusPoint = XMVectorAdd(mFocusPoint, moveUD);
+                cameraPosition = XMVectorAdd(cameraPosition, moveUD);
+                focusPoint = XMVectorAdd(focusPoint, moveUD);
             }
             if (inputManager->IsKeyDown(InputAction::LowerCamera)) {
-                mCameraPos = XMVectorSubtract(mCameraPos, moveUD);
-                mFocusPoint = XMVectorSubtract(mFocusPoint, moveUD);
+                cameraPosition = XMVectorSubtract(cameraPosition, moveUD);
+                focusPoint = XMVectorSubtract(focusPoint, moveUD);
             }
         }
         {
-            float const CAM_TURN_AMOUNT{ CAM_TURN_SPEED * deltaTime.count() / 1000.0f };
+            float const CAM_TURN_AMOUNT{ cameraTurnSpeed * deltaTime.count() / 1000.0f };
             XMVECTOR const moveLR{ XMVectorScale(right, CAM_TURN_AMOUNT) };
             if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
-                mFocusPoint = XMVectorAdd(mFocusPoint, moveLR);
+                focusPoint = XMVectorAdd(focusPoint, moveLR);
             if (inputManager->IsKeyDown(InputAction::TurnCameraLeft))
-                mFocusPoint = XMVectorSubtract(mFocusPoint, moveLR);
+                focusPoint = XMVectorSubtract(focusPoint, moveLR);
 
             XMVECTOR const moveUP{ XMVectorScale(up, CAM_TURN_AMOUNT) };
             if (inputManager->IsKeyDown(InputAction::LookCameraUp))
-                mFocusPoint = XMVectorAdd(mFocusPoint, moveUP);
+                focusPoint = XMVectorAdd(focusPoint, moveUP);
             if (inputManager->IsKeyDown(InputAction::LookCameraDown))
-                mFocusPoint = XMVectorSubtract(mFocusPoint, moveUP);
+                focusPoint = XMVectorSubtract(focusPoint, moveUP);
         }
-        mViewMatrix = XMMatrixLookAtLH(mCameraPos, mFocusPoint, up);
+        viewMatrix = XMMatrixLookAtLH(cameraPosition, focusPoint, up);
     }
 
     void Camera::UpdateProjectionMatrix(float windowAspectRatio)
     {
-        mProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(FOV), windowAspectRatio, NEAR, FAR);
+        projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(fieldOfView), windowAspectRatio, near, far);
     }
 
-    XMMATRIX const & Camera::GetViewMatrix() const { return mViewMatrix; }
-    XMMATRIX const & Camera::GetProjectionMatrix() const { return mProjectionMatrix; }
+    XMMATRIX const & Camera::GetViewMatrix() const { return viewMatrix; }
+    XMMATRIX const & Camera::GetProjectionMatrix() const { return projectionMatrix; }
 
 } // namespace gg

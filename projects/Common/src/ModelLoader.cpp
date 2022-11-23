@@ -35,7 +35,7 @@ namespace
 					? assimpMesh->mTextureCoords[UVsetNumber][vertexIndex]
 					: aiVector3D {0, 0, 0};
 
-				outMesh.Vertices.emplace_back(
+				outMesh.vertices.emplace_back(
 					static_cast<float>(assimpVertex.x),
 					static_cast<float>(assimpVertex.y),
 					static_cast<float>(assimpVertex.z),

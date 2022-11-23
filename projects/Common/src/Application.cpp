@@ -42,7 +42,7 @@ namespace gg
 	}
 
 	Application::Application(std::unique_ptr<Renderer> renderer)
-		: mRenderer{ std::move(renderer) }
+		: renderer{ std::move(renderer) }
 	{
 		/* Check for DirectX Math library support. */
 		if (!DirectX::XMVerifyCPUSupport())
@@ -56,48 +56,48 @@ namespace gg
 
 	std::shared_ptr<TimeManager> Application::GetTimeManager() 
 	{
-		return mTimeManager;
+		return timeManager;
 	}
 
 	std::shared_ptr<InputManager> Application::GetInputManager()
 	{
-		return mInputManager;
+		return inputManager;
 	}
 
 	std::shared_ptr<ModelLoader> Application::GetModelLoader()
 	{
-		return mModelLoader;
+		return modelLoader;
 	}
 
 	std::shared_ptr<Renderer> Application::GetRenderer()
 	{
-		return mRenderer;
+		return renderer;
 	}
 
 	void Application::Tick()
 	{
-		if (!mPaused)
-			mRenderer->Render(mTimeManager->Tick());
+		if (!isPaused)
+			renderer->Render(timeManager->Tick());
 	}
 
 	void Application::OnWindowResized(uint32_t width, uint32_t height)
 	{
-		mRenderer->OnWindowResized(width, height);
+		renderer->OnWindowResized(width, height);
 	}
 
 	void Application::OnWindowMinimized()
 	{
-		mPaused = true;
+		isPaused = true;
 	}
 
 	void Application::OnWindowRestored()
 	{
-		mPaused = false;
+		isPaused = false;
 	}
 
 	void Application::OnKeyPressed(SDL_Keycode key, bool isDown)
 	{
-		mInputManager->OnKeyPressed(key, isDown);
+		inputManager->OnKeyPressed(key, isDown);
 	}
 
 } // namespace gg 

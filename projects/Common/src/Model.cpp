@@ -5,14 +5,14 @@ module Model;
 
 namespace gg
 {
-	uint32_t Mesh::VerticesSizeBytes() const { return static_cast<uint32_t>(Vertices.size()) * sizeof(Vertex); }
-	uint32_t Mesh::IndicesSizeBytes() const { return static_cast<uint32_t>(Indices.size()) * sizeof(uint32_t); }
-	uint32_t Mesh::GetVertexCount() const { return static_cast<uint32_t>(Vertices.size()); }
-	uint32_t Mesh::GetIndexCount() const { return static_cast<uint32_t>(Indices.size()); }
+	uint32_t Mesh::VerticesSizeBytes() const { return static_cast<uint32_t>(vertices.size()) * sizeof(Vertex); }
+	uint32_t Mesh::IndicesSizeBytes() const { return static_cast<uint32_t>(indices.size()) * sizeof(uint32_t); }
+	uint32_t Mesh::GetVertexCount() const { return static_cast<uint32_t>(vertices.size()); }
+	uint32_t Mesh::GetIndexCount() const { return static_cast<uint32_t>(indices.size()); }
 
 	Mesh::Mesh(Mesh&& other) noexcept
-		: Vertices{ std::move(other.Vertices) }
-		, Indices{ std::move(other.Indices) }
+		: vertices{ std::move(other.vertices) }
+		, indices{ std::move(other.indices) }
 	{
 	}
 
@@ -20,10 +20,10 @@ namespace gg
 	{
 		if (this != &other)
 		{
-			Vertices.clear();
-			Indices.clear();
-			Vertices = std::move(other.Vertices);
-			Indices = std::move(other.Indices);
+			vertices.clear();
+			indices.clear();
+			vertices = std::move(other.vertices);
+			indices = std::move(other.indices);
 		}
 		return *this;
 	}

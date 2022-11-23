@@ -9,45 +9,45 @@ namespace gg
 	void InputManager::OnKeyPressed(SDL_Keycode key, bool isDown)
 	{
 		if (key == SDLK_w)
-			Keys[MoveCameraForward] = isDown;
+			keys[MoveCameraForward] = isDown;
 		else if (key == SDLK_s)
-			Keys[MoveCameraBack] = isDown;
+			keys[MoveCameraBack] = isDown;
 		else if (key == SDLK_a)
-			Keys[MoveCameraLeft] = isDown;
+			keys[MoveCameraLeft] = isDown;
 		else if (key == SDLK_d)
-			Keys[MoveCameraRight] = isDown;
+			keys[MoveCameraRight] = isDown;
 		else if (key == SDLK_q)
-			Keys[RaiseCamera] = isDown;
+			keys[RaiseCamera] = isDown;
 		else if (key == SDLK_e)
-			Keys[LowerCamera] = isDown;
+			keys[LowerCamera] = isDown;
 		else if (key == SDLK_UP)
-			Keys[LookCameraUp] = isDown;
+			keys[LookCameraUp] = isDown;
 		else if (key == SDLK_DOWN)
-			Keys[LookCameraDown] = isDown;
+			keys[LookCameraDown] = isDown;
 		else if (key == SDLK_LEFT)
-			Keys[TurnCameraLeft] = isDown;
+			keys[TurnCameraLeft] = isDown;
 		else if (key == SDLK_RIGHT)
-			Keys[TurnCameraRight] = isDown;
+			keys[TurnCameraRight] = isDown;
 	}
 
 	void InputManager::SetKeyDown(InputAction a, bool value) 
 	{
-		Keys[a] = value;
+		keys[a] = value;
 	}
 
 	void InputManager::ClearKeys() 
 	{
-		memset(Keys, 0, sizeof(Keys));
+		memset(keys, 0, sizeof(keys));
 	}
 
 	bool InputManager::IsKeyDown(InputAction a) const 
 	{
-		return Keys[a];
+		return keys[a];
 	}
 
 	float InputManager::GetPlayerSpeed(uint64_t deltaMs) const 
 	{
-		return static_cast<float>(PlayerSpeed / 1000 * deltaMs);
+		return static_cast<float>(playerSpeed / 1000 * deltaMs);
 	}
 
 } // namespace gg

@@ -11,18 +11,18 @@ namespace gg
 {
 	export struct Vertex
 	{
-		XMVECTOR Position{};
-		XMFLOAT2 TextureCoords0{};
+		XMVECTOR position{};
+		XMFLOAT2 textureCoords0{};
 
 		Vertex() = default;
 
 		Vertex(float x, float y, float z, float w)
-			: Position{x, y, z, w}
+			: position{x, y, z, w}
 		{}
 
 		Vertex(float x, float y, float z, float w, float u, float v)
-			: Position{ x, y, z, w }
-			, TextureCoords0{ u, v }
+			: position{ x, y, z, w }
+			, textureCoords0{ u, v }
 		{}
 
 		static VkVertexInputBindingDescription GetBindingDescription();

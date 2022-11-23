@@ -37,11 +37,11 @@ namespace gg
 		// TODO: remove the singleton !
 		static std::shared_ptr<Application> INSTANCE;
 
-		bool mPaused{ false };
+		bool isPaused{ false };
 
-		std::shared_ptr<InputManager> mInputManager{ std::make_unique<InputManager>() };
-		std::shared_ptr<ModelLoader> mModelLoader{ std::make_unique<ModelLoader>() };
-		std::shared_ptr<TimeManager> mTimeManager{ std::make_unique<TimeManager>() };
-		std::shared_ptr<Renderer> mRenderer;
+		std::shared_ptr<InputManager> inputManager{ std::make_unique<InputManager>() };
+		std::shared_ptr<ModelLoader> modelLoader{ std::make_unique<ModelLoader>() };
+		std::shared_ptr<TimeManager> timeManager{ std::make_unique<TimeManager>() };
+		std::shared_ptr<Renderer> renderer;
 	};
 } // namespace gg 

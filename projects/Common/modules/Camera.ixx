@@ -17,11 +17,11 @@ export namespace gg {
 		XMMATRIX const & GetViewMatrix() const;
 		XMMATRIX const & GetProjectionMatrix() const;
 	private:
-		XMMATRIX mProjectionMatrix{};
-		XMMATRIX mViewMatrix{};
+		XMMATRIX projectionMatrix{};
+		XMMATRIX viewMatrix{};
 
-		XMVECTOR mCameraPos{ 0.f, 0.f, -3.f, 1.f };
-		XMVECTOR mFocusPoint{ 0.f, 0.f, 0.f, 1.f };
+		XMVECTOR cameraPosition{ 0.f, 0.f, -3.f, 1.f };
+		XMVECTOR focusPoint{ 0.f, 0.f, 0.f, 1.f };
 	};
 
 } // namespace gg

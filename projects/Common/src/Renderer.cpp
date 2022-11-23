@@ -6,9 +6,9 @@ module Renderer;
 namespace gg 
 {
 	Renderer::Renderer(uint32_t width, uint32_t height, SDL_Window* windowHandle)
-		: mWidth{ width }
-		, mHeight{ height }
-		, mWindowHandle{ windowHandle }
+		: width{ width }
+		, height{ height }
+		, windowHandle{ windowHandle }
 	{
 	}
 }

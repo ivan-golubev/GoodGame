@@ -12,69 +12,76 @@ import Logging;
 import ModelLoader;
 import VulkanRenderer;
 
-using namespace gg;
+using gg::Application;
+using gg::VulkanRenderer;
+using gg::BreakIfFalse;
+using gg::DebugLevel;
 
-void MainLoop(std::shared_ptr<Application> app)
-{
-    using namespace std::chrono_literals;
-
-    BreakIfFalse(Application::IsInitialized());
-    bool isRunning{ true };
-    
-    auto timeManager{ app->GetTimeManager() };
-    uint64_t lastEventPollMs{ 0 };
-    constexpr uint64_t EVENT_POLL_INTERVAL_MS{ 16ULL }; // Poll 60 times per sec.
-
-    while (isRunning)
+namespace {
+    void MainLoop(std::shared_ptr<Application> app)
     {
-        int64_t const currentTimeMs{ timeManager->GetCurrentTimeMs().count()};
-        bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
+        using namespace std::chrono_literals;
 
-        if (needToPollEvents)
+        BreakIfFalse(Application::IsInitialized());
+        bool isRunning{ true };
+
+        auto timeManager{ app->GetTimeManager() };
+        uint64_t lastEventPollMs{ 0 };
+        constexpr uint64_t EVENT_POLL_INTERVAL_MS{ 16ULL }; // Poll 60 times per sec.
+
+        while (isRunning)
         {
-            lastEventPollMs = currentTimeMs;
+            int64_t const currentTimeMs{ timeManager->GetCurrentTimeMs().count() };
+            bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
 
-            SDL_Event event;
-            // Poll for user input.
-            while (SDL_PollEvent(&event))
+            if (needToPollEvents)
             {
-                switch (event.type)
+                lastEventPollMs = currentTimeMs;
+
+                SDL_Event event;
+                // Poll for user input.
+                while (SDL_PollEvent(&event))
                 {
-                case SDL_QUIT:
-                    isRunning = false;
-                    break;
-                case SDL_WINDOWEVENT:
-                {
-                    auto windowEvent{ event.window.event };
-                    if (windowEvent == SDL_WINDOWEVENT_RESIZED)
-                        app->OnWindowResized(event.window.data1, event.window.data2);
-                    else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
-                        app->OnWindowMinimized();
-                    else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
-                        app->OnWindowRestored();
-                }
-                break;
-                case SDL_KEYDOWN:
-                case SDL_KEYUP:
-                {
-                    SDL_Keycode key{ event.key.keysym.sym };
-                    if (key == SDLK_ESCAPE)
+                    switch (event.type)
+                    {
+                    case SDL_QUIT:
                         isRunning = false;
-                    else
-                        app->OnKeyPressed(key, event.type == SDL_KEYDOWN);
+                        break;
+                    case SDL_WINDOWEVENT:
+                    {
+                        auto windowEvent{ event.window.event };
+                        if (windowEvent == SDL_WINDOWEVENT_RESIZED)
+                            app->OnWindowResized(event.window.data1, event.window.data2);
+                        else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
+                            app->OnWindowMinimized();
+                        else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
+                            app->OnWindowRestored();
+                    }
                     break;
-                }
-                default:
-                    // Do nothing.
-                    break;
+                    case SDL_KEYDOWN: 
+                        [[fallthrough]];
+                    case SDL_KEYUP:
+                    {
+                        SDL_Keycode key{ event.key.keysym.sym };
+                        if (key == SDLK_ESCAPE)
+                            isRunning = false;
+                        else
+                            app->OnKeyPressed(key, event.type == SDL_KEYDOWN);
+                        break;
+                    }
+                    default:
+                        // Do nothing.
+                        break;
+                    }
                 }
             }
+            app->Tick();
+            /* Don't do the next tick immediately */
+            // TODO: why we need this ? maybe just the input polling has to be slower ? 250ms is a lot
+            std::this_thread::sleep_for(0.25ms);
         }
-        app->Tick();
-        /* Don't do the next tick immediately */
-        std::this_thread::sleep_for(0.25ms); // TODO: why we need this ? maybe just the input polling has to be slower ? 250ms is a lot
     }
-}
+} // namespace
 
 int main()
 {

@@ -27,8 +27,8 @@ export namespace gg
 		bool IsKeyDown(InputAction a) const;
 		float GetPlayerSpeed(uint64_t deltaMs) const;
 	private:
-		bool Keys[InputAction::Count]{};
-		static constexpr float PlayerSpeed{ 1.5f };
+		bool keys[InputAction::Count]{};
+		static constexpr float playerSpeed{ 1.5f };
 	};
 
 } // namespace gg

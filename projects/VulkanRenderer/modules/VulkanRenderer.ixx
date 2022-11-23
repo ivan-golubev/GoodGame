@@ -104,53 +104,53 @@ namespace gg
 
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-		static constexpr int32_t MAX_FRAMES_IN_FLIGHT{ 2 };
-		bool mWindowResized{ true };
+		static constexpr int32_t maxFramesInFlight{ 2 };
+		bool isWindowResized{ true };
 
-		VkCommandPool mCommandPool{};
-		std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> mCommandBuffers;
-		VkRenderPass mRenderPass{};
-		VkDescriptorSetLayout mDescriptorSetLayout{};
-		VkPipelineLayout mPipelineLayout{};
-		VkPipeline mGraphicsPipeline{};
+		VkCommandPool commandPool{};
+		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers;
+		VkRenderPass renderPass{};
+		VkDescriptorSetLayout descriptorSetLayout{};
+		VkPipelineLayout pipelineLayout{};
+		VkPipeline graphicsPipeline{};
 
 		/* Render Targets */
-		std::vector<VkImage> mSwapChainImages;
-		std::vector<VkImageView> mSwapChainImageViews;
-		std::vector<VkFramebuffer> mFrameBuffers;
-		VkFormat mSwapChainImageFormat{};
-		VkExtent2D mSwapChainExtent{};
+		std::vector<VkImage> swapChainImages;
+		std::vector<VkImageView> swapChainImageViews;
+		std::vector<VkFramebuffer> frameBuffers;
+		VkFormat swapChainImageFormat{};
+		VkExtent2D swapChainExtent{};
 
-		uint32_t mCurrentFrame{ 0 };
+		uint32_t currentFrame{ 0 };
 
 		/* Vertex Buffer for the cube. TODO: There is a better place for it. */
-		VkBuffer mVB{};
-		VkDeviceMemory mVertexBufferMemory{};
+		VkBuffer VB{};
+		VkDeviceMemory vertexBufferMemory{};
 
 		/* Textures. TODO: move to a better place */
-		VkImage mTextureImage;
-		VkDeviceMemory mTextureImageMemory;
-		VkImageView mTextureImageView;
-		VkSampler mTextureSampler;
+		VkImage textureImage;
+		VkDeviceMemory textureImageMemory;
+		VkImageView textureImageView;
+		VkSampler textureSampler;
 
-		std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> mUniformBuffers;
-		std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> mUniformBuffersMemory;
-		VkDescriptorPool mDescriptorPool;
-		std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> mDescriptorSets;
+		std::array<VkBuffer, maxFramesInFlight> uniformBuffers;
+		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemory;
+		VkDescriptorPool descriptorPool;
+		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets;
 
-		std::unique_ptr<Model> mModel;
-		std::unique_ptr<Camera> mCamera;
+		std::unique_ptr<Model> model;
+		std::unique_ptr<Camera> camera;
 
-		VkDevice mDevice{};
-		VkInstance mInstance{};
-		VkPhysicalDevice mPhysicalDevice{};
-		VkQueue mGraphicsQueue{};
-		VkSurfaceKHR mSurface{};
-		VkSwapchainKHR mSwapChain{};
+		VkDevice device{};
+		VkInstance instance{};
+		VkPhysicalDevice physicalDevice{};
+		VkQueue graphicsQueue{};
+		VkSurfaceKHR surface{};
+		VkSwapchainKHR swapChain{};
 		/* Synchronization objects */
-		std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mImageAvailableSemaphores;
-		std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mRenderFinishedSemaphores;
-		std::array<VkFence, MAX_FRAMES_IN_FLIGHT> mInFlightFences;
+		std::array<VkSemaphore, maxFramesInFlight> imageAvailableSemaphores;
+		std::array<VkSemaphore, maxFramesInFlight> renderFinishedSemaphores;
+		std::array<VkFence, maxFramesInFlight> inFlightFences;
 	};
 
 } // namespace gg

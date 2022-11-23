@@ -17,18 +17,18 @@ namespace gg
 		Mesh(Mesh&&) noexcept;
 		Mesh& operator=(Mesh&&) noexcept;
 
-		std::vector<Vertex> Vertices{};
-		std::vector<uint32_t> Indices{};
-
-		uint8_t* Texture{ nullptr };
-		uint32_t TextureColorFormat{ 0 }; /* GL_RGB or GL_RGBA */
-		uint32_t TextureWidth{ 0 };
-		uint32_t TextureHeight{ 0 };
-
 		uint32_t VerticesSizeBytes() const;
 		uint32_t IndicesSizeBytes() const;
 		uint32_t GetVertexCount() const;
 		uint32_t GetIndexCount() const;
+
+		std::vector<Vertex> vertices{};
+		std::vector<uint32_t> indices{};
+
+		uint32_t textureColorFormat{ 0 }; /* GL_RGB or GL_RGBA */
+		uint32_t textureWidth{ 0 };
+		uint32_t textureHeight{ 0 };
+		uint8_t* texture{ nullptr };
 	};
 
 	export struct Model

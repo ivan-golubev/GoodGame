@@ -18,9 +18,9 @@ namespace gg
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(std::chrono::milliseconds deltaTime) = 0;
 	protected:
-		uint32_t mWidth{};
-		uint32_t mHeight{};
-		SDL_Window* mWindowHandle{ nullptr };
+		uint32_t width{};
+		uint32_t height{};
+		SDL_Window* windowHandle{ nullptr };
 	};
 
 } // namespace gg
