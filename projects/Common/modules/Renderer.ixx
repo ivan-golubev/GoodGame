@@ -12,15 +12,18 @@ namespace gg
 	export class Renderer
 	{
 	public:
-		Renderer(uint32_t width, uint32_t height, SDL_Window*);
+		Renderer() = default;
 		virtual ~Renderer() = default;
+
+		Renderer(Renderer const&) = delete;
+		Renderer& operator=(Renderer const&) = delete;
+
+		Renderer(Renderer &&) noexcept = default;
+		Renderer& operator=(Renderer &&) noexcept = default;
+
 		virtual void UploadGeometry(std::unique_ptr<Model>) = 0;
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(std::chrono::milliseconds deltaTime) = 0;
-	protected:
-		uint32_t width{};
-		uint32_t height{};
-		SDL_Window* windowHandle{ nullptr };
 	};
 
 } // namespace gg

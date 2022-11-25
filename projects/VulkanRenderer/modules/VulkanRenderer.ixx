@@ -27,9 +27,16 @@ namespace gg
 	public:
 		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
 		~VulkanRenderer();
-		void UploadGeometry(std::unique_ptr<Model>);
-		void OnWindowResized(uint32_t width, uint32_t height);
-		void Render(std::chrono::milliseconds deltaTime);
+
+		VulkanRenderer(VulkanRenderer const&) = delete;
+		VulkanRenderer& operator=(VulkanRenderer const&) = delete;
+
+		VulkanRenderer(VulkanRenderer &&) noexcept = default;
+		VulkanRenderer& operator=(VulkanRenderer &&) noexcept = default;
+
+		void UploadGeometry(std::unique_ptr<Model>) override;
+		void OnWindowResized(uint32_t width, uint32_t height) override;
+		void Render(std::chrono::milliseconds deltaTime) override;
 		VkDevice GetDevice() const;
 	private:
 		struct QueueFamilyIndices
@@ -107,6 +114,10 @@ namespace gg
 
 		static constexpr int32_t maxFramesInFlight{ 2 };
 		bool isWindowResized{ true };
+
+		uint32_t width{};
+		uint32_t height{};
+		SDL_Window* windowHandle{ nullptr };
 
 		VkCommandPool commandPool{};
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers;

@@ -78,7 +78,9 @@ namespace
 namespace gg
 {
 	VulkanRenderer::VulkanRenderer(uint32_t width, uint32_t height, SDL_Window* windowHandle)
-		: Renderer{width, height, windowHandle}
+		: width{ width }
+		, height{ height }
+		, windowHandle{ windowHandle }
 		, camera{ std::make_unique<Camera>() }
 	{
 		uint32_t extension_count;
