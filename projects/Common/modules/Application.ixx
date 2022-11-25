@@ -13,6 +13,8 @@ import ModelLoader;
 
 namespace gg 
 {
+	struct ApplicationSettings;
+
 	export class Application 
 	{
 	public:
@@ -43,5 +45,7 @@ namespace gg
 		std::shared_ptr<ModelLoader> modelLoader{ std::make_unique<ModelLoader>() };
 		std::shared_ptr<TimeManager> timeManager{ std::make_unique<TimeManager>() };
 		std::shared_ptr<Renderer> renderer;
+
+		friend std::shared_ptr<Application> MakeApplication(ApplicationSettings);
 	};
 } // namespace gg 

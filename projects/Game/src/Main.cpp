@@ -7,15 +7,12 @@
 #include <cassert>
 
 import Application;
+import ApplicationSettings;
 import ErrorHandling;
 import Logging;
 import ModelLoader;
-import VulkanRenderer;
 
-using gg::Application;
-using gg::VulkanRenderer;
-using gg::BreakIfFalse;
-using gg::DebugLevel;
+using namespace gg;
 
 namespace 
 {
@@ -105,7 +102,10 @@ int main()
 
     try
     {
-        auto app = Application::Init(std::make_unique<VulkanRenderer>(width, height, window));
+        ApplicationSettings appSettings{ width, height, window, RendererType::Vulkan };
+        std::shared_ptr<Application> app{ MakeApplication(appSettings) };
+
+        //auto app = Application::Init(std::make_unique<VulkanRenderer>(width, height, window));
         app->GetRenderer()->UploadGeometry(
             app->GetModelLoader()->LoadModel(
                 "../../assets/runtime/models/textured_cube.glb",

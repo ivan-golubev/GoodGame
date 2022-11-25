@@ -184,6 +184,8 @@ copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEvent
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="modules\ApplicationSettings.ixx" />
+    <ClCompile Include="src\ApplicationSettings.cpp" />
     <ClCompile Include="src\Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -31,5 +31,11 @@
     <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\ApplicationSettings.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ApplicationSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
