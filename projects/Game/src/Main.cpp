@@ -20,7 +20,6 @@ namespace
     {
         using namespace std::chrono_literals;
 
-        BreakIfFalse(Application::IsInitialized());
         bool isRunning{ true };
 
         auto timeManager{ app->GetTimeManager() };
@@ -102,10 +101,9 @@ int main()
 
     try
     {
-        ApplicationSettings appSettings{ width, height, window, RendererType::Vulkan };
+        ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
         std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 
-        //auto app = Application::Init(std::make_unique<VulkanRenderer>(width, height, window));
         app->GetRenderer()->UploadGeometry(
             app->GetModelLoader()->LoadModel(
                 "../../assets/runtime/models/textured_cube.glb",
@@ -122,6 +120,5 @@ int main()
         return EXIT_FAILURE;
     }
 
-    Application::Destroy();
     return EXIT_SUCCESS;
 }

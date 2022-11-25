@@ -77,11 +77,12 @@ namespace
 
 namespace gg
 {
-	VulkanRenderer::VulkanRenderer(uint32_t width, uint32_t height, SDL_Window* windowHandle)
-		: width{ width }
-		, height{ height }
-		, windowHandle{ windowHandle }
-		, camera{ std::make_unique<Camera>() }
+	VulkanRenderer::VulkanRenderer(RendererSettings const& rs)
+		: width{ rs.width }
+		, height{ rs.height }
+		, windowHandle{ rs.windowHandle }
+		, timeManager{ rs.timeManager }
+		, camera{ std::make_unique<Camera>(rs.inputManager) }
 	{
 		uint32_t extension_count;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr))
@@ -986,7 +987,7 @@ namespace gg
 			throw std::runtime_error("failed to acquire swap chain image!");
 
 		/* Rotate the model */
-		auto const elapsedTimeMs = Application::Get()->GetTimeManager()->GetCurrentTimeMs().count();
+		auto const elapsedTimeMs = timeManager->GetCurrentTimeMs().count();
 		auto const rotation = 0.0002f * DirectX::XM_PI * elapsedTimeMs;
 		XMMATRIX const modelMatrix = XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation));
 

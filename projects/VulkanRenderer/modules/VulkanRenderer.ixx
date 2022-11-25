@@ -25,7 +25,7 @@ namespace gg
 	export class VulkanRenderer : public Renderer 
 	{
 	public:
-		VulkanRenderer(uint32_t width, uint32_t height, SDL_Window*);
+		VulkanRenderer(RendererSettings const &);
 		~VulkanRenderer();
 
 		VulkanRenderer(VulkanRenderer const&) = delete;
@@ -151,6 +151,7 @@ namespace gg
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets;
 
 		std::unique_ptr<Model> model;
+		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;
 
 		VkDevice device{};

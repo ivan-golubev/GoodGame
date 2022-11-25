@@ -21,5 +21,5 @@ namespace gg
 		RendererType rendererType;
 	};
 
-	export std::shared_ptr<Application> MakeApplication(ApplicationSettings&);
+	export std::shared_ptr<Application> MakeApplication(ApplicationSettings const&);
 } // namespace gg 

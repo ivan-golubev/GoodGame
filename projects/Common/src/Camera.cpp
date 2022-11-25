@@ -27,9 +27,13 @@ namespace gg
     constexpr XMVECTOR up{ 0.f, 1.f, 0.f, 0.f };
     constexpr XMVECTOR right{ 1.f, 0.f, 0.f };
 
+    Camera::Camera(std::shared_ptr<InputManager> inputManager)
+        : inputManager{ inputManager }
+    {
+    }
+
     void Camera::UpdateCamera(std::chrono::milliseconds deltaTime)
     {
-        auto inputManager = Application::Get()->GetInputManager();
         float const cameraMoveAmount{ cameraMoveSpeed * deltaTime.count() / 1000.0f };
         {
             XMVECTOR const moveFB{ XMVectorScale(forward, cameraMoveAmount) };
