@@ -453,8 +453,8 @@ namespace gg
 	void VulkanRenderer::CreateTextureImage()
 	{
 		// TODO: move this outside of the renderer
-		int texWidth, texHeight, texChannels;
-		std::string textureFileAbsPath{ std::filesystem::absolute("../../assets/src/textures/CubeColor.tga").generic_string() };
+		int texWidth, texHeight, texChannels; // TODO: all these relative paths here are nasty
+		std::string textureFileAbsPath{ std::filesystem::absolute("../../../assets/src/textures/CubeColor.tga").generic_string() };
 		stbi_uc* pixels = stbi_load(textureFileAbsPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSizeBytes = texWidth * texHeight * 4;
 

@@ -16,13 +16,13 @@ using namespace gg;
 
 namespace 
 {
-    void MainLoop(std::shared_ptr<Application> app)
+    void MainLoop(Application& app)
     {
         using namespace std::chrono_literals;
 
         bool isRunning{ true };
 
-        auto timeManager{ app->GetTimeManager() };
+        std::shared_ptr<TimeManager> timeManager{ app.GetTimeManager() };
         uint64_t lastEventPollMs{ 0 };
         constexpr uint64_t EVENT_POLL_INTERVAL_MS{ 16ULL }; // Poll 60 times per sec.
 
@@ -48,11 +48,11 @@ namespace
                     {
                         auto windowEvent{ event.window.event };
                         if (windowEvent == SDL_WINDOWEVENT_RESIZED)
-                            app->OnWindowResized(event.window.data1, event.window.data2);
+                            app.OnWindowResized(event.window.data1, event.window.data2);
                         else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
-                            app->OnWindowMinimized();
+                            app.OnWindowMinimized();
                         else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
-                            app->OnWindowRestored();
+                            app.OnWindowRestored();
                     }
                     break;
                     case SDL_KEYDOWN: 
@@ -63,7 +63,7 @@ namespace
                         if (key == SDLK_ESCAPE)
                             isRunning = false;
                         else
-                            app->OnKeyPressed(key, event.type == SDL_KEYDOWN);
+                            app.OnKeyPressed(key, event.type == SDL_KEYDOWN);
                         break;
                     }
                     default:
@@ -72,7 +72,7 @@ namespace
                     }
                 }
             }
-            app->Tick();
+            app.Tick();
             /* Don't do the next tick immediately */
             // TODO: why we need this ? maybe just the input polling has to be slower ? 250ms is a lot
             std::this_thread::sleep_for(0.25ms);
@@ -102,11 +102,11 @@ int main()
     try
     {
         ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
-        std::shared_ptr<Application> app{ MakeApplication(appSettings) };
+        Application app{ MakeApplication(appSettings) };
 
-        app->GetRenderer()->UploadGeometry(
-            app->GetModelLoader()->LoadModel(
-                "../../assets/runtime/models/textured_cube.glb",
+        app.GetRenderer()->UploadGeometry(
+            app.GetModelLoader()->LoadModel(
+                "../../../assets/runtime/models/textured_cube.glb",
                 "shaders/textured_surface_VS.spv",
                 "shaders/textured_surface_PS.spv"
             )

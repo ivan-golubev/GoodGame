@@ -1,11 +1,11 @@
-Param([Parameter(Mandatory=$true)][string]$Config)
+Param([Parameter(Mandatory=$true)][string]$Config, [Parameter(Mandatory=$true)][string]$TargetDir)
 # Get PowerShell 7.2.1 or higher from the MS Store: https://aka.ms/Install-PowerShell
 
 $IsFinal=$($Config -eq "Final")
 # Vulkan SDK (1.2.182.0)
 $DxcPath="C:\VulkanSDK\1.2.182.0\Bin"
 $Compiler="${DxcPath}\dxc.exe"
-$OutputDir="${PSScriptRoot}\..\bin\${Config}\shaders"
+$OutputDir="${TargetDir}\shaders"
 $ShaderModel="6_0"
 
 if (!(Test-Path -Path $OutputDir))

@@ -11,13 +11,20 @@ import Input;
 import TimeManager;
 import ModelLoader;
 
-namespace gg 
+namespace gg
 {
-	export class Application 
+	export class Application
 	{
 	public:
 		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
 		~Application();
+
+		Application(Application const&) = delete;
+		Application& operator=(Application const&) = delete;
+
+		Application(Application&&) noexcept = default;
+		Application& operator=(Application&&) noexcept = default;
+
 		void Tick();
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void OnWindowMinimized();
@@ -36,4 +43,4 @@ namespace gg
 		std::shared_ptr<TimeManager> timeManager;
 		std::shared_ptr<Renderer> renderer;
 	};
-} // namespace gg 
+} // namespace gg
