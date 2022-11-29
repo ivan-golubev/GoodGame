@@ -23,13 +23,13 @@ namespace
         bool isRunning{ true };
 
         std::shared_ptr<TimeManager> timeManager{ app.GetTimeManager() };
-        uint64_t lastEventPollMs{ 0 };
-        constexpr uint64_t EVENT_POLL_INTERVAL_MS{ 16ULL }; // Poll 60 times per sec.
+        int64_t lastEventPollMs{ 0 };
+        constexpr int64_t EVENT_POLL_INTERVAL_MS{ 1000 / 60 }; // Poll 60 times per sec.
 
         while (isRunning)
         {
             int64_t const currentTimeMs{ timeManager->GetCurrentTimeMs().count() };
-            bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
+            bool const needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
 
             if (needToPollEvents)
             {
@@ -46,7 +46,7 @@ namespace
                         break;
                     case SDL_WINDOWEVENT:
                     {
-                        auto windowEvent{ event.window.event };
+                        int8_t const windowEvent{ event.window.event };
                         if (windowEvent == SDL_WINDOWEVENT_RESIZED)
                             app.OnWindowResized(event.window.data1, event.window.data2);
                         else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
@@ -59,7 +59,7 @@ namespace
                         [[fallthrough]];
                     case SDL_KEYUP:
                     {
-                        SDL_Keycode key{ event.key.keysym.sym };
+                        SDL_Keycode const key{ event.key.keysym.sym };
                         if (key == SDLK_ESCAPE)
                             isRunning = false;
                         else
@@ -93,7 +93,7 @@ int main()
     uint32_t const height{ 1080 };
 
     SDL_Window* window = SDL_CreateWindow("Vulkan Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-    if(nullptr == window) 
+    if(!window) 
     {
         DebugLog(DebugLevel::Error, "Could not create SDL window");
         return EXIT_FAILURE;
@@ -103,15 +103,15 @@ int main()
     {
         ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
         Application app{ MakeApplication(appSettings) };
-
-        app.GetRenderer()->UploadGeometry(
-            app.GetModelLoader()->LoadModel(
-                "../../../assets/runtime/models/textured_cube.glb",
-                "shaders/textured_surface_VS.spv",
-                "shaders/textured_surface_PS.spv"
-            )
-        );
         DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
+        
+		std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel(
+		    "../../../assets/runtime/models/textured_cube.glb",
+		    "shaders/textured_surface_VS.spv",
+		    "shaders/textured_surface_PS.spv"
+        ) };
+
+        app.GetRenderer()->UploadGeometry(std::move(model));
         MainLoop(app);
     }
     catch (std::exception const& e)
