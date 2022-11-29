@@ -21,7 +21,7 @@ namespace gg
 	{
 		/* Check for DirectX Math library support. */
 		if (!DirectX::XMVerifyCPUSupport())
-			throw std::exception("Failed to verify DirectX Math library support");
+			throw ApplicationInitException("Failed to verify DirectX Math library support");
 	}
 
 	Application::~Application() 

@@ -13,6 +13,8 @@ import ErrorHandling;
 
 namespace
 {
+	using gg::AssetLoadException;
+
 	VkShaderModule createShaderModule(VkDevice device, std::string const& shaderBlob)
 	{
 		VkShaderModuleCreateInfo createInfo{};
@@ -22,7 +24,7 @@ namespace
 		VkShaderModule shaderModule;
 		if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 		{
-			throw std::runtime_error("failed to create shader module!");
+			throw AssetLoadException("failed to create shader module!");
 		}
 		return shaderModule;
 	}
@@ -33,7 +35,7 @@ namespace
 
 		if (!file.is_open())
 		{
-			throw std::runtime_error(std::format("failed to open file: {}", filename));
+			throw AssetLoadException(std::format("failed to open file: {}", filename));
 		}
 
 		size_t const fileSize = static_cast<size_t>(file.tellg());

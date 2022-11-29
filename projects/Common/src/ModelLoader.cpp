@@ -23,10 +23,10 @@ namespace
 {
 	void readVertices(aiMesh const* assimpMesh, Mesh& outMesh, uint32_t UVsetNumber)
 	{
-		for (uint32_t faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
+		for (unsigned int faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
 		{
 			aiFace* face{ &assimpMesh->mFaces[faceIndex] };
-			for (uint32_t j{ 0 }; j < face->mNumIndices; ++j)
+			for (unsigned int j{ 0 }; j < face->mNumIndices; ++j)
 			{
 				auto vertexIndex = face->mIndices[j];
 				auto assimpVertex = assimpMesh->mVertices[vertexIndex];
@@ -73,7 +73,7 @@ namespace gg
 		model->shaderProgram = make_shared<ShaderProgram>(vertexShaderAbsPath, fragmentShaderAbsPath);
 
 		if (!LoadMeshes(modelFileAbsPath, *model))
-			throw std::runtime_error(std::format("Failed to read the input model: {}", modelFileAbsPath));
+			throw AssetLoadException(std::format("Failed to read the input model: {}", modelFileAbsPath));
 		return model;
 	}
 
@@ -87,8 +87,8 @@ namespace gg
 			| aiProcess_FlipUVs
 		);
 		if (!scene)
-			throw std::runtime_error(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
-		for (uint32_t i{ 0 }; i < scene->mNumMeshes; ++i)
+			throw AssetLoadException(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
+		for (unsigned int i{ 0 }; i < scene->mNumMeshes; ++i)
 			outModel.meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
 		return true;
 	}

@@ -9,6 +9,7 @@
 import Application;
 import ApplicationSettings;
 import ErrorHandling;
+import ErrorHandlingVulkan;
 import Logging;
 import ModelLoader;
 
@@ -46,7 +47,7 @@ namespace
                         break;
                     case SDL_WINDOWEVENT:
                     {
-                        int8_t const windowEvent{ event.window.event };
+                        uint8_t const windowEvent{ event.window.event };
                         if (windowEvent == SDL_WINDOWEVENT_RESIZED)
                             app.OnWindowResized(event.window.data1, event.window.data2);
                         else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
@@ -114,6 +115,26 @@ int main()
         app.GetRenderer()->UploadGeometry(std::move(model));
         MainLoop(app);
     }
+    catch (ApplicationInitException const& e)
+    {
+		DebugLog(DebugLevel::Error, std::format("Failed to initialize the game: {}", e.what()));
+		return EXIT_FAILURE;
+	}
+	catch (VulkanInitException const& e)
+	{
+		DebugLog(DebugLevel::Error, std::format("Failed to initialize the renderer: {}", e.what()));
+		return EXIT_FAILURE;
+	}
+	catch (VulkanRenderException const& e)
+	{
+		DebugLog(DebugLevel::Error, std::format("Failed to render a frame: {}", e.what()));
+		return EXIT_FAILURE;
+	}
+	catch (AssetLoadException const& e)
+	{
+		DebugLog(DebugLevel::Error, std::format("Failed to load an asset: {}", e.what()));
+		return EXIT_FAILURE;
+	}
     catch (std::exception const& e)
     {
         DebugLog(DebugLevel::Error, std::format("Caught exception with message: {}", e.what()));

@@ -6,7 +6,7 @@ import Application;
 
 namespace gg
 {
-	export enum class RendererType : uint8_t
+	export enum class RendererType
 	{
 		Vulkan,
 		D3D12

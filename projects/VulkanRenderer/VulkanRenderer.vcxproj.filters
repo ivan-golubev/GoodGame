@@ -20,5 +20,11 @@
     <ClCompile Include="modules\VulkanRenderer.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\ErrorHandlingVulkan.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ErrorHandlingVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

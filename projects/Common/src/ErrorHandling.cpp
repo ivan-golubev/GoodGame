@@ -40,4 +40,14 @@ namespace gg
 		}
 	}
 
+	ApplicationInitException::ApplicationInitException(std::string const& msg) 
+		: std::runtime_error{ msg }
+	{
+	}
+
+	AssetLoadException::AssetLoadException(std::string const& msg)
+		: std::runtime_error{ msg }
+	{
+	}
+
 } // namespace gg

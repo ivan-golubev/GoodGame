@@ -26,6 +26,7 @@ module VulkanRenderer;
 import Application;
 import Camera;
 import ErrorHandling;
+import ErrorHandlingVulkan;
 import GlobalSettings;
 import Input;
 import Vertex;
@@ -87,12 +88,12 @@ namespace gg
 		uint32_t extension_count;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr))
 		{
-			throw std::exception("Could not get the number of required instance extensions from SDL.");
+			throw VulkanInitException("Could not get the number of required instance extensions from SDL.");
 		}
 		std::vector<char const*> extensions(extension_count);
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, extensions.data()))
 		{
-			throw std::exception("Could not get the names of required instance extensions from SDL.");
+			throw VulkanInitException("Could not get the names of required instance extensions from SDL.");
 		}
 
 		std::vector<char const*> layers;
@@ -106,7 +107,7 @@ namespace gg
 		/* Create a surface for rendering */
 		if (!SDL_Vulkan_CreateSurface(windowHandle, instance, &surface))
 		{
-			throw std::exception("Could not create a Vulkan surface.");
+			throw VulkanInitException("Could not create a Vulkan surface.");
 		}
 
 		SelectPhysicalDevice();
@@ -154,11 +155,11 @@ namespace gg
 		VkResult const result = vkCreateInstance(&instInfo, nullptr, &instance);
 		if (VK_ERROR_INCOMPATIBLE_DRIVER == result)
 		{
-			throw std::exception("Unable to find a compatible Vulkan Driver.");
+			throw VulkanInitException("Unable to find a compatible Vulkan Driver.");
 		}
 		else if (result)
 		{
-			throw std::exception("Could not create a Vulkan instance (for unknown reasons).");
+			throw VulkanInitException("Could not create a Vulkan instance (for unknown reasons).");
 		}
 	}
 
@@ -216,7 +217,7 @@ namespace gg
 		createInfo.clipped = VK_TRUE;
 		if (VK_SUCCESS != vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain))
 		{
-			throw std::runtime_error("Failed to create swap chain!");
+			throw VulkanInitException("Failed to create swap chain!");
 		}
 		/* Retrieve the swap chain images to render to */
 		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -273,7 +274,7 @@ namespace gg
 
 		if (VK_SUCCESS != vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass))
 		{
-			throw std::runtime_error("failed to create render pass!");
+			throw VulkanInitException("failed to create render pass!");
 		}
 
 	}
@@ -299,7 +300,7 @@ namespace gg
 		layoutInfo.pBindings = bindings.data();
 
 		if (VK_SUCCESS != vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout))
-			throw std::runtime_error("failed to create descriptor set layout!");
+			throw VulkanInitException("failed to create descriptor set layout!");
 	}
 
 	void VulkanRenderer::CreateGraphicsPipeline()
@@ -391,7 +392,7 @@ namespace gg
 
 		if (VK_SUCCESS != vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout))
 		{
-			throw std::runtime_error("failed to create pipeline layout!");
+			throw VulkanInitException("failed to create pipeline layout!");
 		}
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -410,7 +411,7 @@ namespace gg
 
 		if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline))
 		{
-			throw std::runtime_error("failed to create graphics pipeline!");
+			throw VulkanInitException("failed to create graphics pipeline!");
 		}
 
 		/* cleanup */
@@ -432,7 +433,7 @@ namespace gg
 			framebufferInfo.layers = 1;
 			if (VK_SUCCESS != vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffers[i]))
 			{
-				throw std::runtime_error("failed to create framebuffer!");
+				throw VulkanInitException("failed to create framebuffer!");
 			}
 		}
 	}
@@ -446,7 +447,7 @@ namespace gg
 		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 		if (VK_SUCCESS != vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool))
 		{
-			throw std::runtime_error("failed to create command pool!");
+			throw VulkanInitException("failed to create command pool!");
 		}
 	}
 
@@ -459,7 +460,7 @@ namespace gg
 		VkDeviceSize imageSizeBytes = texWidth * texHeight * 4;
 
 		if (!pixels)
-			throw std::runtime_error("failed to load texture image!");
+			throw AssetLoadException("failed to load texture image!");
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -520,7 +521,7 @@ namespace gg
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
 		if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
-			throw std::runtime_error("failed to create image!");
+			throw VulkanInitException("failed to create image!");
 
 		VkMemoryRequirements memRequirements;
 		vkGetImageMemoryRequirements(device, image, &memRequirements);
@@ -531,7 +532,7 @@ namespace gg
 		allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-			throw std::runtime_error("failed to allocate image memory!");
+			throw VulkanInitException("failed to allocate image memory!");
 
 		vkBindImageMemory(device, image, imageMemory, 0);
 	}
@@ -545,7 +546,7 @@ namespace gg
 		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 		if (VK_SUCCESS != vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()))
 		{
-			throw std::runtime_error("failed to allocate command buffers!");
+			throw VulkanInitException("failed to allocate command buffers!");
 		}
 	}
 
@@ -563,7 +564,7 @@ namespace gg
 				|| vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS
 				|| vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
 			{
-				throw std::runtime_error("failed to create semaphores!");
+				throw VulkanInitException("failed to create semaphores!");
 			}
 		}
 	}
@@ -609,7 +610,7 @@ namespace gg
 				return i;
 			}
 		}
-		throw std::runtime_error("failed to find suitable memory type!");
+		throw VulkanInitException("failed to find suitable memory type!");
 	}
 
 	VulkanRenderer::SwapChainSupportDetails VulkanRenderer::QuerySwapChainSupport(VkPhysicalDevice device) const
@@ -666,7 +667,7 @@ namespace gg
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 		if (0 == deviceCount)
 		{
-			throw std::runtime_error("failed to find GPUs with Vulkan support!");
+			throw VulkanInitException("failed to find GPUs with Vulkan support!");
 		}
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
@@ -680,7 +681,7 @@ namespace gg
 		}
 		if (VK_NULL_HANDLE == physicalDevice)
 		{
-			throw std::runtime_error("failed to find a suitable GPU!");
+			throw VulkanInitException("failed to find a suitable GPU!");
 		}
 	}
 
@@ -711,7 +712,7 @@ namespace gg
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		if (VK_SUCCESS != vkCreateDevice(physicalDevice, &createInfo, nullptr, &device))
 		{
-			throw std::runtime_error("failed to create logical device!");
+			throw VulkanInitException("failed to create logical device!");
 		}
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 	}
@@ -726,7 +727,7 @@ namespace gg
 
 	void VulkanRenderer::CreateVertexBuffer(Mesh const& mesh)
 	{
-		uint32_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
+		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -750,7 +751,7 @@ namespace gg
 		VkBuffer IB{};
 		VkDeviceMemory IndexBufferMemory{};
 
-		uint32_t const IB_sizeBytes{ mesh.IndicesSizeBytes() };
+		uint64_t const IB_sizeBytes{ mesh.IndicesSizeBytes() };
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -792,7 +793,7 @@ namespace gg
 		poolInfo.maxSets = maxFramesInFlight;
 
 		if (VK_SUCCESS != vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool))
-			throw std::runtime_error("failed to create descriptor pool!");
+			throw VulkanInitException("failed to create descriptor pool!");
 	}
 
 	void VulkanRenderer::CreateDescriptorSets()
@@ -806,7 +807,7 @@ namespace gg
 
 		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()))
 		{
-			throw std::runtime_error("failed to allocate descriptor sets!");
+			throw VulkanInitException("failed to allocate descriptor sets!");
 		}
 
 		for (size_t i = 0; i < maxFramesInFlight; ++i)
@@ -890,7 +891,7 @@ namespace gg
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		if (VK_SUCCESS != vkCreateBuffer(device, &bufferInfo, nullptr, &outBuffer))
 		{
-			throw std::runtime_error("failed to create vertex buffer!");
+			throw VulkanInitException("failed to create vertex buffer!");
 		}
 
 		/* allocate and bind memory to this buffer */
@@ -903,7 +904,7 @@ namespace gg
 		allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
 		if (VK_SUCCESS != vkAllocateMemory(device, &allocInfo, nullptr, &outBufferMemory))
 		{
-			throw std::runtime_error("failed to allocate vertex buffer memory!");
+			throw VulkanInitException("failed to allocate vertex buffer memory!");
 		}
 		vkBindBufferMemory(device, outBuffer, outBufferMemory, 0);
 	}
@@ -984,7 +985,7 @@ namespace gg
 			return;
 		}
 		else if (result != VK_SUCCESS)
-			throw std::runtime_error("failed to acquire swap chain image!");
+			throw VulkanRenderException("failed to acquire swap chain image!");
 
 		/* Rotate the model */
 		auto const elapsedTimeMs = timeManager->GetCurrentTimeMs().count();
@@ -1017,7 +1018,7 @@ namespace gg
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isWindowResized)
 			ResizeWindow();
 		else if (result != VK_SUCCESS)
-			throw std::runtime_error("failed to present swap chain image!");
+			throw VulkanRenderException("failed to present swap chain image!");
 		currentFrame = (currentFrame + 1) % maxFramesInFlight;
 	}
 
@@ -1051,7 +1052,7 @@ namespace gg
 		submitInfo.pSignalSemaphores = signalSemaphores;
 		if (VK_SUCCESS != vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]))
 		{
-			throw std::runtime_error("failed to submit a command buffer!");
+			throw VulkanRenderException("failed to submit a command buffer!");
 		}
 	}
 
@@ -1063,7 +1064,7 @@ namespace gg
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		if (VK_SUCCESS != vkBeginCommandBuffer(commandBuffer, &beginInfo))
 		{
-			throw std::runtime_error("failed to begin recording command buffer!");
+			throw VulkanRenderException("failed to begin recording command buffer!");
 		}
 
 		VkRenderPassBeginInfo renderPassInfo{};
@@ -1092,7 +1093,7 @@ namespace gg
 		vkCmdEndRenderPass(commandBuffer);
 		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))
 		{
-			throw std::runtime_error("failed to record command buffer!");
+			throw VulkanRenderException("failed to record command buffer!");
 		}
 	}
 
@@ -1167,7 +1168,7 @@ namespace gg
 			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
 		else
-			throw std::invalid_argument("unsupported layout transition!");
+			throw VulkanRenderException("unsupported layout transition!");
 
 		vkCmdPipelineBarrier(
 			commandBuffer,
@@ -1225,7 +1226,7 @@ namespace gg
 
 		VkImageView imageView;
 		if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
-			throw std::runtime_error("failed to create texture image view!");
+			throw VulkanInitException("failed to create texture image view!");
 		return imageView;
 	}
 
@@ -1259,7 +1260,7 @@ namespace gg
 		samplerInfo.maxLod = 0.0f;
 
 		if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS)
-			throw std::runtime_error("failed to create texture sampler!");
+			throw VulkanInitException("failed to create texture sampler!");
 	}
 
 } // namespace gg

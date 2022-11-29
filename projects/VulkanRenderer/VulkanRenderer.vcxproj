@@ -211,7 +211,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
     <ClCompile Include="modules\VulkanRenderer.ixx" />
+    <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
     <ClCompile Include="src\VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -17,8 +17,8 @@ namespace gg
 		Mesh(Mesh&&) noexcept;
 		Mesh& operator=(Mesh&&) noexcept;
 
-		uint32_t VerticesSizeBytes() const;
-		uint32_t IndicesSizeBytes() const;
+		uint64_t VerticesSizeBytes() const;
+		uint64_t IndicesSizeBytes() const;
 		uint32_t GetVertexCount() const;
 		uint32_t GetIndexCount() const;
 
