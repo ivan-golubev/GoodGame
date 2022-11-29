@@ -13,6 +13,7 @@ namespace gg
 	export class TimeManager 
 	{
 	public:
+		[[nodiscard("Delta time should be passed to renderer")]]
 		milliseconds Tick();
 		milliseconds GetCurrentTimeMs() const;
 		seconds GetCurrentTimeSec() const;

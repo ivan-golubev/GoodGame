@@ -67,8 +67,7 @@ namespace
                             app.OnKeyPressed(key, event.type == SDL_KEYDOWN);
                         break;
                     }
-                    default:
-                        // Do nothing.
+                    default: // NOP
                         break;
                     }
                 }
