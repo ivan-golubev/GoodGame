@@ -38,7 +38,7 @@ namespace
 			throw AssetLoadException(std::format("failed to open file: {}", filename));
 		}
 
-		size_t const fileSize = static_cast<size_t>(file.tellg());
+		size_t fileSize = static_cast<size_t>(file.tellg());
 		std::string buffer{};
 		buffer.resize(fileSize);
 		file.seekg(0);

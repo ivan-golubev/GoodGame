@@ -28,8 +28,8 @@ namespace
 
         while (isRunning)
         {
-            int64_t const currentTimeMs{ timeManager->GetCurrentTimeMs().count() };
-            bool const needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
+            int64_t currentTimeMs{ timeManager->GetCurrentTimeMs().count() };
+            bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
 
             if (needToPollEvents)
             {
@@ -46,7 +46,7 @@ namespace
                         break;
                     case SDL_WINDOWEVENT:
                     {
-                        uint8_t const windowEvent{ event.window.event };
+                        uint8_t windowEvent{ event.window.event };
                         if (windowEvent == SDL_WINDOWEVENT_RESIZED)
                             app.OnWindowResized(event.window.data1, event.window.data2);
                         else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
@@ -59,7 +59,7 @@ namespace
                         [[fallthrough]];
                     case SDL_KEYUP:
                     {
-                        SDL_Keycode const key{ event.key.keysym.sym };
+                        SDL_Keycode key{ event.key.keysym.sym };
                         if (key == SDLK_ESCAPE)
                             isRunning = false;
                         else
@@ -90,8 +90,8 @@ int main()
     }
     atexit(SDL_Quit);
 
-    uint32_t const width{ 1920 };
-    uint32_t const height{ 1080 };
+    constexpr uint32_t width{ 1920 };
+    constexpr uint32_t height{ 1080 };
 
     SDL_Window* window = SDL_CreateWindow("Vulkan Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     if(!window) 

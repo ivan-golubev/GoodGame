@@ -312,13 +312,13 @@ namespace gg
 		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 		vertShaderStageInfo.module = model->shaderProgram->GetVertexShader();
-		vertShaderStageInfo.pName = entryPointVertexShader;
+		vertShaderStageInfo.pName = entryPointVertexShader.data();
 
 		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
 		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		fragShaderStageInfo.module = model->shaderProgram->GetFragmentShader();
-		fragShaderStageInfo.pName = entryPointFragmentShader;
+		fragShaderStageInfo.pName = entryPointFragmentShader.data();
 
 		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };
 
@@ -991,15 +991,15 @@ namespace gg
 			throw VulkanRenderException("failed to acquire swap chain image!");
 
 		/* Rotate the model */
-		auto const elapsedTimeMs = timeManager->GetCurrentTimeMs().count();
-		auto const rotation = 0.0002f * DirectX::XM_PI * elapsedTimeMs;
-		XMMATRIX const modelMatrix = XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation));
+		int64_t elapsedTimeMs{ timeManager->GetCurrentTimeMs().count() };
+		float rotation{ 0.0002f * DirectX::XM_PI * elapsedTimeMs };
+		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)) };
 
 		camera->UpdateCamera(deltaTime);
-		XMMATRIX const& viewMatrix = camera->GetViewMatrix();
-		XMMATRIX const& projectionMatrix = camera->GetProjectionMatrix();
+		XMMATRIX const& viewMatrix{ camera->GetViewMatrix() };
+		XMMATRIX const& projectionMatrix{ camera->GetProjectionMatrix() };
 
-		XMMATRIX mvpMatrix = XMMatrixMultiply(modelMatrix, viewMatrix);
+		XMMATRIX mvpMatrix{ XMMatrixMultiply(modelMatrix, viewMatrix) };
 		mvpMatrix = XMMatrixMultiply(mvpMatrix, projectionMatrix);
 
 		/* submit the UBO data */

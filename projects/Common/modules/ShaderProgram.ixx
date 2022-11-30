@@ -5,8 +5,8 @@ export module ShaderProgram;
 
 export namespace gg
 {
-	constexpr char const* entryPointVertexShader{ "vs_main" };
-	constexpr char const* entryPointFragmentShader{ "ps_main" }; // TODO: this should be fs_main
+	std::string const entryPointVertexShader{ "vs_main" };
+	std::string const entryPointFragmentShader{ "ps_main" }; // TODO: this should be fs_main
 
 	class ShaderProgram
 	{
