@@ -32,7 +32,10 @@ import Input;
 import Vertex;
 import ModelLoader;
 
-using namespace DirectX;
+using DirectX::XMMATRIX;
+using DirectX::XMMatrixRotationY;
+using DirectX::XMMatrixRotationZ;
+using DirectX::XMMatrixMultiply;
 
 namespace 
 {

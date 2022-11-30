@@ -13,13 +13,12 @@ import ErrorHandlingVulkan;
 import Logging;
 import ModelLoader;
 
-using namespace gg;
-
 namespace 
 {
-    void MainLoop(Application& app)
+    void MainLoop(gg::Application& app)
     {
         using namespace std::chrono_literals;
+        using namespace gg;
 
         bool isRunning{ true };
 
@@ -82,6 +81,8 @@ namespace
 
 int main()
 {
+    using namespace gg;
+
     if(SDL_Init(SDL_INIT_VIDEO) != 0) 
     {
         DebugLog(DebugLevel::Error, "Could not initialize SDL");

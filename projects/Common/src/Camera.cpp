@@ -8,12 +8,6 @@ import Application;
 
 using DirectX::XMVECTOR;
 using DirectX::XMMATRIX;
-using DirectX::XMVectorScale;
-using DirectX::XMVectorAdd;
-using DirectX::XMVectorSubtract;
-using DirectX::XMMatrixLookAtLH;
-using DirectX::XMConvertToRadians;
-using DirectX::XMMatrixPerspectiveFovLH;
 
 namespace gg 
 {
@@ -34,6 +28,7 @@ namespace gg
 
     void Camera::UpdateCamera(std::chrono::milliseconds deltaTime)
     {
+        using namespace DirectX;
         float const cameraMoveAmount{ cameraMoveSpeed * deltaTime.count() / 1000.0f };
         {
             XMVECTOR const moveFB{ XMVectorScale(forward, cameraMoveAmount) };
@@ -81,6 +76,7 @@ namespace gg
 
     void Camera::UpdateProjectionMatrix(float windowAspectRatio)
     {
+        using namespace DirectX;
         projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(fieldOfView), windowAspectRatio, near, far);
     }
 
