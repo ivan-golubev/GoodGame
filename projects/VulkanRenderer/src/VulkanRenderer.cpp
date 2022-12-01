@@ -442,7 +442,7 @@ namespace gg
 		int texWidth, texHeight, texChannels; // TODO: all these relative paths here are nasty
 		std::string textureFileAbsPath{ std::filesystem::absolute("../../../assets/src/textures/CubeColor.tga").generic_string() };
 		stbi_uc* pixels = stbi_load(textureFileAbsPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		VkDeviceSize imageSizeBytes = texWidth * texHeight * 4;
+		VkDeviceSize imageSizeBytes = static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * 4;
 
 		if (!pixels)
 			throw AssetLoadException("failed to load texture image!");
@@ -696,9 +696,9 @@ namespace gg
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 	}
 
-	void VulkanRenderer::UploadGeometry(std::unique_ptr<Model> model)
+	void VulkanRenderer::UploadGeometry(std::unique_ptr<Model> m)
 	{
-		model = std::move(model);
+		model = std::move(m);
 		for (auto& m : model->meshes)
 			CreateVertexBuffer(m);
 		CreateGraphicsPipeline();

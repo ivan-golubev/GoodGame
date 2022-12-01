@@ -32,6 +32,6 @@ export namespace gg
 
 		VkShaderModule vertexShader{ nullptr };
 		VkShaderModule fragmentShader{ nullptr };
-		VkDevice device;
+		VkDevice device{ nullptr };
 	};
 } // namespace gg
