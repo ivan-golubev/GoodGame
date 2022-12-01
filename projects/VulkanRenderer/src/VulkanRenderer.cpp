@@ -90,14 +90,10 @@ namespace gg
 	{
 		uint32_t extension_count;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr))
-		{
 			throw VulkanInitException("Could not get the number of required instance extensions from SDL.");
-		}
 		std::vector<char const*> extensions(extension_count);
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, extensions.data()))
-		{
 			throw VulkanInitException("Could not get the names of required instance extensions from SDL.");
-		}
 
 		std::vector<char const*> layers;
 		if constexpr (IsDebug())
@@ -109,9 +105,7 @@ namespace gg
 
 		/* Create a surface for rendering */
 		if (!SDL_Vulkan_CreateSurface(windowHandle, instance, &surface))
-		{
 			throw VulkanInitException("Could not create a Vulkan surface.");
-		}
 
 		SelectPhysicalDevice();
 		CreateLogicalDevice();
@@ -157,13 +151,9 @@ namespace gg
 
 		VkResult const result = vkCreateInstance(&instInfo, nullptr, &instance);
 		if (VK_ERROR_INCOMPATIBLE_DRIVER == result)
-		{
 			throw VulkanInitException("Unable to find a compatible Vulkan Driver.");
-		}
 		else if (result)
-		{
 			throw VulkanInitException("Could not create a Vulkan instance (for unknown reasons).");
-		}
 	}
 
 	VkExtent2D VulkanRenderer::ChooseSwapExtent(VkSurfaceCapabilitiesKHR const& capabilities) const
@@ -190,9 +180,7 @@ namespace gg
 
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
-		{
 			imageCount = swapChainSupport.capabilities.maxImageCount;
-		}
 		VkSwapchainCreateInfoKHR createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		createInfo.surface = surface;
@@ -219,9 +207,7 @@ namespace gg
 		createInfo.presentMode = presentMode;
 		createInfo.clipped = VK_TRUE;
 		if (VK_SUCCESS != vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain))
-		{
 			throw VulkanInitException("Failed to create swap chain!");
-		}
 		/* Retrieve the swap chain images to render to */
 		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
 		swapChainImages.resize(imageCount);
@@ -394,9 +380,7 @@ namespace gg
 		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
 		if (VK_SUCCESS != vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout))
-		{
 			throw VulkanInitException("failed to create pipeline layout!");
-		}
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -435,9 +419,7 @@ namespace gg
 			framebufferInfo.height = swapChainExtent.height;
 			framebufferInfo.layers = 1;
 			if (VK_SUCCESS != vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffers[i]))
-			{
 				throw VulkanInitException("failed to create framebuffer!");
-			}
 		}
 	}
 
@@ -548,9 +530,7 @@ namespace gg
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 		if (VK_SUCCESS != vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()))
-		{
 			throw VulkanInitException("failed to allocate command buffers!");
-		}
 	}
 
 	void VulkanRenderer::CreateSyncObjects()
@@ -591,9 +571,7 @@ namespace gg
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
 			if (presentSupport)
-			{
 				indices.presentFamily = i;
-			}
 
 			if (indices.IsComplete())
 				break;
@@ -714,9 +692,7 @@ namespace gg
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		if (VK_SUCCESS != vkCreateDevice(physicalDevice, &createInfo, nullptr, &device))
-		{
 			throw VulkanInitException("failed to create logical device!");
-		}
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 	}
 
@@ -809,9 +785,7 @@ namespace gg
 		allocInfo.pSetLayouts = layouts.data();
 
 		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()))
-		{
 			throw VulkanInitException("failed to allocate descriptor sets!");
-		}
 
 		for (size_t i = 0; i < maxFramesInFlight; ++i)
 		{
@@ -1054,9 +1028,7 @@ namespace gg
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 		if (VK_SUCCESS != vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]))
-		{
 			throw VulkanRenderException("failed to submit a command buffer!");
-		}
 	}
 
 	void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix)
@@ -1066,9 +1038,7 @@ namespace gg
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		if (VK_SUCCESS != vkBeginCommandBuffer(commandBuffer, &beginInfo))
-		{
 			throw VulkanRenderException("failed to begin recording command buffer!");
-		}
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1095,9 +1065,7 @@ namespace gg
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))
-		{
 			throw VulkanRenderException("failed to record command buffer!");
-		}
 	}
 
 	VkCommandBuffer VulkanRenderer::BeginSingleTimeCommands()
