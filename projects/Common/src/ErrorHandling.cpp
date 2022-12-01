@@ -2,6 +2,7 @@ module;
 #include <cstdint>
 #include <format>
 #include <string>
+#include <format>
 #include <windows.h>
 module ErrorHandling;
 
@@ -41,12 +42,12 @@ namespace gg
 	}
 
 	ApplicationInitException::ApplicationInitException(std::string const& msg) 
-		: std::runtime_error{ msg }
+		: std::runtime_error{ std::format("Failed to initialize the game: {}.", msg) }
 	{
 	}
 
 	AssetLoadException::AssetLoadException(std::string const& msg)
-		: std::runtime_error{ msg }
+		: std::runtime_error{ std::format("Failed to load an asset: {}.", msg) }
 	{
 	}
 

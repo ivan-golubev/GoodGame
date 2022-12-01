@@ -1,6 +1,5 @@
 #include <SDL2/SDL.h>
 #include <exception>
-#include <format>
 #include <cstdlib>
 #include <chrono>
 #include <thread>
@@ -115,31 +114,10 @@ int main()
         app.GetRenderer()->UploadGeometry(std::move(model));
         MainLoop(app);
     }
-    catch (ApplicationInitException const& e)
-    {
-		DebugLog(DebugLevel::Error, std::format("Failed to initialize the game: {}", e.what()));
-		return EXIT_FAILURE;
-	}
-	catch (VulkanInitException const& e)
-	{
-		DebugLog(DebugLevel::Error, std::format("Failed to initialize the renderer: {}", e.what()));
-		return EXIT_FAILURE;
-	}
-	catch (VulkanRenderException const& e)
-	{
-		DebugLog(DebugLevel::Error, std::format("Failed to render a frame: {}", e.what()));
-		return EXIT_FAILURE;
-	}
-	catch (AssetLoadException const& e)
-	{
-		DebugLog(DebugLevel::Error, std::format("Failed to load an asset: {}", e.what()));
-		return EXIT_FAILURE;
-	}
     catch (std::exception const& e)
     {
-        DebugLog(DebugLevel::Error, std::format("Caught exception with message: {}", e.what()));
+        DebugLog(DebugLevel::Error, e.what());
         return EXIT_FAILURE;
     }
-
     return EXIT_SUCCESS;
 }
