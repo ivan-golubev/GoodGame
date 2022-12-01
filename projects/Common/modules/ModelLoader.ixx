@@ -13,9 +13,9 @@ namespace gg
 		ModelLoader();
 		~ModelLoader();
 
-		[[nodiscard("Loaded model should be passed to the renderer")]] 
+		[[nodiscard("Loaded model should be passed to the renderer")]]
 		std::unique_ptr<Model> LoadModel(
-			  std::string const& modelRelativePath
+			std::string const& modelRelativePath
 			, std::string const& vertexShaderRelativePath
 			, std::string const& fragmentShaderRelativePath);
 

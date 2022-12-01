@@ -33,7 +33,7 @@ namespace
 
 				aiVector3D UV = assimpMesh->HasTextureCoords(UVsetNumber)
 					? assimpMesh->mTextureCoords[UVsetNumber][vertexIndex]
-					: aiVector3D {0, 0, 0};
+					: aiVector3D{ 0, 0, 0 };
 
 				outMesh.vertices.emplace_back(
 					static_cast<float>(assimpVertex.x),
@@ -81,7 +81,7 @@ namespace gg
 	{
 		Assimp::Importer importer;
 		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
-			  aiProcess_Triangulate
+			aiProcess_Triangulate
 			| aiProcess_JoinIdenticalVertices
 			| aiProcess_SortByPType
 			| aiProcess_FlipUVs

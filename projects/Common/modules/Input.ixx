@@ -5,7 +5,7 @@ export module Input;
 
 export namespace gg
 {
-	enum InputAction 
+	enum InputAction
 	{
 		RaiseCamera,
 		LowerCamera,
@@ -20,7 +20,7 @@ export namespace gg
 		Count
 	};
 
-	class InputManager 
+	class InputManager
 	{
 	public:
 		void OnKeyPressed(SDL_Keycode, bool isDown);

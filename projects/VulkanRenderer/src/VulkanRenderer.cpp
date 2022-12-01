@@ -37,7 +37,7 @@ using DirectX::XMMatrixRotationY;
 using DirectX::XMMatrixRotationZ;
 using DirectX::XMMatrixMultiply;
 
-namespace 
+namespace
 {
 	constexpr std::array<char const*, 1> deviceExtensions
 	{
@@ -282,7 +282,7 @@ namespace gg
 		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings { uboLayoutBinding, samplerLayoutBinding };
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings{ uboLayoutBinding, samplerLayoutBinding };
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -481,7 +481,7 @@ namespace gg
 	}
 
 	void VulkanRenderer::CreateImage(
-		  uint32_t width
+		uint32_t width
 		, uint32_t height
 		, VkFormat format
 		, VkImageTiling tiling
@@ -893,7 +893,7 @@ namespace gg
 		VkBufferCopy copyRegion{};
 		copyRegion.size = size;
 		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-		
+
 		EndSingleTimeCommands(commandBuffer);
 	}
 
@@ -904,7 +904,7 @@ namespace gg
 		vkDeviceWaitIdle(device);
 
 		CleanupSwapChain();
-		
+
 		vkDestroySampler(device, textureSampler, nullptr);
 		vkDestroyImageView(device, textureImageView, nullptr);
 		vkDestroyImage(device, textureImage, nullptr);

@@ -30,22 +30,22 @@ namespace gg
 			keys[TurnCameraRight] = isDown;
 	}
 
-	void InputManager::SetKeyDown(InputAction a, bool value) 
+	void InputManager::SetKeyDown(InputAction a, bool value)
 	{
 		keys[a] = value;
 	}
 
-	void InputManager::ClearKeys() 
+	void InputManager::ClearKeys()
 	{
 		memset(keys, 0, sizeof(keys));
 	}
 
-	bool InputManager::IsKeyDown(InputAction a) const 
+	bool InputManager::IsKeyDown(InputAction a) const
 	{
 		return keys[a];
 	}
 
-	float InputManager::GetPlayerSpeed(uint64_t deltaMs) const 
+	float InputManager::GetPlayerSpeed(uint64_t deltaMs) const
 	{
 		return static_cast<float>(playerSpeed / 1000 * deltaMs);
 	}

@@ -8,9 +8,9 @@ using std::chrono::seconds;
 using std::chrono::system_clock;
 using std::chrono::time_point;
 
-namespace gg 
+namespace gg
 {
-	export class TimeManager 
+	export class TimeManager
 	{
 	public:
 		[[nodiscard("Delta time should be passed to renderer")]]

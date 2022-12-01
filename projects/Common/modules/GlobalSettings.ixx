@@ -1,31 +1,31 @@
 export module GlobalSettings;
 
-export namespace gg 
+export namespace gg
 {
-    consteval bool IsDebug() 
-    {
+	consteval bool IsDebug()
+	{
 #ifdef _DEBUG
-        return true;
+		return true;
 #else
-        return false;
+		return false;
 #endif
-    }
+	}
 
-    consteval bool IsFinal()
-    {
+	consteval bool IsFinal()
+	{
 #ifdef FINAL
-        return true;
+		return true;
 #else
-        return false;
+		return false;
 #endif
-    }
+	}
 
-    consteval bool IsWindowsSubSystem()
-    {
+	consteval bool IsWindowsSubSystem()
+	{
 #ifdef _CONSOLE
-        return false;
+		return false;
 #else
-        return true;
+		return true;
 #endif
-    }
+	}
 } // namespace gg

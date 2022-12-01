@@ -7,7 +7,7 @@ export module Vertex;
 using DirectX::XMVECTOR;
 using DirectX::XMFLOAT2;
 
-namespace gg 
+namespace gg
 {
 	export struct Vertex
 	{
@@ -17,13 +17,15 @@ namespace gg
 		Vertex() = default;
 
 		Vertex(float x, float y, float z, float w)
-			: position{x, y, z, w}
-		{}
+			: position{ x, y, z, w }
+		{
+		}
 
 		Vertex(float x, float y, float z, float w, float u, float v)
 			: position{ x, y, z, w }
 			, textureCoords0{ u, v }
-		{}
+		{
+		}
 
 		static VkVertexInputBindingDescription GetBindingDescription();
 		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions();

@@ -70,7 +70,7 @@ namespace gg
 	}
 
 	ShaderProgram::~ShaderProgram()
-	{		
+	{
 		if (vertexShader)
 			vkDestroyShaderModule(device, vertexShader, nullptr);
 		if (fragmentShader)

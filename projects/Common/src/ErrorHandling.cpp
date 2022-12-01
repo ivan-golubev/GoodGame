@@ -41,7 +41,7 @@ namespace gg
 		}
 	}
 
-	ApplicationInitException::ApplicationInitException(std::string const& msg) 
+	ApplicationInitException::ApplicationInitException(std::string const& msg)
 		: std::runtime_error{ std::format("Failed to initialize the game: {}.", msg) }
 	{
 	}

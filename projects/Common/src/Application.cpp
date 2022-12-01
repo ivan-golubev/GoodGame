@@ -24,12 +24,12 @@ namespace gg
 			throw ApplicationInitException("Failed to verify DirectX Math library support");
 	}
 
-	Application::~Application() 
+	Application::~Application()
 	{
 		DebugLog(DebugLevel::Info, "Shutting down the application");
 	}
 
-	std::shared_ptr<TimeManager> Application::GetTimeManager() 
+	std::shared_ptr<TimeManager> Application::GetTimeManager()
 	{
 		return timeManager;
 	}

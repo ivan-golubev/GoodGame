@@ -20,19 +20,19 @@ import Renderer;
 
 using DirectX::XMMATRIX;
 
-namespace gg 
+namespace gg
 {
-	export class VulkanRenderer : public Renderer 
+	export class VulkanRenderer : public Renderer
 	{
 	public:
-		VulkanRenderer(RendererSettings const &);
+		VulkanRenderer(RendererSettings const&);
 		~VulkanRenderer();
 
 		VulkanRenderer(VulkanRenderer const&) = delete;
 		VulkanRenderer& operator=(VulkanRenderer const&) = delete;
 
-		VulkanRenderer(VulkanRenderer &&) noexcept = default;
-		VulkanRenderer& operator=(VulkanRenderer &&) noexcept = default;
+		VulkanRenderer(VulkanRenderer&&) noexcept = default;
+		VulkanRenderer& operator=(VulkanRenderer&&) noexcept = default;
 
 		void UploadGeometry(std::unique_ptr<Model>) override;
 		void OnWindowResized(uint32_t width, uint32_t height) override;
@@ -53,7 +53,7 @@ namespace gg
 			std::vector<VkPresentModeKHR> presentModes;
 		};
 
-		void CreateVkInstance(std::vector<char const*> const & layers, std::vector<char const*> const & extensions);
+		void CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions);
 		void SelectPhysicalDevice();
 		void CreateLogicalDevice();
 		void CreateSwapChain();
@@ -77,12 +77,12 @@ namespace gg
 		void CreateUniformBuffers();
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
-		
-		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const & mvpMatrix);
+
+		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix);
 		VkCommandBuffer BeginSingleTimeCommands();
 		void EndSingleTimeCommands(VkCommandBuffer);
 		void SubmitCommands();
-		
+
 		void TransitionImageLayout(VkImage, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout);
 		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
