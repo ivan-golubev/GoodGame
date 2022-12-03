@@ -1,6 +1,7 @@
 module;
 #include <DirectXMath.h>
 #include <chrono>
+#include <numbers>
 module Camera;
 
 import Input;
@@ -12,7 +13,7 @@ using DirectX::XMMATRIX;
 namespace gg
 {
 	constexpr float cameraMoveSpeed{ 5.f }; // in metres per second
-	constexpr float cameraTurnSpeed{ DirectX::XM_PI }; // in radians per second
+	constexpr float cameraTurnSpeed{ std::numbers::pi_v<float> }; // in radians per second
 	constexpr float fieldOfView{ 90.f };
 	constexpr float near{ 0.1f };
 	constexpr float far{ 100.f };

@@ -8,6 +8,7 @@ module;
 #include <format>
 #include <glm/glm.hpp>
 #include <limits>
+#include <numbers>
 #include <optional>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -966,7 +967,7 @@ namespace gg
 
 		/* Rotate the model */
 		int64_t elapsedTimeMs{ timeManager->GetCurrentTimeMs().count() };
-		float rotation{ 0.0002f * DirectX::XM_PI * elapsedTimeMs };
+		float rotation{ 0.0002f * std::numbers::pi_v<float> *elapsedTimeMs };
 		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)) };
 
 		camera->UpdateCamera(deltaTime);
