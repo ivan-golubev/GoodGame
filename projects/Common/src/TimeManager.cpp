@@ -7,14 +7,14 @@ module TimeManager;
 
 using std::chrono::milliseconds;
 using std::chrono::seconds;
-using std::chrono::system_clock;
+using std::chrono::steady_clock;
 using std::chrono::time_point;
 
 namespace gg
 {
 	milliseconds TimeManager::Tick()
 	{
-		time_point<system_clock> now = system_clock::now();
+		time_point<steady_clock> now = steady_clock::now();
 		milliseconds elapsed = duration_cast<milliseconds>(currentTime - now);
 		currentTime = now;
 		return elapsed;

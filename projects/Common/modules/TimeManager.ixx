@@ -5,7 +5,7 @@ export module TimeManager;
 
 using std::chrono::milliseconds;
 using std::chrono::seconds;
-using std::chrono::system_clock;
+using std::chrono::steady_clock;
 using std::chrono::time_point;
 
 namespace gg
@@ -18,7 +18,7 @@ namespace gg
 		milliseconds GetCurrentTimeMs() const;
 		seconds GetCurrentTimeSec() const;
 	private:
-		time_point<system_clock> startTime{ system_clock::now() };
-		time_point<system_clock> currentTime{ startTime };
+		time_point<steady_clock> startTime{ steady_clock::now() };
+		time_point<steady_clock> currentTime{ startTime };
 	};
 } // namespace gg
