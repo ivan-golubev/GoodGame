@@ -19,6 +19,7 @@ import Model;
 import Renderer;
 
 using DirectX::XMMATRIX;
+using std::chrono::milliseconds;
 
 namespace gg
 {
@@ -36,7 +37,7 @@ namespace gg
 
 		void UploadGeometry(std::unique_ptr<Model>) override;
 		void OnWindowResized(uint32_t width, uint32_t height) override;
-		void Render(std::chrono::milliseconds deltaTime) override;
+		void Render(milliseconds deltaTime) override;
 		VkDevice GetDevice() const;
 	private:
 		struct QueueFamilyIndices

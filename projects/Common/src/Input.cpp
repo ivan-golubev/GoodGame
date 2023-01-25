@@ -1,8 +1,11 @@
 module;
 #include <cstdint>
+#include <chrono>
 #include <SDL2/SDL_keycode.h>
 #include <cstring> // memset
 module Input;
+
+using std::chrono::milliseconds;
 
 namespace gg
 {
@@ -45,9 +48,9 @@ namespace gg
 		return keys[a];
 	}
 
-	float InputManager::GetPlayerSpeed(uint64_t deltaMs) const
+	float InputManager::GetPlayerSpeed(milliseconds delta) const
 	{
-		return static_cast<float>(playerSpeed / 1000 * deltaMs);
+		return static_cast<float>(playerSpeed / 1000 * delta.count());
 	}
 
 } // namespace gg

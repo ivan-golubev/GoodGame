@@ -37,6 +37,7 @@ using DirectX::XMMATRIX;
 using DirectX::XMMatrixRotationY;
 using DirectX::XMMatrixRotationZ;
 using DirectX::XMMatrixMultiply;
+using std::chrono::milliseconds;
 
 namespace
 {
@@ -950,7 +951,7 @@ namespace gg
 
 	VkDevice VulkanRenderer::GetDevice() const { return device; }
 
-	void VulkanRenderer::Render(std::chrono::milliseconds deltaTime)
+	void VulkanRenderer::Render(milliseconds deltaTime)
 	{
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 

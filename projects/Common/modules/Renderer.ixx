@@ -9,6 +9,8 @@ import Model;
 import TimeManager;
 import Input;
 
+using std::chrono::milliseconds;
+
 namespace gg
 {
 	export class Renderer
@@ -25,7 +27,7 @@ namespace gg
 
 		virtual void UploadGeometry(std::unique_ptr<Model>) = 0;
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
-		virtual void Render(std::chrono::milliseconds deltaTime) = 0;
+		virtual void Render(milliseconds deltaTime) = 0;
 	};
 
 	export struct RendererSettings

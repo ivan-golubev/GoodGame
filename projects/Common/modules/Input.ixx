@@ -1,7 +1,10 @@
 module;
 #include <cstdint>
+#include <chrono>
 #include <SDL2/SDL_keycode.h>
 export module Input;
+
+using std::chrono::milliseconds;
 
 export namespace gg
 {
@@ -27,7 +30,7 @@ export namespace gg
 		void SetKeyDown(InputAction a, bool value);
 		void ClearKeys();
 		bool IsKeyDown(InputAction a) const;
-		float GetPlayerSpeed(uint64_t deltaMs) const;
+		float GetPlayerSpeed(milliseconds delta) const;
 	private:
 		bool keys[InputAction::Count]{};
 		static constexpr float playerSpeed{ 1.5f };
