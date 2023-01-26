@@ -1,15 +1,27 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <AssimpBinDir>$(SolutionDir)lib\assimp\bin\Debug</AssimpBinDir>
+    <AssimLib>assimp-vc142-mtd</AssimLib>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release' Or '$(Configuration)'=='Final'">
+    <AssimpBinDir>$(SolutionDir)lib\assimp\bin\Release</AssimpBinDir>
+    <AssimLib>assimp-vc142-mt</AssimLib>
+  </PropertyGroup>
+
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)lib\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link Condition="'$(Configuration)'=='Debug'">
-      <AdditionalLibraryDirectories>$(SolutionDir)lib\assimp\bin\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <Link Condition="'$(Configuration)'=='Release' Or '$(Configuration)'=='Final'">
-      <AdditionalLibraryDirectories>$(SolutionDir)lib\assimp\bin\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    <Link>
+      <AdditionalLibraryDirectories>$(AssimpBinDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(AssimLib).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  
+  <ItemGroup Condition="'$(ConfigurationType)'=='Application'">
+      <ContentWithTargetPath Include="$(AssimpBinDir)\$(AssimLib).dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <TargetPath>%(Filename)%(Extension)</TargetPath>
+      </ContentWithTargetPath>
+  </ItemGroup>
 </Project>

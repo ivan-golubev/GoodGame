@@ -61,15 +61,15 @@
   <PropertyGroup>
     <OutDir>$(SolutionDir)bin\$(Configuration)\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)intermediate\$(Configuration)\$(ProjectName)\</IntDir>
-  </PropertyGroup>  
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)\props\Global.props" />
   <Import Project="$(SolutionDir)\props\Vulkan.props" />
-  <Import Project="$(SolutionDir)\props\WinPix.props" />
-  <Import Project="$(SolutionDir)\props\StbImage.props" />
   <Import Project="$(SolutionDir)\props\Assimp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -80,9 +80,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
-copy $(SolutionDir)lib\assimp\bin\Debug\assimp-vc142-mtd.dll $(TargetDir)
-copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEventRuntime.dll $(TargetDir)</Command>
+      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
@@ -94,7 +92,7 @@ copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEvent
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -109,9 +107,7 @@ copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEvent
       </EntryPointSymbol>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
-copy $(SolutionDir)lib\assimp\bin\Release\assimp-vc142-mt.dll $(TargetDir)
-copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEventRuntime.dll $(TargetDir)</Command>
+      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
@@ -123,7 +119,7 @@ copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEvent
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;NOMINMAX;FINAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -138,9 +134,7 @@ copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEvent
       </EntryPointSymbol>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
-copy $(SolutionDir)lib\assimp\bin\Release\assimp-vc142-mt.dll $(TargetDir)
-copy $(SolutionDir)packages\WinPixEventRuntime.1.0.220124001\bin\x64\WinPixEventRuntime.dll $(TargetDir)</Command>
+      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>

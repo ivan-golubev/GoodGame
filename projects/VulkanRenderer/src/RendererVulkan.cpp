@@ -448,6 +448,7 @@ namespace gg
 	void RendererVulkan::CreateTextureImage()
 	{
 		// TODO: move this outside of the renderer
+		// TODO: remove StbImage.props from VulkanRenderer.vcxproj
 		int texWidth, texHeight, texChannels; // TODO: all these relative paths here are nasty
 		std::string textureFileAbsPath{ std::filesystem::absolute("../../../assets/src/textures/CubeColor.tga").generic_string() };
 		stbi_uc* pixels = stbi_load(textureFileAbsPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);

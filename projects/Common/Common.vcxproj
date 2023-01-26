@@ -60,10 +60,9 @@
   <PropertyGroup>
     <OutDir>$(SolutionDir)bin\$(Configuration)\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)intermediate\$(Configuration)\$(ProjectName)\</IntDir>
-  </PropertyGroup>  
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)\props\Global.props" />
   <Import Project="$(SolutionDir)\props\Vulkan.props" />
-  <Import Project="$(SolutionDir)\props\WinPix.props" />
-  <Import Project="$(SolutionDir)\props\StbImage.props" />
   <Import Project="$(SolutionDir)\props\Assimp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
