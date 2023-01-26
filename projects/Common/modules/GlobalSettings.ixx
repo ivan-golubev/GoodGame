@@ -29,10 +29,4 @@ export namespace gg
 #endif
 	}
 
-	enum class RendererType
-	{
-		Vulkan,
-		D3D12
-	};
-
 } // namespace gg

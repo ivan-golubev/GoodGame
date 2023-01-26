@@ -1,6 +1,5 @@
 module;
 #include <string>
-#include <vulkan/vulkan.h>
 export module ShaderProgram;
 
 export namespace gg
@@ -14,26 +13,10 @@ export namespace gg
 		ShaderProgram() = default;
 		ShaderProgram(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
-		ShaderProgram(ShaderProgram&&) noexcept;
-		ShaderProgram& operator=(ShaderProgram&&) noexcept;
+		virtual ~ShaderProgram() = default;
 
-		/* Prohibit copying to make sure the underlying shader is destroyed exactly once */
-		ShaderProgram(ShaderProgram const&) = delete;
-		ShaderProgram& operator=(ShaderProgram const&) = delete;
-
-		~ShaderProgram();
-
-		VkShaderModule GetVertexShader() const;
-		VkShaderModule GetFragmentShader() const;
-
-	private:
+	protected:
 		std::string vertexShaderBlob;
 		std::string fragmentShaderBlob;
-
-
-		// TODO: get rid of Vulkan-specific stuff in the "Common" project
-		VkShaderModule vertexShader{ nullptr };
-		VkShaderModule fragmentShader{ nullptr };
-		VkDevice device{ nullptr };
 	};
 } // namespace gg

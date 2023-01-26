@@ -33,6 +33,7 @@ import Input;
 import Vertex;
 import VulkanVertex;
 import ModelLoader;
+import ShaderProgramVulkan;
 
 using DirectX::XMMATRIX;
 using DirectX::XMMatrixRotationY;
@@ -297,16 +298,19 @@ namespace gg
 
 	void VulkanRenderer::CreateGraphicsPipeline()
 	{
+		BreakIfFalse(model->shaderProgram.get());
+		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(model->shaderProgram.get());
+
 		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = model->shaderProgram->GetVertexShader();
+		vertShaderStageInfo.module = shaderProgram->GetVertexShader();
 		vertShaderStageInfo.pName = entryPointVertexShader.data();
 
 		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
 		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = model->shaderProgram->GetFragmentShader();
+		fragShaderStageInfo.module = shaderProgram->GetFragmentShader();
 		fragShaderStageInfo.pName = entryPointFragmentShader.data();
 
 		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };

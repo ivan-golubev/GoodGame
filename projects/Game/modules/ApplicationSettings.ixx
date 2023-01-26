@@ -3,11 +3,16 @@ module;
 export module ApplicationSettings;
 
 import Application;
-import GlobalSettings;
 
-namespace gg
+export namespace gg
 {
-	export struct ApplicationSettings
+	enum class RendererType
+	{
+		Vulkan,
+		D3D12
+	};
+
+	struct ApplicationSettings
 	{
 		uint32_t width;
 		uint32_t height;
@@ -15,5 +20,5 @@ namespace gg
 		RendererType rendererType;
 	};
 
-	export Application MakeApplication(ApplicationSettings const&);
+	Application MakeApplication(ApplicationSettings const&);
 } // namespace gg 

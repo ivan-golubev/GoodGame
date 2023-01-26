@@ -28,5 +28,11 @@
     <ClCompile Include="src\VulkanVertex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\ShaderProgramVulkan.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\ShaderProgramVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
