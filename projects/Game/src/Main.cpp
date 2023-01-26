@@ -74,9 +74,6 @@ namespace
 				}
 			}
 			app.Tick();
-			/* Don't do the next tick immediately */
-			// TODO: why we need this ? maybe just the input polling has to be slower ? 250ms is a lot
-			std::this_thread::sleep_for(0.25ms);
 		}
 	}
 } // namespace
