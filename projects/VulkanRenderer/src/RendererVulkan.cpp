@@ -39,7 +39,7 @@ using DirectX::XMMATRIX;
 using DirectX::XMMatrixRotationY;
 using DirectX::XMMatrixRotationZ;
 using DirectX::XMMatrixMultiply;
-using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
 
 namespace
 {
@@ -49,6 +49,7 @@ namespace
 	};
 
 	std::string const shaderExtensionVulkan{ ".spv" };
+	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
 
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
 	{
@@ -959,7 +960,7 @@ namespace gg
 
 	VkDevice RendererVulkan::GetDevice() const { return device; }
 
-	void RendererVulkan::Render(milliseconds deltaTime)
+	void RendererVulkan::Render(nanoseconds deltaTime)
 	{
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -975,8 +976,7 @@ namespace gg
 			throw VulkanRenderException("failed to acquire swap chain image!");
 
 		/* Rotate the model */
-		int64_t elapsedTimeMs{ timeManager->GetCurrentTimeMs().count() };
-		float rotation{ 0.0002f * std::numbers::pi_v<float> *elapsedTimeMs };
+		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
 		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)) };
 
 		camera->UpdateCamera(deltaTime);

@@ -12,8 +12,8 @@ using DirectX::XMMATRIX;
 
 namespace gg
 {
-	constexpr float cameraMoveSpeed{ 5.f }; // in metres per second
-	constexpr float cameraTurnSpeed{ std::numbers::pi_v<float> }; // in radians per second
+	constexpr double cameraMoveSpeed{ 5.0 }; // in metres per second
+	constexpr double cameraTurnSpeed{ std::numbers::pi_v<double> }; // in radians per second
 	constexpr float fieldOfView{ 90.f };
 	constexpr float near{ 0.1f };
 	constexpr float far{ 100.f };
@@ -27,10 +27,13 @@ namespace gg
 	{
 	}
 
-	void Camera::UpdateCamera(std::chrono::milliseconds deltaTime)
+	void Camera::UpdateCamera(std::chrono::nanoseconds deltaTime)
 	{
 		using namespace DirectX;
-		float const cameraMoveAmount{ cameraMoveSpeed * deltaTime.count() / 1000.0f };
+		using namespace std::chrono_literals;
+
+		double const deltaTimeSeconds{ deltaTime / 1.0s };
+		float const cameraMoveAmount = static_cast<float>(cameraMoveSpeed * deltaTimeSeconds);
 		{
 			XMVECTOR const moveFB{ XMVectorScale(forward, cameraMoveAmount) };
 			if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
@@ -59,7 +62,7 @@ namespace gg
 			}
 		}
 		{
-			float const CAM_TURN_AMOUNT{ cameraTurnSpeed * deltaTime.count() / 1000.0f };
+			float const CAM_TURN_AMOUNT = static_cast<float>(cameraTurnSpeed * deltaTimeSeconds);
 			XMVECTOR const moveLR{ XMVectorScale(right, CAM_TURN_AMOUNT) };
 			if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
 				focusPoint = XMVectorAdd(focusPoint, moveLR);

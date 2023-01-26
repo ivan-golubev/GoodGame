@@ -19,60 +19,48 @@ namespace
 {
 	void MainLoop(gg::Application& app)
 	{
-		using namespace std::chrono_literals;
 		using namespace gg;
 
 		bool isRunning{ true };
 
-		std::shared_ptr<TimeManager> timeManager{ app.GetTimeManager() };
-		int64_t lastEventPollMs{ 0 };
-		constexpr int64_t EVENT_POLL_INTERVAL_MS{ 1000 / 60 }; // Poll 60 times per sec.
-
 		while (isRunning)
 		{
-			int64_t currentTimeMs{ timeManager->GetCurrentTimeMs().count() };
-			bool needToPollEvents{ currentTimeMs - lastEventPollMs > EVENT_POLL_INTERVAL_MS };
-
-			if (needToPollEvents)
+			SDL_Event event;
+			// Poll for user input.
+			while (SDL_PollEvent(&event))
 			{
-				lastEventPollMs = currentTimeMs;
-
-				SDL_Event event;
-				// Poll for user input.
-				while (SDL_PollEvent(&event))
+				switch (event.type)
 				{
-					switch (event.type)
-					{
-					case SDL_QUIT:
-						isRunning = false;
-						break;
-					case SDL_WINDOWEVENT:
-					{
-						uint8_t windowEvent{ event.window.event };
-						if (windowEvent == SDL_WINDOWEVENT_RESIZED)
-							app.OnWindowResized(event.window.data1, event.window.data2);
-						else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
-							app.OnWindowMinimized();
-						else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
-							app.OnWindowRestored();
-					}
+				case SDL_QUIT:
+					isRunning = false;
 					break;
-					case SDL_KEYDOWN:
-						[[fallthrough]];
-					case SDL_KEYUP:
-					{
-						SDL_Keycode key{ event.key.keysym.sym };
-						if (key == SDLK_ESCAPE)
-							isRunning = false;
-						else
-							app.OnKeyPressed(key, event.type == SDL_KEYDOWN);
-						break;
-					}
-					default: // NOP
-						break;
-					}
+				case SDL_WINDOWEVENT:
+				{
+					uint8_t windowEvent{ event.window.event };
+					if (windowEvent == SDL_WINDOWEVENT_RESIZED)
+						app.OnWindowResized(event.window.data1, event.window.data2);
+					else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
+						app.OnWindowMinimized();
+					else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
+						app.OnWindowRestored();
+				}
+				break;
+				case SDL_KEYDOWN:
+					[[fallthrough]];
+				case SDL_KEYUP:
+				{
+					SDL_Keycode key{ event.key.keysym.sym };
+					if (key == SDLK_ESCAPE)
+						isRunning = false;
+					else
+						app.OnKeyPressed(key, event.type == SDL_KEYDOWN);
+					break;
+				}
+				default: // NOP
+					break;
 				}
 			}
+			// All events processed - tick the world
 			app.Tick();
 		}
 	}

@@ -19,7 +19,7 @@ import Model;
 import Renderer;
 
 using DirectX::XMMATRIX;
-using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
 
 namespace gg
 {
@@ -37,7 +37,7 @@ namespace gg
 
 		void UploadGeometry(std::unique_ptr<Model>) override;
 		void OnWindowResized(uint32_t width, uint32_t height) override;
-		void Render(milliseconds deltaTime) override;
+		void Render(nanoseconds deltaTime) override;
 		std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) override;
 		VkDevice GetDevice() const;
 	private:

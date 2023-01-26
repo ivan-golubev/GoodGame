@@ -16,7 +16,7 @@ export namespace gg
 	{
 	public:
 		Camera(std::shared_ptr<InputManager>);
-		void UpdateCamera(std::chrono::milliseconds deltaTime);
+		void UpdateCamera(std::chrono::nanoseconds deltaTime);
 		void UpdateProjectionMatrix(float windowAspectRatio);
 		XMMATRIX const& GetViewMatrix() const;
 		XMMATRIX const& GetProjectionMatrix() const;
