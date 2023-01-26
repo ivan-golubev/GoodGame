@@ -1,7 +1,7 @@
 module;
 #include <array>
 #include <vulkan/vulkan.h>
-module VulkanVertex;
+module VertexVulkan;
 
 import Vertex;
 import Model;

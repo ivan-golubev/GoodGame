@@ -5,9 +5,9 @@ module ApplicationSettings;
 
 import Application;
 import GlobalSettings;
-import VulkanRenderer;
+import RendererVulkan;
 
-using gg::VulkanRenderer;
+using gg::RendererVulkan;
 
 namespace gg
 {
@@ -19,7 +19,7 @@ namespace gg
 
 		std::unique_ptr<Renderer> renderer{
 			s.rendererType == RendererType::Vulkan
-			? std::make_unique<VulkanRenderer>(rendererSettings)
+			? std::make_unique<RendererVulkan>(rendererSettings)
 			: nullptr // TODO: add D3D12 here
 		};
 		return Application(std::move(renderer), timeManager, inputManager);

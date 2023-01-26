@@ -214,11 +214,11 @@
     <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
     <ClCompile Include="modules\ShaderProgramVulkan.cpp" />
     <ClCompile Include="modules\ShaderProgramVulkan.ixx" />
-    <ClCompile Include="modules\VulkanRenderer.ixx" />
-    <ClCompile Include="modules\VulkanVertex.ixx" />
+    <ClCompile Include="modules\RendererVulkan.ixx" />
+    <ClCompile Include="modules\VertexVulkan.ixx" />
     <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
-    <ClCompile Include="src\VulkanRenderer.cpp" />
-    <ClCompile Include="src\VulkanVertex.cpp" />
+    <ClCompile Include="src\RendererVulkan.cpp" />
+    <ClCompile Include="src\VertexVulkan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

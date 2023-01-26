@@ -22,7 +22,7 @@ module;
 #include <windows.h>
 #include <WinPixEventRuntime/pix3.h> // has to be the last - depends on types in windows.h
 
-module VulkanRenderer;
+module RendererVulkan;
 
 import Application;
 import Camera;
@@ -31,7 +31,7 @@ import ErrorHandlingVulkan;
 import GlobalSettings;
 import Input;
 import Vertex;
-import VulkanVertex;
+import VertexVulkan;
 import ModelLoader;
 import ShaderProgramVulkan;
 
@@ -85,7 +85,7 @@ namespace
 
 namespace gg
 {
-	VulkanRenderer::VulkanRenderer(RendererSettings const& rs)
+	RendererVulkan::RendererVulkan(RendererSettings const& rs)
 		: width{ rs.width }
 		, height{ rs.height }
 		, windowHandle{ rs.windowHandle }
@@ -134,7 +134,7 @@ namespace gg
 		CreateSyncObjects();
 	}
 
-	void VulkanRenderer::CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions)
+	void RendererVulkan::CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions)
 	{
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -160,7 +160,7 @@ namespace gg
 			throw VulkanInitException("Could not create a Vulkan instance (for unknown reasons).");
 	}
 
-	VkExtent2D VulkanRenderer::ChooseSwapExtent(VkSurfaceCapabilitiesKHR const& capabilities) const
+	VkExtent2D RendererVulkan::ChooseSwapExtent(VkSurfaceCapabilitiesKHR const& capabilities) const
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 			return capabilities.currentExtent;
@@ -175,7 +175,7 @@ namespace gg
 		};
 	}
 
-	void VulkanRenderer::CreateSwapChain()
+	void RendererVulkan::CreateSwapChain()
 	{
 		SwapChainSupportDetails swapChainSupport{ QuerySwapChainSupport(physicalDevice) };
 		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -221,14 +221,14 @@ namespace gg
 		swapChainExtent = extent;
 	}
 
-	void VulkanRenderer::CreateImageViews()
+	void RendererVulkan::CreateImageViews()
 	{
 		swapChainImageViews.resize(swapChainImages.size());
 		for (size_t i{ 0 }; i < swapChainImages.size(); ++i)
 			swapChainImageViews[i] = CreateImageView(swapChainImages[i], swapChainImageFormat);
 	}
 
-	void VulkanRenderer::CreateRenderPass()
+	void RendererVulkan::CreateRenderPass()
 	{
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChainImageFormat;
@@ -272,7 +272,7 @@ namespace gg
 
 	}
 
-	void VulkanRenderer::CreateDescriptorSetLayout()
+	void RendererVulkan::CreateDescriptorSetLayout()
 	{
 		VkDescriptorSetLayoutBinding uboLayoutBinding{};
 		uboLayoutBinding.binding = 0;
@@ -296,7 +296,7 @@ namespace gg
 			throw VulkanInitException("failed to create descriptor set layout!");
 	}
 
-	void VulkanRenderer::CreateGraphicsPipeline()
+	void RendererVulkan::CreateGraphicsPipeline()
 	{
 		BreakIfFalse(model->shaderProgram.get());
 		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(model->shaderProgram.get());
@@ -411,7 +411,7 @@ namespace gg
 		/* cleanup */
 	}
 
-	void VulkanRenderer::CreateFrameBuffers()
+	void RendererVulkan::CreateFrameBuffers()
 	{
 		frameBuffers.resize(swapChainImageViews.size());
 		for (size_t i{ 0 }; i < swapChainImageViews.size(); ++i)
@@ -430,7 +430,7 @@ namespace gg
 		}
 	}
 
-	void VulkanRenderer::CreateCommandPool()
+	void RendererVulkan::CreateCommandPool()
 	{
 		QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(physicalDevice);
 		VkCommandPoolCreateInfo poolInfo{};
@@ -443,7 +443,7 @@ namespace gg
 		}
 	}
 
-	void VulkanRenderer::CreateTextureImage()
+	void RendererVulkan::CreateTextureImage()
 	{
 		// TODO: move this outside of the renderer
 		int texWidth, texHeight, texChannels; // TODO: all these relative paths here are nasty
@@ -487,7 +487,7 @@ namespace gg
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
 
-	void VulkanRenderer::CreateImage(
+	void RendererVulkan::CreateImage(
 		uint32_t width
 		, uint32_t height
 		, VkFormat format
@@ -529,7 +529,7 @@ namespace gg
 		vkBindImageMemory(device, image, imageMemory, 0);
 	}
 
-	void VulkanRenderer::CreateCommandBuffers()
+	void RendererVulkan::CreateCommandBuffers()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -540,7 +540,7 @@ namespace gg
 			throw VulkanInitException("failed to allocate command buffers!");
 	}
 
-	void VulkanRenderer::CreateSyncObjects()
+	void RendererVulkan::CreateSyncObjects()
 	{
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -559,7 +559,7 @@ namespace gg
 		}
 	}
 
-	VulkanRenderer::QueueFamilyIndices VulkanRenderer::FindQueueFamilies(VkPhysicalDevice const device) const
+	RendererVulkan::QueueFamilyIndices RendererVulkan::FindQueueFamilies(VkPhysicalDevice const device) const
 	{
 		uint32_t queueFamilyCount{ 0 };
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
@@ -587,7 +587,7 @@ namespace gg
 		return indices;
 	}
 
-	uint32_t VulkanRenderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
+	uint32_t RendererVulkan::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
 	{
 		VkPhysicalDeviceMemoryProperties memProperties;
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -601,7 +601,7 @@ namespace gg
 		throw VulkanInitException("failed to find suitable memory type!");
 	}
 
-	VulkanRenderer::SwapChainSupportDetails VulkanRenderer::QuerySwapChainSupport(VkPhysicalDevice device) const
+	RendererVulkan::SwapChainSupportDetails RendererVulkan::QuerySwapChainSupport(VkPhysicalDevice device) const
 	{
 		SwapChainSupportDetails details{};
 
@@ -628,13 +628,13 @@ namespace gg
 		return details;
 	}
 
-	bool VulkanRenderer::SwapChainRequirementsSatisfied(VkPhysicalDevice const device) const
+	bool RendererVulkan::SwapChainRequirementsSatisfied(VkPhysicalDevice const device) const
 	{
 		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
 		return !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 
-	bool VulkanRenderer::IsDeviceSuitable(VkPhysicalDevice const device) const
+	bool RendererVulkan::IsDeviceSuitable(VkPhysicalDevice const device) const
 	{
 		VkPhysicalDeviceProperties deviceProperties;
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
@@ -649,7 +649,7 @@ namespace gg
 			&& supportedFeatures.samplerAnisotropy;
 	}
 
-	void VulkanRenderer::SelectPhysicalDevice()
+	void RendererVulkan::SelectPhysicalDevice()
 	{
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -673,7 +673,7 @@ namespace gg
 		}
 	}
 
-	void VulkanRenderer::CreateLogicalDevice()
+	void RendererVulkan::CreateLogicalDevice()
 	{
 		QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
 		std::set<uint32_t> uniqueQueueFamilies{ indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -703,7 +703,7 @@ namespace gg
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 	}
 
-	void VulkanRenderer::UploadGeometry(std::unique_ptr<Model> m)
+	void RendererVulkan::UploadGeometry(std::unique_ptr<Model> m)
 	{
 		model = std::move(m);
 		for (auto& m : model->meshes)
@@ -711,7 +711,7 @@ namespace gg
 		CreateGraphicsPipeline();
 	}
 
-	void VulkanRenderer::CreateVertexBuffer(Mesh const& mesh)
+	void RendererVulkan::CreateVertexBuffer(Mesh const& mesh)
 	{
 		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
 
@@ -732,7 +732,7 @@ namespace gg
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
 
-	void VulkanRenderer::CreateIndexBuffer(Mesh const& mesh)
+	void RendererVulkan::CreateIndexBuffer(Mesh const& mesh)
 	{
 		VkBuffer IB{};
 		VkDeviceMemory IndexBufferMemory{};
@@ -756,7 +756,7 @@ namespace gg
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
 
-	void VulkanRenderer::CreateUniformBuffers()
+	void RendererVulkan::CreateUniformBuffers()
 	{
 		VkDeviceSize const bufferSize = sizeof(XMMATRIX);
 
@@ -764,7 +764,7 @@ namespace gg
 			CreateBuffer(uniformBuffers[i], uniformBuffersMemory[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	}
 
-	void VulkanRenderer::CreateDescriptorPool()
+	void RendererVulkan::CreateDescriptorPool()
 	{
 		std::array<VkDescriptorPoolSize, 2> poolSizes{};
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -782,7 +782,7 @@ namespace gg
 			throw VulkanInitException("failed to create descriptor pool!");
 	}
 
-	void VulkanRenderer::CreateDescriptorSets()
+	void RendererVulkan::CreateDescriptorSets()
 	{
 		std::array<VkDescriptorSetLayout, maxFramesInFlight> const layouts{ descriptorSetLayout, descriptorSetLayout };
 		VkDescriptorSetAllocateInfo allocInfo{};
@@ -827,7 +827,7 @@ namespace gg
 		}
 	}
 
-	void VulkanRenderer::ResizeWindow()
+	void RendererVulkan::ResizeWindow()
 	{
 		RecreateSwapChain();
 		float windowAspectRatio{ width / static_cast<float>(height) };
@@ -835,7 +835,7 @@ namespace gg
 		isWindowResized = false;
 	}
 
-	void VulkanRenderer::CleanupSwapChain()
+	void RendererVulkan::CleanupSwapChain()
 	{
 		for (auto framebuffer : frameBuffers)
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
@@ -848,7 +848,7 @@ namespace gg
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 	}
 
-	void VulkanRenderer::RecreateSwapChain()
+	void RendererVulkan::RecreateSwapChain()
 	{
 		vkDeviceWaitIdle(device);
 		CleanupSwapChain();
@@ -860,7 +860,7 @@ namespace gg
 		CreateFrameBuffers();
 	}
 
-	void VulkanRenderer::CreateBuffer(
+	void RendererVulkan::CreateBuffer(
 		VkBuffer& outBuffer,
 		VkDeviceMemory& outBufferMemory,
 		uint64_t sizeBytes,
@@ -893,7 +893,7 @@ namespace gg
 		vkBindBufferMemory(device, outBuffer, outBufferMemory, 0);
 	}
 
-	void VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+	void RendererVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 	{
 		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
@@ -904,7 +904,7 @@ namespace gg
 		EndSingleTimeCommands(commandBuffer);
 	}
 
-	VulkanRenderer::~VulkanRenderer()
+	RendererVulkan::~RendererVulkan()
 	{
 		/* Ensure that the GPU is no longer referencing resources that are about to be
 		 cleaned up by the destructor. */
@@ -947,16 +947,16 @@ namespace gg
 		SDL_Quit();
 	}
 
-	void VulkanRenderer::OnWindowResized(uint32_t width, uint32_t height)
+	void RendererVulkan::OnWindowResized(uint32_t width, uint32_t height)
 	{
 		isWindowResized = true;
 		width = std::max(8u, width);
 		height = std::max(8u, height);
 	}
 
-	VkDevice VulkanRenderer::GetDevice() const { return device; }
+	VkDevice RendererVulkan::GetDevice() const { return device; }
 
-	void VulkanRenderer::Render(milliseconds deltaTime)
+	void RendererVulkan::Render(milliseconds deltaTime)
 	{
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -1006,7 +1006,7 @@ namespace gg
 		currentFrame = (currentFrame + 1) % maxFramesInFlight;
 	}
 
-	VkResult VulkanRenderer::Present(uint32_t imageIndex)
+	VkResult RendererVulkan::Present(uint32_t imageIndex)
 	{
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1020,7 +1020,7 @@ namespace gg
 		return vkQueuePresentKHR(graphicsQueue, &presentInfo);
 	}
 
-	void VulkanRenderer::SubmitCommands()
+	void RendererVulkan::SubmitCommands()
 	{
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1038,7 +1038,7 @@ namespace gg
 			throw VulkanRenderException("failed to submit a command buffer!");
 	}
 
-	void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix)
+	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix)
 	{
 		vkResetCommandBuffer(commandBuffer, 0);
 
@@ -1075,7 +1075,7 @@ namespace gg
 			throw VulkanRenderException("failed to record command buffer!");
 	}
 
-	VkCommandBuffer VulkanRenderer::BeginSingleTimeCommands()
+	VkCommandBuffer RendererVulkan::BeginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1094,7 +1094,7 @@ namespace gg
 		return commandBuffer;
 	}
 
-	void VulkanRenderer::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
+	void RendererVulkan::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
 	{
 		vkEndCommandBuffer(commandBuffer);
 
@@ -1109,7 +1109,7 @@ namespace gg
 		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	}
 
-	void VulkanRenderer::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+	void RendererVulkan::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
@@ -1160,7 +1160,7 @@ namespace gg
 		EndSingleTimeCommands(commandBuffer);
 	}
 
-	void VulkanRenderer::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+	void RendererVulkan::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
 		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
@@ -1189,7 +1189,7 @@ namespace gg
 		EndSingleTimeCommands(commandBuffer);
 	}
 
-	VkImageView VulkanRenderer::CreateImageView(VkImage image, VkFormat format)
+	VkImageView RendererVulkan::CreateImageView(VkImage image, VkFormat format)
 	{
 		VkImageViewCreateInfo viewInfo{};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1208,12 +1208,12 @@ namespace gg
 		return imageView;
 	}
 
-	void VulkanRenderer::CreateTextureImageView()
+	void RendererVulkan::CreateTextureImageView()
 	{
 		textureImageView = CreateImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
 	}
 
-	void VulkanRenderer::CreateTextureSampler()
+	void RendererVulkan::CreateTextureSampler()
 	{
 		VkSamplerCreateInfo samplerInfo{};
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

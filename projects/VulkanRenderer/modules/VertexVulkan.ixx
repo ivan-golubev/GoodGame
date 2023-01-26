@@ -1,7 +1,7 @@
 module;
 #include <array>
 #include <vulkan/vulkan.h>
-export module VulkanVertex;
+export module VertexVulkan;
 
 export namespace gg
 {

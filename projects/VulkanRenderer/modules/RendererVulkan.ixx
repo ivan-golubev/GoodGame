@@ -9,7 +9,7 @@ module;
 #include <vector>
 #include <SDL2/SDL_video.h>
 #include <vulkan/vulkan.h>
-export module VulkanRenderer;
+export module RendererVulkan;
 
 import Camera;
 import Input;
@@ -23,17 +23,17 @@ using std::chrono::milliseconds;
 
 namespace gg
 {
-	export class VulkanRenderer : public Renderer
+	export class RendererVulkan : public Renderer
 	{
 	public:
-		VulkanRenderer(RendererSettings const&);
-		~VulkanRenderer();
+		RendererVulkan(RendererSettings const&);
+		~RendererVulkan();
 
-		VulkanRenderer(VulkanRenderer const&) = delete;
-		VulkanRenderer& operator=(VulkanRenderer const&) = delete;
+		RendererVulkan(RendererVulkan const&) = delete;
+		RendererVulkan& operator=(RendererVulkan const&) = delete;
 
-		VulkanRenderer(VulkanRenderer&&) noexcept = default;
-		VulkanRenderer& operator=(VulkanRenderer&&) noexcept = default;
+		RendererVulkan(RendererVulkan&&) noexcept = default;
+		RendererVulkan& operator=(RendererVulkan&&) noexcept = default;
 
 		void UploadGeometry(std::unique_ptr<Model>) override;
 		void OnWindowResized(uint32_t width, uint32_t height) override;

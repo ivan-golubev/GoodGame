@@ -10,10 +10,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\VulkanRenderer.cpp">
+    <ClCompile Include="src\RendererVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\VulkanRenderer.ixx">
+    <ClCompile Include="modules\RendererVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="modules\ErrorHandlingVulkan.ixx">
@@ -22,10 +22,10 @@
     <ClCompile Include="src\ErrorHandlingVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\VulkanVertex.ixx">
+    <ClCompile Include="modules\VertexVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanVertex.cpp">
+    <ClCompile Include="src\VertexVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\ShaderProgramVulkan.ixx">
