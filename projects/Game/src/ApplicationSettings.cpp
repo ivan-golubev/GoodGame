@@ -4,6 +4,7 @@ module;
 module ApplicationSettings;
 
 import Application;
+import GlobalSettings;
 import VulkanRenderer;
 
 using gg::VulkanRenderer;

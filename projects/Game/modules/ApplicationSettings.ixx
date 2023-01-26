@@ -3,15 +3,10 @@ module;
 export module ApplicationSettings;
 
 import Application;
+import GlobalSettings;
 
 namespace gg
 {
-	export enum class RendererType
-	{
-		Vulkan,
-		D3D12
-	};
-
 	export struct ApplicationSettings
 	{
 		uint32_t width;

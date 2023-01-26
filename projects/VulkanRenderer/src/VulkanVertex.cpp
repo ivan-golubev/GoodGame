@@ -1,13 +1,14 @@
 module;
 #include <array>
 #include <vulkan/vulkan.h>
-module Vertex;
+module VulkanVertex;
 
+import Vertex;
 import Model;
 
 namespace gg
 {
-	VkVertexInputBindingDescription Vertex::GetBindingDescription()
+	VkVertexInputBindingDescription GetVertexBindingDescription()
 	{
 		VkVertexInputBindingDescription bindingDescription{};
 		bindingDescription.binding = 0;
@@ -16,7 +17,7 @@ namespace gg
 		return bindingDescription;
 	}
 
-	std::array<VkVertexInputAttributeDescription, 2> Vertex::GetAttributeDescriptions()
+	std::array<VkVertexInputAttributeDescription, 2> GetVertexAttributeDescriptions()
 	{
 		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
 		attributeDescriptions[0].binding = 0;

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <cassert>
+#include <memory>
 
 import Application;
 import ApplicationSettings;
@@ -11,6 +12,7 @@ import ErrorHandling;
 import ErrorHandlingVulkan;
 import Logging;
 import ModelLoader;
+import ShaderProgram;
 
 namespace
 {
@@ -105,11 +107,8 @@ int main()
 		Application app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
 
-		std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel(
-			"../../../assets/runtime/models/textured_cube.glb",
-			"shaders/textured_surface_VS.spv",
-			"shaders/textured_surface_PS.spv"
-		) };
+		std::unique_ptr<ShaderProgram> shader{ std::make_unique<ShaderProgram>("shaders/textured_surface_VS.spv", "shaders/textured_surface_PS.spv") };
+		std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader)) };
 
 		app.GetRenderer()->UploadGeometry(std::move(model));
 		MainLoop(app);

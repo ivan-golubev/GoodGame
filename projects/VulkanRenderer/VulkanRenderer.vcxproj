@@ -213,8 +213,10 @@
   <ItemGroup>
     <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
     <ClCompile Include="modules\VulkanRenderer.ixx" />
+    <ClCompile Include="modules\VulkanVertex.ixx" />
     <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
     <ClCompile Include="src\VulkanRenderer.cpp" />
+    <ClCompile Include="src\VulkanVertex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

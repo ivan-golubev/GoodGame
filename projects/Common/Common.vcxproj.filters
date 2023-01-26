@@ -70,9 +70,6 @@
     <ClCompile Include="src\TimeManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Vertex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\Renderer.ixx">
       <Filter>Modules</Filter>
     </ClCompile>

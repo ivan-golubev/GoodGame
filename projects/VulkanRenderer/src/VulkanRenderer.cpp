@@ -31,6 +31,7 @@ import ErrorHandlingVulkan;
 import GlobalSettings;
 import Input;
 import Vertex;
+import VulkanVertex;
 import ModelLoader;
 
 using DirectX::XMMATRIX;
@@ -310,8 +311,8 @@ namespace gg
 
 		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };
 
-		auto bindingDescription = Vertex::GetBindingDescription();
-		auto attributeDescriptions = Vertex::GetAttributeDescriptions();
+		auto bindingDescription = GetVertexBindingDescription();
+		auto attributeDescriptions = GetVertexAttributeDescriptions();
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

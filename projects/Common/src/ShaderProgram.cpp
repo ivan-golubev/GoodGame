@@ -2,6 +2,7 @@ module;
 #include <cassert>
 #include <format>
 #include <fstream>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
@@ -50,9 +51,9 @@ namespace
 
 namespace gg
 {
-	ShaderProgram::ShaderProgram(std::string const& vertexShaderAbsPath, std::string const& fragmentShaderAbsPath)
-		: vertexShaderBlob{ readFile(vertexShaderAbsPath) }
-		, fragmentShaderBlob{ readFile(fragmentShaderAbsPath) }
+	ShaderProgram::ShaderProgram(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+		: vertexShaderBlob{ readFile(std::filesystem::absolute(vertexShaderRelativePath).generic_string()) }
+		, fragmentShaderBlob{ readFile(std::filesystem::absolute(fragmentShaderRelativePath).generic_string()) }
 	{
 		BreakIfFalse(vertexShaderBlob.size() != 0);
 		BreakIfFalse(fragmentShaderBlob.size() != 0);

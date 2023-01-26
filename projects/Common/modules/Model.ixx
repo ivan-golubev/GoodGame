@@ -40,7 +40,7 @@ namespace gg
 		Model(Model&&) noexcept;
 		Model& operator=(Model&&) noexcept;
 
-		std::shared_ptr<ShaderProgram> shaderProgram;
+		std::unique_ptr<ShaderProgram> shaderProgram;
 		std::vector<Mesh> meshes;
 	};
 

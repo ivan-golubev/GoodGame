@@ -29,7 +29,7 @@ namespace gg
 	}
 
 	Model::Model(Model&& other) noexcept
-		: shaderProgram{ other.shaderProgram }
+		: shaderProgram{ std::move(other.shaderProgram) }
 		, meshes{ std::move(other.meshes) }
 	{
 	}
