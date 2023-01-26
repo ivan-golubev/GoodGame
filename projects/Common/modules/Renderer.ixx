@@ -28,6 +28,7 @@ namespace gg
 		virtual void UploadGeometry(std::unique_ptr<Model>) = 0;
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(milliseconds deltaTime) = 0;
+		virtual std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) = 0;
 	};
 
 	export struct RendererSettings

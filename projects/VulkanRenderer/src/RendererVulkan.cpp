@@ -48,6 +48,8 @@ namespace
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
+	std::string const shaderExtensionVulkan{ ".spv" };
+
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
 	{
 		for (auto const& availableFormat : availableFormats)
@@ -1004,6 +1006,12 @@ namespace gg
 		else if (result != VK_SUCCESS)
 			throw VulkanRenderException("failed to present swap chain image!");
 		currentFrame = (currentFrame + 1) % maxFramesInFlight;
+	}
+
+	std::unique_ptr<ShaderProgram> RendererVulkan::LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	{
+		ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath + shaderExtensionVulkan, fragmentShaderRelativePath + shaderExtensionVulkan, device);
+		return std::unique_ptr<ShaderProgram>{ shader };
 	}
 
 	VkResult RendererVulkan::Present(uint32_t imageIndex)

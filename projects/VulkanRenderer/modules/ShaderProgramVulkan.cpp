@@ -29,14 +29,10 @@ namespace
 
 namespace gg
 {
-	ShaderProgramVulkan::ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	ShaderProgramVulkan::ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice device)
 		: ShaderProgram(vertexShaderRelativePath, fragmentShaderRelativePath)
+		, device{ device }
 	{
-		//device = Application::Get()->GetRenderer()->GetDevice();
-		// how can I get a VK device then ?
-		// I think createShaderModule should be polymorhipc too
-		// TODO: stopped here
-		__debugbreak();
 		vertexShader = createShaderModule(device, vertexShaderBlob);
 		fragmentShader = createShaderModule(device, fragmentShaderBlob);
 

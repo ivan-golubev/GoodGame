@@ -108,7 +108,7 @@ int main()
 		Application app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
 
-		std::unique_ptr<ShaderProgram> shader{ std::make_unique<ShaderProgramVulkan>("shaders/textured_surface_VS.spv", "shaders/textured_surface_PS.spv") };
+		std::unique_ptr<ShaderProgram> shader{ app.GetRenderer()->LoadShader("shaders/textured_surface_VS", "shaders/textured_surface_PS") };
 		std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader)) };
 
 		app.GetRenderer()->UploadGeometry(std::move(model));

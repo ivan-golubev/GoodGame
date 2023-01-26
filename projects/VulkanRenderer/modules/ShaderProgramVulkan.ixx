@@ -10,9 +10,6 @@ export namespace gg
 	class ShaderProgramVulkan : public ShaderProgram
 	{
 	public:
-		ShaderProgramVulkan() = default;
-		ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
-
 		ShaderProgramVulkan(ShaderProgramVulkan&&) noexcept;
 		ShaderProgramVulkan& operator=(ShaderProgramVulkan&&) noexcept;
 
@@ -26,8 +23,13 @@ export namespace gg
 		VkShaderModule GetFragmentShader() const;
 
 	private:
+		ShaderProgramVulkan() = default;
+		ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice);
+
 		VkShaderModule vertexShader{ nullptr };
 		VkShaderModule fragmentShader{ nullptr };
 		VkDevice device{ nullptr };
+
+		friend class RendererVulkan;
 	};
 }
