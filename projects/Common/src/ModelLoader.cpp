@@ -78,6 +78,7 @@ namespace gg
 	bool ModelLoader::LoadMeshes(std::string const& modelAbsolutePath, Model& outModel)
 	{
 		Assimp::Importer importer;
+		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
 		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
 			aiProcess_Triangulate
 			| aiProcess_JoinIdenticalVertices
