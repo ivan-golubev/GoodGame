@@ -3,5 +3,13 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)lib\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link Condition="'$(Configuration)'=='Debug'">
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\assimp\bin\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Link Condition="'$(Configuration)'=='Release' Or '$(Configuration)'=='Final'">
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\assimp\bin\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
 </Project>
