@@ -64,11 +64,10 @@ namespace gg
 	{
 	}
 
-	std::unique_ptr<Model> ModelLoader::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader)
+	std::unique_ptr<Model> ModelLoader::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::unique_ptr<Texture> texture)
 	{
 		std::string modelFileAbsPath{ std::filesystem::absolute(modelRelativePath).generic_string() };
-		std::unique_ptr<Model> model = std::make_unique<Model>();
-		model->shaderProgram = std::move(shader);
+		std::unique_ptr<Model> model = std::make_unique<Model>(std::move(shader), std::move(texture));
 
 		if (!LoadMeshes(modelFileAbsPath, *model))
 			throw AssetLoadException(std::format("Failed to read the input model: {}", modelFileAbsPath));

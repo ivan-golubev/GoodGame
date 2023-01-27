@@ -17,6 +17,7 @@ import Vertex;
 import TimeManager;
 import Model;
 import Renderer;
+import Texture;
 
 using DirectX::XMMATRIX;
 using std::chrono::nanoseconds;
@@ -66,7 +67,7 @@ namespace gg
 		void CreateCommandPool();
 
 		void CreateImageViews();
-		void CreateTextureImage();
+		void CreateTextureImage(std::unique_ptr<Texture>);
 		void CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
 		VkImageView CreateImageView(VkImage, VkFormat);
 		void CreateTextureImageView();

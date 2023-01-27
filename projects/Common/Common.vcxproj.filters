@@ -73,5 +73,11 @@
     <ClCompile Include="modules\Renderer.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\Texture.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

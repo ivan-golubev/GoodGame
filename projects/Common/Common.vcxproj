@@ -64,6 +64,7 @@
   <Import Project="$(SolutionDir)\props\Global.props" />
   <Import Project="$(SolutionDir)\props\Vulkan.props" />
   <Import Project="$(SolutionDir)\props\Assimp.props" />
+  <Import Project="$(SolutionDir)\props\StbImage.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -128,6 +129,7 @@
     <ClCompile Include="modules\ModelLoader.ixx" />
     <ClCompile Include="modules\Renderer.ixx" />
     <ClCompile Include="modules\ShaderProgram.ixx" />
+    <ClCompile Include="modules\Texture.ixx" />
     <ClCompile Include="modules\TimeManager.ixx" />
     <ClCompile Include="modules\Vertex.ixx" />
     <ClCompile Include="src\Application.cpp" />
@@ -138,6 +140,7 @@
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\ModelLoader.cpp" />
     <ClCompile Include="src\ShaderProgram.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\TimeManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

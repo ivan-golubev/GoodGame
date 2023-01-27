@@ -1,9 +1,0 @@
-{
-    "Version": "1.1",
-    "Data": {
-        "Source": "d:\\code\\ggame\\projects\\common\\modules\\errorhandling.ixx",
-        "ProvidedModule": "ErrorHandling",
-        "ImportedModules": [],
-        "ImportedHeaderUnits": []
-    }
-}

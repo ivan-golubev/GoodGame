@@ -28,9 +28,16 @@ namespace gg
 		return *this;
 	}
 
+	Model::Model(std::unique_ptr<ShaderProgram> s, std::unique_ptr<Texture> t)
+		: shaderProgram{ std::move(s) }
+		, texture{ std::move(t) }
+	{
+	}
+
 	Model::Model(Model&& other) noexcept
 		: shaderProgram{ std::move(other.shaderProgram) }
 		, meshes{ std::move(other.meshes) }
+		, texture{ std::move(other.texture) }
 	{
 	}
 
@@ -42,6 +49,7 @@ namespace gg
 
 			shaderProgram = std::move(other.shaderProgram);
 			meshes = std::move(other.meshes);
+			texture = std::move(other.texture);
 		}
 		return *this;
 	}

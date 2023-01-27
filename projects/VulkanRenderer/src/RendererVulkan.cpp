@@ -4,7 +4,6 @@ module;
 #include <cstdint>
 #include <chrono>
 #include <DirectXMath.h>
-#include <filesystem>
 #include <format>
 #include <glm/glm.hpp>
 #include <limits>
@@ -15,7 +14,6 @@ module;
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_vulkan.h>
 #include <set>
-#include <stb_image.h>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -34,6 +32,7 @@ import Vertex;
 import VertexVulkan;
 import ModelLoader;
 import ShaderProgramVulkan;
+import Texture;
 
 using DirectX::XMMATRIX;
 using DirectX::XMMatrixRotationY;
@@ -125,13 +124,6 @@ namespace gg
 
 		CreateFrameBuffers();
 		CreateCommandPool();
-
-		CreateTextureImage();
-		CreateTextureImageView();
-		CreateTextureSampler();
-
-		CreateDescriptorPool();
-		CreateDescriptorSets();
 
 		CreateCommandBuffers();
 		CreateSyncObjects();
@@ -444,16 +436,11 @@ namespace gg
 		}
 	}
 
-	void RendererVulkan::CreateTextureImage()
+	void RendererVulkan::CreateTextureImage(std::unique_ptr<Texture> texture)
 	{
-		// TODO: move this outside of the renderer
-		// TODO: remove StbImage.props from VulkanRenderer.vcxproj
-		int texWidth, texHeight, texChannels; // TODO: all these relative paths here are nasty
-		std::string textureFileAbsPath{ std::filesystem::absolute("../../../assets/src/textures/CubeColor.tga").generic_string() };
-		stbi_uc* pixels = stbi_load(textureFileAbsPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		VkDeviceSize imageSizeBytes = static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * 4;
+		VkDeviceSize imageSizeBytes = texture->SizeBytes();
 
-		if (!pixels)
+		if (!texture->pixels)
 			throw AssetLoadException("failed to load texture image!");
 
 		VkBuffer stagingBuffer;
@@ -467,13 +454,11 @@ namespace gg
 
 		void* mappedData;
 		vkMapMemory(device, stagingBufferMemory, 0, imageSizeBytes, 0, &mappedData);
-		memcpy(mappedData, pixels, static_cast<size_t>(imageSizeBytes));
+		memcpy(mappedData, texture->pixels, static_cast<size_t>(imageSizeBytes));
 		vkUnmapMemory(device, stagingBufferMemory);
 
-		stbi_image_free(pixels);
-
-		CreateImage(texWidth
-			, texHeight
+		CreateImage(texture->width
+			, texture->height
 			, VK_FORMAT_R8G8B8A8_SRGB
 			, VK_IMAGE_TILING_OPTIMAL
 			, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
@@ -482,7 +467,7 @@ namespace gg
 			, textureImageMemory);
 
 		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		CopyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+		CopyBufferToImage(stagingBuffer, textureImage, texture->width, texture->height);
 		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -710,6 +695,14 @@ namespace gg
 		model = std::move(m);
 		for (auto& m : model->meshes)
 			CreateVertexBuffer(m);
+
+		CreateTextureImage(std::move(model->texture));
+		CreateTextureImageView();
+		CreateTextureSampler();
+
+		CreateDescriptorPool();
+		CreateDescriptorSets();
+
 		CreateGraphicsPipeline();
 	}
 

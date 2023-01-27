@@ -14,6 +14,7 @@ import Logging;
 import ModelLoader;
 import ShaderProgram;
 import ShaderProgramVulkan;
+import Texture;
 
 namespace
 {
@@ -93,8 +94,10 @@ int main()
 		Application app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
 
+
+		std::unique_ptr<Texture> texture{ std::make_unique<Texture>("../../../assets/src/textures/CubeColor.tga") };
 		std::unique_ptr<ShaderProgram> shader{ app.GetRenderer()->LoadShader("shaders/textured_surface_VS", "shaders/textured_surface_PS") };
-		std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader)) };
+		std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), std::move(texture)) };
 
 		app.GetRenderer()->UploadGeometry(std::move(model));
 		MainLoop(app);
