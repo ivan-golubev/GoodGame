@@ -9,12 +9,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "projects\Game\Game.
 		{86E825A1-A3C0-4760-8F52-8A88B93A0ADD} = {86E825A1-A3C0-4760-8F52-8A88B93A0ADD}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanRenderer", "projects\VulkanRenderer\VulkanRenderer.vcxproj", "{86E825A1-A3C0-4760-8F52-8A88B93A0ADD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RendererVulkan", "projects\RendererVulkan\RendererVulkan.vcxproj", "{86E825A1-A3C0-4760-8F52-8A88B93A0ADD}"
 	ProjectSection(ProjectDependencies) = postProject
 		{1E183599-3C64-448B-B0A2-AB14AB71285B} = {1E183599-3C64-448B-B0A2-AB14AB71285B}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "projects\Common\Common.vcxproj", "{1E183599-3C64-448B-B0A2-AB14AB71285B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RendererD3D12", "projects\RendererD3D12\RendererD3D12.vcxproj", "{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,12 @@ Global
 		{1E183599-3C64-448B-B0A2-AB14AB71285B}.Final|x64.Build.0 = Final|x64
 		{1E183599-3C64-448B-B0A2-AB14AB71285B}.Release|x64.ActiveCfg = Release|x64
 		{1E183599-3C64-448B-B0A2-AB14AB71285B}.Release|x64.Build.0 = Release|x64
+		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Debug|x64.ActiveCfg = Debug|x64
+		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Debug|x64.Build.0 = Debug|x64
+		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Final|x64.ActiveCfg = Debug|x64
+		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Final|x64.Build.0 = Debug|x64
+		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Release|x64.ActiveCfg = Release|x64
+		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

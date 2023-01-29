@@ -17,27 +17,26 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{5304ad29-cfc8-429e-adb4-55da51496510}</ProjectGuid>
-    <RootNamespace>Game</RootNamespace>
+    <ProjectGuid>{51be0df1-0109-4edd-a21f-fcbf8ae01d92}</ProjectGuid>
+    <RootNamespace>RendererD3D12</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>Game</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -63,8 +62,8 @@
     <IntDir>$(SolutionDir)intermediate\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\props\Global.props" />
-  <Import Project="$(SolutionDir)\props\Vulkan.props" />
-  <Import Project="$(SolutionDir)\props\Assimp.props" />
+  <Import Project="$(SolutionDir)\props\D3D12.props" />
+  <Import Project="$(SolutionDir)\props\WinPix.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -79,12 +78,6 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>Compiling shaders...</Message>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -103,15 +96,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EntryPointSymbol>
-      </EntryPointSymbol>
     </Link>
-    <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>Compiling shaders...</Message>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'">
     <ClCompile>
@@ -130,39 +115,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EntryPointSymbol>
-      </EntryPointSymbol>
     </Link>
-    <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>Compiling shaders...</Message>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <FxCompile Include="$(SolutionDir)shaders\textured_surface.hlsl">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="$(SolutionDir)shaders\compile_shaders.ps1">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </None>
-    <None Include="packages.config" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{1e183599-3c64-448b-b0a2-ab14ab71285b}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\RendererVulkan\RendererVulkan.vcxproj">
-      <Project>{86e825a1-a3c0-4760-8f52-8a88b93a0add}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="modules\ApplicationSettings.ixx" />
-    <ClCompile Include="src\ApplicationSettings.cpp" />
-    <ClCompile Include="src\Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>
