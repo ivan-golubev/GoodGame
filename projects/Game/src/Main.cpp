@@ -94,12 +94,12 @@ int main()
 		Application app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
 
-
-		std::shared_ptr<Texture> texture{ app.GetRenderer()->LoadTexture("../../../assets/src/textures/CubeColor.tga") };
-		std::unique_ptr<ShaderProgram> shader{ app.GetRenderer()->LoadShader("shaders/textured_surface_VS", "shaders/textured_surface_PS") };
-		std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), texture) };
-
-		app.GetRenderer()->UploadGeometry(std::move(model));
+		{
+			std::shared_ptr<Texture> texture{ app.GetRenderer()->LoadTexture("../../../assets/src/textures/CubeColor.tga") };
+			std::unique_ptr<ShaderProgram> shader{ app.GetRenderer()->LoadShader("shaders/textured_surface_VS", "shaders/textured_surface_PS") };
+			std::unique_ptr<Model> model{ app.GetModelLoader()->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), texture) };
+			app.GetRenderer()->UploadGeometry(std::move(model));
+		}
 		MainLoop(app);
 	}
 	catch (std::exception const& e)

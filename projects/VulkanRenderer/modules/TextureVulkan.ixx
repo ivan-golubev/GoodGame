@@ -26,7 +26,7 @@ export namespace gg
 		void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
 		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
-		std::weak_ptr<RendererVulkan> rendererWeak;
+		std::shared_ptr<RendererVulkan> renderer;
 		VkImage textureImage;
 		VkDeviceMemory textureImageMemory;
 	};

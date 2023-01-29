@@ -844,7 +844,7 @@ namespace gg
 		vkDestroyBuffer(device, VB, nullptr);
 		vkFreeMemory(device, vertexBufferMemory, nullptr);
 
-		/* destroys the associated shaders */
+		/* destroys the associated shaders and textures */
 		model.reset();
 
 		vkDestroySurfaceKHR(instance, surface, nullptr);

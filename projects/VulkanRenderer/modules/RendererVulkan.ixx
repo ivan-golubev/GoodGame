@@ -95,8 +95,6 @@ namespace gg
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix);
 		void SubmitCommands();
 
-		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
-
 		VkResult Present(uint32_t imageIndex);
 
 		void CleanupSwapChain();

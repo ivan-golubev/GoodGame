@@ -10,26 +10,22 @@ import RendererVulkan;
 
 namespace gg
 {
-	TextureVulkan::TextureVulkan(std::string const& textureRelativePath, std::shared_ptr<RendererVulkan> rdr)
+	TextureVulkan::TextureVulkan(std::string const& textureRelativePath, std::shared_ptr<RendererVulkan> renderer)
 		: Texture(textureRelativePath)
-		, rendererWeak{ rdr }
+		, renderer{ renderer }
 	{
-
 		CreateTextureImage();
 		CreateTextureImageView();
-		textureSampler = rdr->CreateTextureSampler();
+		textureSampler = renderer->CreateTextureSampler();
 	}
 
 	TextureVulkan::~TextureVulkan()
 	{
-		if (std::shared_ptr<RendererVulkan> r = rendererWeak.lock())
-		{
-			VkDevice device = r->GetDevice();
-			vkDestroySampler(device, textureSampler, nullptr);
-			vkDestroyImageView(device, textureImageView, nullptr);
-			vkDestroyImage(device, textureImage, nullptr);
-			vkFreeMemory(device, textureImageMemory, nullptr);
-		}
+		VkDevice device = renderer->GetDevice();
+		vkDestroySampler(device, textureSampler, nullptr);
+		vkDestroyImageView(device, textureImageView, nullptr);
+		vkDestroyImage(device, textureImage, nullptr);
+		vkFreeMemory(device, textureImageMemory, nullptr);
 	}
 
 
@@ -37,10 +33,6 @@ namespace gg
 	{
 		if (!pixels)
 			throw AssetLoadException("failed to load texture image!");
-
-		std::shared_ptr<RendererVulkan> renderer = rendererWeak.lock();
-		if (!renderer)
-			throw VulkanInitException("failed to create texture!");
 
 		VkDevice device = renderer->GetDevice();
 		VkBuffer stagingBuffer;
@@ -85,9 +77,6 @@ namespace gg
 		, VkImage& image
 		, VkDeviceMemory& imageMemory)
 	{
-		std::shared_ptr<RendererVulkan> renderer = rendererWeak.lock();
-		if (!renderer)
-			throw VulkanInitException("failed to create texture!");
 		VkDevice device = renderer->GetDevice();
 
 		VkImageCreateInfo imageInfo{};
@@ -124,10 +113,6 @@ namespace gg
 
 	void TextureVulkan::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
-		std::shared_ptr<RendererVulkan> renderer = rendererWeak.lock();
-		if (!renderer)
-			throw VulkanInitException("failed to create texture!");
-
 		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
 
 		VkImageMemoryBarrier barrier{};
@@ -179,10 +164,6 @@ namespace gg
 
 	void TextureVulkan::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
-		std::shared_ptr<RendererVulkan> renderer = rendererWeak.lock();
-		if (!renderer)
-			throw VulkanInitException("failed to create texture!");
-
 		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
 
 		VkBufferImageCopy region{};
@@ -231,9 +212,6 @@ namespace gg
 
 	void TextureVulkan::CreateTextureImageView()
 	{
-		std::shared_ptr<RendererVulkan> renderer = rendererWeak.lock();
-		if (!renderer)
-			throw VulkanInitException("failed to create texture!");
 		textureImageView = CreateImageView(renderer->GetDevice(), textureImage, VK_FORMAT_R8G8B8A8_SRGB);
 	}
 } // namespace gg
