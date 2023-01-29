@@ -8,6 +8,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)packages\WinPixEventRuntime.$(WinPixVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)packages\WinPixEventRuntime.$(WinPixVersion)\bin\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>WinPixEventRuntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -19,10 +20,10 @@
       </ContentWithTargetPath>
   </ItemGroup>
 
-  <ImportGroup Label="ExtensionTargets">
+  <ImportGroup Label="ExtensionTargets" Condition="'$(ConfigurationType)'=='Application'">
     <Import Project="..\..\packages\WinPixEventRuntime.$(WinPixVersion)\build\WinPixEventRuntime.targets" Condition="Exists('..\..\packages\WinPixEventRuntime.$(WinPixVersion)\build\WinPixEventRuntime.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild" Condition="'$(ConfigurationType)'=='Application'">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>

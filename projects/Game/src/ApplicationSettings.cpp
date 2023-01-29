@@ -6,6 +6,7 @@ module ApplicationSettings;
 import Application;
 import GlobalSettings;
 import RendererVulkan;
+import RendererD3D12;
 
 using gg::RendererVulkan;
 
@@ -17,12 +18,10 @@ namespace gg
 		std::shared_ptr<InputManager> inputManager{ std::make_shared<InputManager>() };
 		RendererSettings const rendererSettings{ s.width, s.height, s.windowHandle, timeManager, inputManager };
 
-		std::unique_ptr<Renderer> renderer{
-			s.rendererType == RendererType::Vulkan
-			? std::make_unique<RendererVulkan>(rendererSettings)
-			: nullptr // TODO: add D3D12 here
-		};
-		Application::Init(std::move(renderer), timeManager, inputManager);
+		if (s.rendererType == RendererType::Vulkan)
+			Application::Init(std::make_unique<RendererVulkan>(rendererSettings), timeManager, inputManager);
+		else
+			Application::Init(std::make_unique<RendererD3D12>(rendererSettings), timeManager, inputManager);
 
 		return Application::Get();
 	}
