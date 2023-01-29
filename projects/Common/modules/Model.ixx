@@ -34,7 +34,7 @@ namespace gg
 
 	export struct Model
 	{
-		Model(std::unique_ptr<ShaderProgram>, std::unique_ptr<Texture>);
+		Model(std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>);
 		~Model() noexcept = default;
 		Model(Model const&) = delete;
 		Model& operator=(Model const&) = delete;
@@ -42,7 +42,7 @@ namespace gg
 		Model& operator=(Model&&) noexcept;
 
 		std::unique_ptr<ShaderProgram> shaderProgram;
-		std::unique_ptr<Texture> texture;
+		std::shared_ptr<Texture> texture;
 		std::vector<Mesh> meshes;
 	};
 

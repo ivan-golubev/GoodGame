@@ -28,9 +28,9 @@ namespace gg
 		return *this;
 	}
 
-	Model::Model(std::unique_ptr<ShaderProgram> s, std::unique_ptr<Texture> t)
+	Model::Model(std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
 		: shaderProgram{ std::move(s) }
-		, texture{ std::move(t) }
+		, texture{ t }
 	{
 	}
 

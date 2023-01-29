@@ -16,7 +16,7 @@ namespace gg
 		~ModelLoader();
 
 		[[nodiscard("Loaded model should be passed to the renderer")]]
-		std::unique_ptr<Model> LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::unique_ptr<Texture>);
+		std::unique_ptr<Model> LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>);
 
 	private:
 		bool LoadMeshes(std::string const& modelAbsolutePath, Model& outModel);

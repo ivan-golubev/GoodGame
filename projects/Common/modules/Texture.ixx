@@ -4,11 +4,11 @@ export module Texture;
 
 namespace gg
 {
-	export struct Texture
+	export class Texture
 	{
 	public:
 		Texture(std::string const& relativePath);
-		~Texture();
+		virtual ~Texture();
 		uint64_t SizeBytes() const;
 
 		std::string const absPath;

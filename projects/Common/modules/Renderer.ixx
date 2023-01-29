@@ -13,7 +13,7 @@ using std::chrono::nanoseconds;
 
 namespace gg
 {
-	export class Renderer
+	export class Renderer : public std::enable_shared_from_this<Renderer>
 	{
 	public:
 		Renderer() = default;
@@ -29,6 +29,7 @@ namespace gg
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(nanoseconds deltaTime) = 0;
 		virtual std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) = 0;
+		virtual std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath) = 0;
 	};
 
 	export struct RendererSettings

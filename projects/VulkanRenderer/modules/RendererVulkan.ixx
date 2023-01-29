@@ -40,7 +40,23 @@ namespace gg
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
 		std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) override;
+		std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath) override;
 		VkDevice GetDevice() const;
+
+		VkCommandBuffer BeginSingleTimeCommands();
+		void EndSingleTimeCommands(VkCommandBuffer);
+
+		VkSampler CreateTextureSampler();
+		uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
+
+		void CreateBuffer(
+			VkBuffer& outBuffer,
+			VkDeviceMemory& outMemory,
+			uint64_t sizeBytes,
+			VkBufferUsageFlagBits,
+			VkMemoryPropertyFlags
+		);
+
 	private:
 		struct QueueFamilyIndices
 		{
@@ -67,11 +83,6 @@ namespace gg
 		void CreateCommandPool();
 
 		void CreateImageViews();
-		void CreateTextureImage(std::unique_ptr<Texture>);
-		void CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
-		VkImageView CreateImageView(VkImage, VkFormat);
-		void CreateTextureImageView();
-		void CreateTextureSampler();
 
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
@@ -79,14 +90,11 @@ namespace gg
 		void CreateIndexBuffer(Mesh const&);
 		void CreateUniformBuffers();
 		void CreateDescriptorPool();
-		void CreateDescriptorSets();
+		void CreateDescriptorSets(VkImageView, VkSampler);
 
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix);
-		VkCommandBuffer BeginSingleTimeCommands();
-		void EndSingleTimeCommands(VkCommandBuffer);
 		void SubmitCommands();
 
-		void TransitionImageLayout(VkImage, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout);
 		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
 		VkResult Present(uint32_t imageIndex);
@@ -96,22 +104,12 @@ namespace gg
 		void ResizeWindow();
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const) const;
-		uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
 		bool IsDeviceSuitable(VkPhysicalDevice const) const;
 
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice const) const;
 		bool SwapChainRequirementsSatisfied(VkPhysicalDevice const) const;
 
 		VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR const&) const;
-
-		VkShaderModule createShaderModule(std::vector<char> const& shaderBlob);
-		void CreateBuffer(
-			VkBuffer& outBuffer,
-			VkDeviceMemory& outMemory,
-			uint64_t sizeBytes,
-			VkBufferUsageFlagBits usage,
-			VkMemoryPropertyFlags properties
-		);
 
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -141,12 +139,6 @@ namespace gg
 		/* Vertex Buffer for the cube. TODO: There is a better place for it. */
 		VkBuffer VB{};
 		VkDeviceMemory vertexBufferMemory{};
-
-		/* Textures. TODO: move to a better place */
-		VkImage textureImage;
-		VkDeviceMemory textureImageMemory;
-		VkImageView textureImageView;
-		VkSampler textureSampler;
 
 		std::array<VkBuffer, maxFramesInFlight> uniformBuffers;
 		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemory;
