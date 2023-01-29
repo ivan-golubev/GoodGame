@@ -12,7 +12,7 @@ module;
 
 #include <windows.h>
 #include <WinPixEventRuntime/pix3.h> // has to be the last - depends on types in windows.h
-module D3D12Renderer;
+module RendererD3D12;
 
 import Application;
 import Camera;
@@ -29,7 +29,7 @@ using Microsoft::WRL::ComPtr;
 namespace gg
 {
 
-	D3D12Renderer::D3D12Renderer(uint32_t width, uint32_t height, HWND windowHandle)
+	RendererD3D12::RendererD3D12(uint32_t width, uint32_t height, HWND windowHandle)
 		: mWidth{ width }
 		, mHeight{ height }
 		, mWindowHandle{ windowHandle }
@@ -222,7 +222,7 @@ namespace gg
 
 	}
 
-	void D3D12Renderer::UploadGeometry()
+	void RendererD3D12::UploadGeometry()
 	{
 		/* Initialize the vertices. TODO: move to a separate class */
 		// TODO: in fact, cubes are not fun, read data from an .fbx
@@ -274,7 +274,7 @@ namespace gg
 		mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	}
 
-	void D3D12Renderer::ResizeWindow()
+	void RendererD3D12::ResizeWindow()
 	{
 		mViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(mWidth), static_cast<float>(mHeight), 0.0f, 1.0f);
 		ResizeRenderTargets();
@@ -282,7 +282,7 @@ namespace gg
 		mWindowResized = false;
 	}
 
-	void D3D12Renderer::ResizeRenderTargets()
+	void RendererD3D12::ResizeRenderTargets()
 	{
 		for (uint32_t i{ 0 }; i < mFrameCount; ++i)
 			mRenderTargets[i].Reset();
@@ -298,7 +298,7 @@ namespace gg
 		}
 	}
 
-	void D3D12Renderer::ResizeDepthBuffer()
+	void RendererD3D12::ResizeDepthBuffer()
 	{
 		mDepthBuffer.Reset();
 
@@ -333,7 +333,7 @@ namespace gg
 		mDevice->CreateDepthStencilView(mDepthBuffer.Get(), &dsvDesc, mDsvHandle);
 	}
 
-	void D3D12Renderer::CreateBuffer(
+	void RendererD3D12::CreateBuffer(
 		ComPtr<ID3D12GraphicsCommandList> const& commandList,
 		ComPtr<ID3D12Resource>& gpuResource,
 		ComPtr<ID3D12Resource>& cpuResource,
@@ -382,7 +382,7 @@ namespace gg
 		);
 	}
 
-	D3D12Renderer::~D3D12Renderer()
+	RendererD3D12::~RendererD3D12()
 	{
 		/* Ensure that the GPU is no longer referencing resources that are about to be
 		 cleaned up by the destructor. */
@@ -390,14 +390,14 @@ namespace gg
 		CloseHandle(mFenceEvent);
 	}
 
-	void D3D12Renderer::OnWindowResized(uint32_t width, uint32_t height)
+	void RendererD3D12::OnWindowResized(uint32_t width, uint32_t height)
 	{
 		mWindowResized = true;
 		mWidth = std::max(8u, width);
 		mHeight = std::max(8u, height);
 	}
 
-	void D3D12Renderer::Render(uint64_t deltaTimeMs)
+	void RendererD3D12::Render(uint64_t deltaTimeMs)
 	{
 		if (mWindowResized)
 		{
@@ -406,7 +406,7 @@ namespace gg
 			mCamera->UpdateProjectionMatrix(windowAspectRatio);
 		}
 		/* Rotate the model */
-		auto const elapsedTimeMs{ Application::Get().GetTimeManager().GetCurrentTimeMs() };
+		auto const elapsedTimeMs{ Application::Get()->GetTimeManager()->GetCurrentTimeMs() };
 		auto const rotation{ 0.0002f * DirectX::XM_PI * elapsedTimeMs };
 		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)) };
 
@@ -429,7 +429,7 @@ namespace gg
 		WaitForPreviousFrame();
 	}
 
-	void D3D12Renderer::WaitForPreviousFrame()
+	void RendererD3D12::WaitForPreviousFrame()
 	{
 		uint64_t const fence{ mFenceValue };
 		ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), fence));
@@ -443,7 +443,7 @@ namespace gg
 		}
 	}
 
-	void D3D12Renderer::PopulateCommandList(XMMATRIX const& mvpMatrix)
+	void RendererD3D12::PopulateCommandList(XMMATRIX const& mvpMatrix)
 	{
 		//ThrowIfFailed(mCommandAllocator->Reset());
 		ThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), mPipelineState.Get()));

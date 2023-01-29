@@ -7,7 +7,7 @@ module;
 #include <memory>
 #include <string>
 #include <wrl.h>
-export module D3D12Renderer;
+export module RendererD3D12;
 
 import Camera;
 import Input;
@@ -20,11 +20,11 @@ using Microsoft::WRL::ComPtr;
 namespace gg
 {
 
-	export class D3D12Renderer
+	export class RendererD3D12
 	{
 	public:
-		D3D12Renderer(uint32_t width, uint32_t height, HWND windowHandle);
-		~D3D12Renderer();
+		RendererD3D12(uint32_t width, uint32_t height, HWND windowHandle);
+		~RendererD3D12();
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void Render(uint64_t deltaTimeMs);
 	private:
