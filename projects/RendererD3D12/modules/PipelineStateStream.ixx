@@ -4,7 +4,6 @@ export module PipelineStateStream;
 
 export namespace gg
 {
-
 	struct PipelineStateStream
 	{
 		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;

@@ -72,41 +72,41 @@ namespace gg
 		D3D12_VIEWPORT mViewport;
 		D3D12_RECT mScissorRect;
 
-		ComPtr<ID3D12Device4> mDevice;
-		ComPtr<ID3D12CommandQueue> mCommandQueue;
-		ComPtr<ID3D12CommandAllocator> mCommandAllocator;
-		ComPtr<ID3D12GraphicsCommandList> mCommandList;
-		ComPtr<IDXGISwapChain3> mSwapChain;
-		ComPtr<ID3D12PipelineState> mPipelineState;
-		ComPtr<ID3D12RootSignature> mRootSignature;
+		ComPtr<ID3D12Device4> device;
+		ComPtr<ID3D12CommandQueue> commandQueue;
+		ComPtr<ID3D12CommandAllocator> commandAllocator;
+		ComPtr<ID3D12GraphicsCommandList> commandList;
+		ComPtr<IDXGISwapChain3> swapChain;
+		ComPtr<ID3D12PipelineState> pipelineState;
+		ComPtr<ID3D12RootSignature> rootSignature;
 
 		/* Render Targets */
-		ComPtr<ID3D12Resource> mRenderTargets[mFrameCount];
-		CD3DX12_CPU_DESCRIPTOR_HANDLE mRtvHandles[mFrameCount];
-		ComPtr<ID3D12DescriptorHeap> mRenderTargetViewHeap;
-		uint32_t mRtvDescriptorSize;
+		ComPtr<ID3D12Resource> renderTargets[mFrameCount];
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandles[mFrameCount];
+		ComPtr<ID3D12DescriptorHeap> renderTargetViewHeap;
+		uint32_t rtvDescriptorSize;
 
 		/* Depth */
-		ComPtr<ID3D12Resource> mDepthBuffer;
-		ComPtr<ID3D12DescriptorHeap> mDepthStencilHeap;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE mDsvHandle;
-		uint32_t mDsvDescriptorSize;
+		ComPtr<ID3D12Resource> depthBuffer;
+		ComPtr<ID3D12DescriptorHeap> depthStencilHeap;
+		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
+		uint32_t dsvDescriptorSize;
 
 		/* Vertex and Index Buffers for the cube. TODO: There is a better place for them. */
-		ComPtr<ID3D12Resource> mVB_GPU_Resource;
-		ComPtr<ID3D12Resource> mVB_CPU_Resource;
-		D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
+		ComPtr<ID3D12Resource> VB_GPU_Resource;
+		ComPtr<ID3D12Resource> VB_CPU_Resource;
+		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 
-		ComPtr<ID3D12Resource> mIB_GPU_Resource;
-		ComPtr<ID3D12Resource> mIB_CPU_Resource;
-		D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
+		ComPtr<ID3D12Resource> IB_GPU_Resource;
+		ComPtr<ID3D12Resource> IB_CPU_Resource;
+		D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
 		/* Shaders */
-		ComPtr<ID3DBlob> mVertexShaderBlob;
-		ComPtr<ID3DBlob> mPixelShaderBlob;
+		ComPtr<ID3DBlob> vertexShaderBlob;
+		ComPtr<ID3DBlob> pixelShaderBlob;
 
 		/* TODO: move this to a "game_object" class */
-		uint32_t mIndexCount;
+		uint32_t indexCount;
 
 		// TODO: populate the model here
 		//std::shared_ptr<ModelD3D12> model;
@@ -114,10 +114,10 @@ namespace gg
 		std::unique_ptr<Camera> camera;
 
 		/* Synchronization objects */
-		ComPtr<ID3D12Fence> mFence;
-		uint32_t mFrameIndex{ 0 };
-		uint64_t mFenceValue{ 0 };
-		HANDLE mFenceEvent{ nullptr };
+		ComPtr<ID3D12Fence> fence;
+		uint32_t frameIndex{ 0 };
+		uint64_t fenceValue{ 0 };
+		HANDLE fenceEvent{ nullptr };
 	};
 
 } // namespace gg
