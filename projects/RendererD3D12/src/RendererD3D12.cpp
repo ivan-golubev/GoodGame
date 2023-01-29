@@ -1,6 +1,7 @@
 module;
 #include <algorithm>
 #include <cstdint>
+#include <numbers>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
 #include <d3dcompiler.h>
@@ -9,6 +10,7 @@ module;
 #include <format>
 #include <wrl.h>
 #include <vector>
+#include <SDL2/SDL_syswm.h>
 
 #include <windows.h>
 #include <WinPixEventRuntime/pix3.h> // has to be the last - depends on types in windows.h
@@ -25,17 +27,32 @@ import Vertex;
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
+using std::chrono::nanoseconds;
+
+namespace
+{
+	std::string const shaderExtensionVulkan{ ".cso" };
+	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
+
+	HWND getWindowHandle(SDL_Window* windowHandle)
+	{
+		SDL_SysWMinfo wmInfo;
+		SDL_VERSION(&wmInfo.version);
+		SDL_GetWindowWMInfo(windowHandle, &wmInfo);
+		return wmInfo.info.win.window;
+	}
+}
 
 namespace gg
 {
-
-	RendererD3D12::RendererD3D12(uint32_t width, uint32_t height, HWND windowHandle)
-		: mWidth{ width }
-		, mHeight{ height }
-		, mWindowHandle{ windowHandle }
+	RendererD3D12::RendererD3D12(RendererSettings const& rs)
+		: width{ rs.width }
+		, height{ rs.height }
+		, windowHandle{ getWindowHandle(rs.windowHandle) }
+		, timeManager{ rs.timeManager }
+		, camera{ std::make_unique<Camera>(rs.inputManager) }
 		, mScissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
 		, mViewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
-		, mCamera{ std::make_unique<Camera>() }
 	{
 		uint8_t dxgiFactoryFlags{ 0 };
 
@@ -77,8 +94,8 @@ namespace gg
 		{ /* Create a swap chain */
 			DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 			swapChainDesc.BufferCount = mFrameCount;
-			swapChainDesc.Width = mWidth;
-			swapChainDesc.Height = mHeight;
+			swapChainDesc.Width = width;
+			swapChainDesc.Height = height;
 			swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -87,7 +104,7 @@ namespace gg
 			ComPtr<IDXGISwapChain1> swapChain;
 			ThrowIfFailed(factory->CreateSwapChainForHwnd(
 				mCommandQueue.Get(),
-				mWindowHandle,
+				windowHandle,
 				&swapChainDesc,
 				nullptr,
 				nullptr,
@@ -97,7 +114,7 @@ namespace gg
 		}
 
 		/* No support for fullscreen transitions. */
-		ThrowIfFailed(factory->MakeWindowAssociation(mWindowHandle, DXGI_MWA_NO_ALT_ENTER));
+		ThrowIfFailed(factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER));
 
 		{ /* Describe and create a render target view (RTV) descriptor heap. */
 			D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -150,7 +167,8 @@ namespace gg
 			ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_PS.cso", &mPixelShaderBlob));
 			// TODO: can I set the shader name ?
 		}
-		UploadGeometry();
+		//UploadGeometry();
+		__debugbreak(); // ?
 
 		/* Specify the input layout */
 		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
@@ -222,61 +240,85 @@ namespace gg
 
 	}
 
-	void RendererD3D12::UploadGeometry()
+	// TODO: this is no longer needed, we load from a model now.
+	// but need to extract the command list stuff here
+
+	//void RendererD3D12::UploadGeometry()
+	//{
+	//	/* Initialize the vertices. TODO: move to a separate class */
+	//	// TODO: in fact, cubes are not fun, read data from an .fbx
+	//	std::vector<Vertex> const vertices{
+	//		/*  x      y      z     w     r      g    b     a */
+	//		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // 0
+	//		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f}, // 1
+	//		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f}, // 2
+	//		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f}, // 3
+	//		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f}, // 4
+	//		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f}, // 5
+	//		{ 1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f}, // 6
+	//		{ 1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f}, // 7
+	//	};
+	//	std::vector<uint32_t> const indices{
+	//		0, 1, 2, 0, 2, 3,
+	//		4, 6, 5, 4, 7, 6,
+	//		4, 5, 1, 4, 1, 0,
+	//		3, 2, 6, 3, 6, 7,
+	//		1, 5, 6, 1, 6, 2,
+	//		4, 0, 3, 4, 3, 7
+	//	};
+	//	mIndexCount = static_cast<uint32_t>(indices.size());
+
+	//	ThrowIfFailed(mCommandAllocator->Reset());
+	//	ThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), mPipelineState.Get()));
+
+	//	uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
+	//	uint32_t const IB_sizeBytes = static_cast<uint32_t>(indices.size() * sizeof(uint32_t));
+
+	//	CreateBuffer(mCommandList, mVB_GPU_Resource, mVB_CPU_Resource, vertices.data(), VB_sizeBytes, L"VertexBuffer");
+	//	CreateBuffer(mCommandList, mIB_GPU_Resource, mIB_CPU_Resource, indices.data(), IB_sizeBytes, L"IndexBuffer");
+
+	//	ThrowIfFailed(mCommandList->Close());
+
+	//	/* Upload Vertex and Index buffers */
+	//	ID3D12CommandList* ppCommandLists[]{ mCommandList.Get() };
+	//	mCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	//	WaitForPreviousFrame();
+
+	//	/* Init the Vertex/Index buffer views */
+	//	mVertexBufferView.BufferLocation = mVB_GPU_Resource->GetGPUVirtualAddress();
+	//	mVertexBufferView.SizeInBytes = VB_sizeBytes;
+	//	mVertexBufferView.StrideInBytes = sizeof(Vertex);
+
+	//	mIndexBufferView.BufferLocation = mIB_GPU_Resource->GetGPUVirtualAddress();
+	//	mIndexBufferView.SizeInBytes = IB_sizeBytes;
+	//	mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	//}
+
+	std::unique_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
 	{
-		/* Initialize the vertices. TODO: move to a separate class */
-		// TODO: in fact, cubes are not fun, read data from an .fbx
-		std::vector<Vertex> const vertices{
-			/*  x      y      z     w     r      g    b     a */
-			{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // 0
-			{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f}, // 1
-			{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f}, // 2
-			{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f}, // 3
-			{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f}, // 4
-			{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f}, // 5
-			{ 1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f}, // 6
-			{ 1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f}, // 7
-		};
-		std::vector<uint32_t> const indices{
-			0, 1, 2, 0, 2, 3,
-			4, 6, 5, 4, 7, 6,
-			4, 5, 1, 4, 1, 0,
-			3, 2, 6, 3, 6, 7,
-			1, 5, 6, 1, 6, 2,
-			4, 0, 3, 4, 3, 7
-		};
-		mIndexCount = static_cast<uint32_t>(indices.size());
+		//ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath + shaderExtensionVulkan, fragmentShaderRelativePath + shaderExtensionVulkan, device);
+		//return std::unique_ptr<ShaderProgram>{ shader };
+		__debugbreak(); //TODO: implement
+		return {};
+	}
 
-		ThrowIfFailed(mCommandAllocator->Reset());
-		ThrowIfFailed(mCommandList->Reset(mCommandAllocator.Get(), mPipelineState.Get()));
+	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& textureRelativePath)
+	{
+		//Texture* texture = new TextureVulkan(textureRelativePath, device);
+		//return std::shared_ptr<Texture>{ texture };
+		__debugbreak(); //TODO: implement
+		return {};
+	}
 
-		uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
-		uint32_t const IB_sizeBytes = static_cast<uint32_t>(indices.size() * sizeof(uint32_t));
-
-		CreateBuffer(mCommandList, mVB_GPU_Resource, mVB_CPU_Resource, vertices.data(), VB_sizeBytes, L"VertexBuffer");
-		CreateBuffer(mCommandList, mIB_GPU_Resource, mIB_CPU_Resource, indices.data(), IB_sizeBytes, L"IndexBuffer");
-
-		ThrowIfFailed(mCommandList->Close());
-
-		/* Upload Vertex and Index buffers */
-		ID3D12CommandList* ppCommandLists[]{ mCommandList.Get() };
-		mCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-		WaitForPreviousFrame();
-
-		/* Init the Vertex/Index buffer views */
-		mVertexBufferView.BufferLocation = mVB_GPU_Resource->GetGPUVirtualAddress();
-		mVertexBufferView.SizeInBytes = VB_sizeBytes;
-		mVertexBufferView.StrideInBytes = sizeof(Vertex);
-
-		mIndexBufferView.BufferLocation = mIB_GPU_Resource->GetGPUVirtualAddress();
-		mIndexBufferView.SizeInBytes = IB_sizeBytes;
-		mIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
+	{
+		__debugbreak(); //TODO: implement		
 	}
 
 	void RendererD3D12::ResizeWindow()
 	{
-		mViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(mWidth), static_cast<float>(mHeight), 0.0f, 1.0f);
+		mViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		ResizeRenderTargets();
 		ResizeDepthBuffer();
 		mWindowResized = false;
@@ -287,7 +329,7 @@ namespace gg
 		for (uint32_t i{ 0 }; i < mFrameCount; ++i)
 			mRenderTargets[i].Reset();
 
-		ThrowIfFailed(mSwapChain->ResizeBuffers(mFrameCount, mWidth, mHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
+		ThrowIfFailed(mSwapChain->ResizeBuffers(mFrameCount, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
 
 		for (uint8_t n = 0; n < mFrameCount; n++)
 		{
@@ -306,8 +348,8 @@ namespace gg
 		optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
 		optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
-		uint32_t const width{ std::max(mWidth, 0U) };
-		uint32_t const height{ std::max(mHeight, 0U) };
+		uint32_t const width{ std::max(width, 0U) };
+		uint32_t const height{ std::max(height, 0U) };
 
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
 		D3D12_RESOURCE_DESC const resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -390,29 +432,36 @@ namespace gg
 		CloseHandle(mFenceEvent);
 	}
 
+	std::shared_ptr<RendererD3D12> RendererD3D12::Get()
+	{
+		std::shared_ptr<Application> app{ Application::Get() };
+		std::shared_ptr<RendererD3D12> renderer{ dynamic_pointer_cast<RendererD3D12>(app->GetRenderer()) };
+		return renderer;
+	}
+
 	void RendererD3D12::OnWindowResized(uint32_t width, uint32_t height)
 	{
 		mWindowResized = true;
-		mWidth = std::max(8u, width);
-		mHeight = std::max(8u, height);
+		width = std::max(8u, width);
+		height = std::max(8u, height);
 	}
 
-	void RendererD3D12::Render(uint64_t deltaTimeMs)
+	void RendererD3D12::Render(nanoseconds deltaTime)
 	{
 		if (mWindowResized)
 		{
 			ResizeWindow();
-			float windowAspectRatio{ mWidth / static_cast<float>(mHeight) };
-			mCamera->UpdateProjectionMatrix(windowAspectRatio);
+			float windowAspectRatio{ width / static_cast<float>(height) };
+			camera->UpdateProjectionMatrix(windowAspectRatio);
 		}
+
 		/* Rotate the model */
-		auto const elapsedTimeMs{ Application::Get()->GetTimeManager()->GetCurrentTimeMs() };
-		auto const rotation{ 0.0002f * DirectX::XM_PI * elapsedTimeMs };
+		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
 		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)) };
 
-		mCamera->UpdateCamera(deltaTimeMs);
-		XMMATRIX const& viewMatrix{ mCamera->GetViewMatrix() };
-		XMMATRIX const& mProjectionMatrix{ mCamera->GetProjectionMatrix() };
+		camera->UpdateCamera(deltaTime);
+		XMMATRIX const& viewMatrix{ camera->GetViewMatrix() };
+		XMMATRIX const& mProjectionMatrix{ camera->GetProjectionMatrix() };
 
 		XMMATRIX mvpMatrix{ XMMatrixMultiply(modelMatrix, viewMatrix) };
 		mvpMatrix = XMMatrixMultiply(mvpMatrix, mProjectionMatrix);

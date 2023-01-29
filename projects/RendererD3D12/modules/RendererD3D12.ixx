@@ -1,11 +1,13 @@
 module;
 #include <cstdint>
+#include <chrono>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
 #include <DirectXMath.h>
 #include <dxgi1_6.h>
 #include <memory>
 #include <string>
+#include <SDL2/SDL_video.h>
 #include <wrl.h>
 export module RendererD3D12;
 
@@ -13,24 +15,40 @@ import Camera;
 import Input;
 import Vertex;
 import TimeManager;
+import Model;
+import Renderer;
+import Texture;
 
 using DirectX::XMMATRIX;
 using Microsoft::WRL::ComPtr;
+using std::chrono::nanoseconds;
 
 namespace gg
 {
 
-	export class RendererD3D12
+	export class RendererD3D12 : public Renderer
 	{
 	public:
-		RendererD3D12(uint32_t width, uint32_t height, HWND windowHandle);
+		RendererD3D12(RendererSettings const&);
 		~RendererD3D12();
-		void OnWindowResized(uint32_t width, uint32_t height);
-		void Render(uint64_t deltaTimeMs);
+
+		static std::shared_ptr<RendererD3D12> Get();
+
+		RendererD3D12(RendererD3D12 const&) = delete;
+		RendererD3D12& operator=(RendererD3D12 const&) = delete;
+
+		RendererD3D12(RendererD3D12&&) noexcept = default;
+		RendererD3D12& operator=(RendererD3D12&&) noexcept = default;
+
+		void OnWindowResized(uint32_t width, uint32_t height) override;
+		void Render(nanoseconds deltaTime) override;
+		std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) override;
+		std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath) override;
+		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>) override;
+
 	private:
 		void PopulateCommandList(XMMATRIX const& mvpMatrix);
 		void WaitForPreviousFrame();
-		void UploadGeometry();
 		void ResizeRenderTargets();
 		void ResizeDepthBuffer();
 		void ResizeWindow();
@@ -44,9 +62,11 @@ namespace gg
 		);
 
 		static constexpr int8_t mFrameCount{ 2 };
-		uint32_t mWidth;
-		uint32_t mHeight;
-		HWND const mWindowHandle;
+
+		uint32_t width{};
+		uint32_t height{};
+		HWND windowHandle{ nullptr };
+
 		bool mWindowResized{ true };
 
 		D3D12_VIEWPORT mViewport;
@@ -88,7 +108,10 @@ namespace gg
 		/* TODO: move this to a "game_object" class */
 		uint32_t mIndexCount;
 
-		std::unique_ptr<Camera> mCamera;
+		// TODO: populate the model here
+		//std::shared_ptr<ModelD3D12> model;
+		std::shared_ptr<TimeManager> timeManager;
+		std::unique_ptr<Camera> camera;
 
 		/* Synchronization objects */
 		ComPtr<ID3D12Fence> mFence;

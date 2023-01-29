@@ -10,7 +10,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="modules\D3D12Renderer.ixx">
+    <ClCompile Include="modules\RendererD3D12.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="modules\D3DHelpers.ixx">
@@ -19,7 +19,7 @@
     <ClCompile Include="modules\PipelineStateStream.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="src\D3D12Renderer.cpp">
+    <ClCompile Include="src\RendererD3D12.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
     <ClCompile Include="src\D3DHelpers.cpp">

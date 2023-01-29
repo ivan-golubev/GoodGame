@@ -45,13 +45,13 @@ using std::chrono::nanoseconds;
 
 namespace
 {
+	std::string const shaderExtensionVulkan{ ".spv" };
+	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
+
 	constexpr std::array<char const*, 1> deviceExtensions
 	{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
-
-	std::string const shaderExtensionVulkan{ ".spv" };
-	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
 
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
 	{

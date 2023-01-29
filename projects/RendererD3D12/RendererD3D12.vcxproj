@@ -123,10 +123,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="modules\D3D12Renderer.ixx" />
+    <ClCompile Include="modules\RendererD3D12.ixx" />
     <ClCompile Include="modules\D3DHelpers.ixx" />
     <ClCompile Include="modules\PipelineStateStream.ixx" />
-    <ClCompile Include="src\D3D12Renderer.cpp" />
+    <ClCompile Include="src\RendererD3D12.cpp" />
     <ClCompile Include="src\D3DHelpers.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
