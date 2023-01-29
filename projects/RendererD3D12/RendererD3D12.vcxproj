@@ -122,6 +122,13 @@
       <Project>{1e183599-3c64-448b-b0a2-ab14ab71285b}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="modules\D3D12Renderer.ixx" />
+    <ClCompile Include="modules\D3DHelpers.ixx" />
+    <ClCompile Include="modules\PipelineStateStream.ixx" />
+    <ClCompile Include="src\D3D12Renderer.cpp" />
+    <ClCompile Include="src\D3DHelpers.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

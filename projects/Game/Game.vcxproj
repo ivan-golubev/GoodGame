@@ -155,6 +155,9 @@
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{1e183599-3c64-448b-b0a2-ab14ab71285b}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\RendererD3D12\RendererD3D12.vcxproj">
+      <Project>{51be0df1-0109-4edd-a21f-fcbf8ae01d92}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\RendererVulkan\RendererVulkan.vcxproj">
       <Project>{86e825a1-a3c0-4760-8f52-8a88b93a0add}</Project>
     </ProjectReference>
