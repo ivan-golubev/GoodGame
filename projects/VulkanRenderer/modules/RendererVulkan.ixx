@@ -24,6 +24,8 @@ using std::chrono::nanoseconds;
 
 namespace gg
 {
+	struct ModelVulkan;
+
 	export class RendererVulkan : public Renderer
 	{
 	public:
@@ -36,11 +38,12 @@ namespace gg
 		RendererVulkan(RendererVulkan&&) noexcept = default;
 		RendererVulkan& operator=(RendererVulkan&&) noexcept = default;
 
-		void UploadGeometry(std::unique_ptr<Model>) override;
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
 		std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) override;
 		std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath) override;
+		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>) override;
+
 		VkDevice GetDevice() const;
 
 		VkCommandBuffer BeginSingleTimeCommands();
@@ -56,6 +59,8 @@ namespace gg
 			VkBufferUsageFlagBits,
 			VkMemoryPropertyFlags
 		);
+
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	private:
 		struct QueueFamilyIndices
@@ -86,7 +91,6 @@ namespace gg
 
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
-		void CreateVertexBuffer(Mesh const&);
 		void CreateIndexBuffer(Mesh const&);
 		void CreateUniformBuffers();
 		void CreateDescriptorPool();
@@ -108,8 +112,6 @@ namespace gg
 		bool SwapChainRequirementsSatisfied(VkPhysicalDevice const) const;
 
 		VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR const&) const;
-
-		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 		static constexpr int32_t maxFramesInFlight{ 2 };
 		bool isWindowResized{ true };
@@ -134,16 +136,12 @@ namespace gg
 
 		uint32_t currentFrame{ 0 };
 
-		/* Vertex Buffer for the cube. TODO: There is a better place for it. */
-		VkBuffer VB{};
-		VkDeviceMemory vertexBufferMemory{};
-
 		std::array<VkBuffer, maxFramesInFlight> uniformBuffers;
 		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemory;
 		VkDescriptorPool descriptorPool;
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets;
 
-		std::unique_ptr<Model> model;
+		std::shared_ptr<ModelVulkan> model;
 		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;
 

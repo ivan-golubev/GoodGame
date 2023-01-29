@@ -34,6 +34,8 @@ import ModelLoader;
 import ShaderProgramVulkan;
 import Texture;
 import TextureVulkan;
+import ModelLoader;
+import ModelVulkan;
 
 using DirectX::XMMATRIX;
 using DirectX::XMMatrixRotationY;
@@ -611,40 +613,6 @@ namespace gg
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 	}
 
-	void RendererVulkan::UploadGeometry(std::unique_ptr<Model> m)
-	{
-		model = std::move(m);
-		for (auto& mesh : model->meshes)
-			CreateVertexBuffer(mesh);
-
-		CreateDescriptorPool();
-		std::shared_ptr<TextureVulkan> texture{ dynamic_pointer_cast<TextureVulkan>(model->texture) };
-		CreateDescriptorSets(texture->textureImageView, texture->textureSampler);
-
-		CreateGraphicsPipeline();
-	}
-
-	void RendererVulkan::CreateVertexBuffer(Mesh const& mesh)
-	{
-		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
-
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		CreateBuffer(stagingBuffer, stagingBufferMemory, VB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-		void* mappedData;
-		vkMapMemory(device, stagingBufferMemory, 0, VB_sizeBytes, 0, &mappedData);
-		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(VB_sizeBytes));
-		vkUnmapMemory(device, stagingBufferMemory);
-
-		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-		CreateBuffer(VB, vertexBufferMemory, VB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		CopyBuffer(stagingBuffer, VB, VB_sizeBytes);
-
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
-	}
-
 	void RendererVulkan::CreateIndexBuffer(Mesh const& mesh)
 	{
 		VkBuffer IB{};
@@ -841,8 +809,6 @@ namespace gg
 
 		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-		vkDestroyBuffer(device, VB, nullptr);
-		vkFreeMemory(device, vertexBufferMemory, nullptr);
 
 		/* destroys the associated shaders and textures */
 		model.reset();
@@ -928,6 +894,19 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
+	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
+	{
+		model = std::make_shared<ModelVulkan>(std::move(shader), texture, shared_from_this());
+		LoadMeshes(modelRelativePath, model);
+		model->CreateVertexBuffers();
+
+		CreateDescriptorPool();
+		std::shared_ptr<TextureVulkan> textureVulkan{ dynamic_pointer_cast<TextureVulkan>(model->texture) };
+		CreateDescriptorSets(textureVulkan->textureImageView, textureVulkan->textureSampler);
+
+		CreateGraphicsPipeline();
+	}
+
 	VkResult RendererVulkan::Present(uint32_t imageIndex)
 	{
 		VkPresentInfoKHR presentInfo{};
@@ -983,7 +962,7 @@ namespace gg
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-		VkBuffer vertexBuffers[]{ VB };
+		VkBuffer vertexBuffers[]{ model->GetVertexBuffer() };
 		VkDeviceSize offsets[]{ 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 

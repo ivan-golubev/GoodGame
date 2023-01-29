@@ -39,11 +39,6 @@ namespace gg
 		return inputManager;
 	}
 
-	std::shared_ptr<ModelLoader> Application::GetModelLoader()
-	{
-		return modelLoader;
-	}
-
 	std::shared_ptr<Renderer> Application::GetRenderer()
 	{
 		return renderer;

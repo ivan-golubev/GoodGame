@@ -31,13 +31,19 @@
     <ClCompile Include="modules\ShaderProgramVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="modules\ShaderProgramVulkan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\TextureVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="src\TextureVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\ModelVulkan.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ModelVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShaderProgramVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

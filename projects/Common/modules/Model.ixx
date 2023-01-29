@@ -7,9 +7,9 @@ import Vertex;
 import ShaderProgram;
 import Texture;
 
-namespace gg
+export namespace gg
 {
-	export struct Mesh
+	struct Mesh
 	{
 		Mesh() = default;
 		~Mesh() noexcept = default;
@@ -32,10 +32,10 @@ namespace gg
 		uint8_t* texture{ nullptr };
 	};
 
-	export struct Model
+	struct Model
 	{
 		Model(std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>);
-		~Model() noexcept = default;
+		virtual ~Model() noexcept = default;
 		Model(Model const&) = delete;
 		Model& operator=(Model const&) = delete;
 		Model(Model&&) noexcept;
