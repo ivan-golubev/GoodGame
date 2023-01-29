@@ -132,6 +132,13 @@ namespace gg
 		CreateSyncObjects();
 	}
 
+	std::shared_ptr<RendererVulkan> RendererVulkan::Get()
+	{
+		std::shared_ptr<Application> app{ Application::Get() };
+		std::shared_ptr<RendererVulkan> renderer{ dynamic_pointer_cast<RendererVulkan>(app->GetRenderer()) };
+		return renderer;
+	}
+
 	void RendererVulkan::CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions)
 	{
 		VkApplicationInfo appInfo{};
@@ -887,16 +894,13 @@ namespace gg
 
 	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& textureRelativePath)
 	{
-		std::shared_ptr<Renderer> thisRenderer{ shared_from_this() };
-		std::shared_ptr<RendererVulkan> thisRendererVulkan{ dynamic_pointer_cast<RendererVulkan>(thisRenderer) };
-
-		Texture* texture = new TextureVulkan(textureRelativePath, thisRendererVulkan);
+		Texture* texture = new TextureVulkan(textureRelativePath, device);
 		return std::shared_ptr<Texture>{ texture };
 	}
 
 	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
 	{
-		model = std::make_shared<ModelVulkan>(std::move(shader), texture, shared_from_this());
+		model = std::make_shared<ModelVulkan>(std::move(shader), texture, device);
 		LoadMeshes(modelRelativePath, model);
 		model->CreateVertexBuffers();
 

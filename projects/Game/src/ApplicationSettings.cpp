@@ -11,7 +11,7 @@ using gg::RendererVulkan;
 
 namespace gg
 {
-	Application MakeApplication(ApplicationSettings const& s)
+	std::shared_ptr<Application> MakeApplication(ApplicationSettings const& s)
 	{
 		std::shared_ptr<TimeManager> timeManager{ std::make_shared<TimeManager>() };
 		std::shared_ptr<InputManager> inputManager{ std::make_shared<InputManager>() };
@@ -22,6 +22,8 @@ namespace gg
 			? std::make_unique<RendererVulkan>(rendererSettings)
 			: nullptr // TODO: add D3D12 here
 		};
-		return Application(std::move(renderer), timeManager, inputManager);
+		Application::Init(std::move(renderer), timeManager, inputManager);
+
+		return Application::Get();
 	}
 } // namespace gg 

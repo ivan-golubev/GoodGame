@@ -5,14 +5,13 @@ module;
 export module TextureVulkan;
 
 import Texture;
-import RendererVulkan;
 
 export namespace gg
 {
 	class TextureVulkan : public Texture
 	{
 	public:
-		TextureVulkan(std::string const& textureRelativePath, std::shared_ptr<RendererVulkan>);
+		TextureVulkan(std::string const& textureRelativePath, VkDevice);
 		~TextureVulkan();
 
 		VkImageView textureImageView;
@@ -26,7 +25,7 @@ export namespace gg
 		void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
 		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
-		std::shared_ptr<RendererVulkan> renderer;
+		VkDevice device;
 		VkImage textureImage;
 		VkDeviceMemory textureImageMemory;
 	};

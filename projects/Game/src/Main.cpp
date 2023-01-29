@@ -18,7 +18,7 @@ import Texture;
 
 namespace
 {
-	void MainLoop(gg::Application& app)
+	void MainLoop(std::shared_ptr<gg::Application> app)
 	{
 		using namespace gg;
 
@@ -39,11 +39,11 @@ namespace
 				{
 					uint8_t windowEvent{ event.window.event };
 					if (windowEvent == SDL_WINDOWEVENT_RESIZED)
-						app.OnWindowResized(event.window.data1, event.window.data2);
+						app->OnWindowResized(event.window.data1, event.window.data2);
 					else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
-						app.OnWindowMinimized();
+						app->OnWindowMinimized();
 					else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
-						app.OnWindowRestored();
+						app->OnWindowRestored();
 				}
 				break;
 				case SDL_KEYDOWN:
@@ -54,7 +54,7 @@ namespace
 					if (key == SDLK_ESCAPE)
 						isRunning = false;
 					else
-						app.OnKeyPressed(key, event.type == SDL_KEYDOWN);
+						app->OnKeyPressed(key, event.type == SDL_KEYDOWN);
 					break;
 				}
 				default: // NOP
@@ -62,7 +62,7 @@ namespace
 				}
 			}
 			// All events processed - tick the world
-			app.Tick();
+			app->Tick();
 		}
 	}
 } // namespace
@@ -91,16 +91,18 @@ int main()
 	try
 	{
 		ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
-		Application app{ MakeApplication(appSettings) };
+		std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
 
 		{
-			std::shared_ptr<Renderer> renderer{ app.GetRenderer() };
+			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
+			// TODO: texture name should be read from the model itself
 			std::shared_ptr<Texture> texture{ renderer->LoadTexture("../../../assets/src/textures/CubeColor.tga") };
 			std::unique_ptr<ShaderProgram> shader{ renderer->LoadShader("shaders/textured_surface_VS", "shaders/textured_surface_PS") };
 			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), texture);
 		}
 		MainLoop(app);
+		Application::Destroy();
 	}
 	catch (std::exception const& e)
 	{

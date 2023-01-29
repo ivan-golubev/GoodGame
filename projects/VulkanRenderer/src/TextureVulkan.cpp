@@ -10,18 +10,17 @@ import RendererVulkan;
 
 namespace gg
 {
-	TextureVulkan::TextureVulkan(std::string const& textureRelativePath, std::shared_ptr<RendererVulkan> renderer)
+	TextureVulkan::TextureVulkan(std::string const& textureRelativePath, VkDevice d)
 		: Texture(textureRelativePath)
-		, renderer{ renderer }
+		, device{ d }
 	{
 		CreateTextureImage();
 		CreateTextureImageView();
-		textureSampler = renderer->CreateTextureSampler();
+		textureSampler = RendererVulkan::Get()->CreateTextureSampler();
 	}
 
 	TextureVulkan::~TextureVulkan()
 	{
-		VkDevice device = renderer->GetDevice();
 		vkDestroySampler(device, textureSampler, nullptr);
 		vkDestroyImageView(device, textureImageView, nullptr);
 		vkDestroyImage(device, textureImage, nullptr);
@@ -34,6 +33,7 @@ namespace gg
 		if (!pixels)
 			throw AssetLoadException("failed to load texture image!");
 
+		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkDevice device = renderer->GetDevice();
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -77,6 +77,7 @@ namespace gg
 		, VkImage& image
 		, VkDeviceMemory& imageMemory)
 	{
+		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkDevice device = renderer->GetDevice();
 
 		VkImageCreateInfo imageInfo{};
@@ -113,6 +114,7 @@ namespace gg
 
 	void TextureVulkan::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
+		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
 
 		VkImageMemoryBarrier barrier{};
@@ -164,6 +166,7 @@ namespace gg
 
 	void TextureVulkan::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
+		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
 
 		VkBufferImageCopy region{};
@@ -212,6 +215,6 @@ namespace gg
 
 	void TextureVulkan::CreateTextureImageView()
 	{
-		textureImageView = CreateImageView(renderer->GetDevice(), textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+		textureImageView = CreateImageView(RendererVulkan::Get()->GetDevice(), textureImage, VK_FORMAT_R8G8B8A8_SRGB);
 	}
 } // namespace gg

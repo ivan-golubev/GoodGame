@@ -11,15 +11,14 @@ import ErrorHandling;
 
 namespace gg
 {
-	ModelVulkan::ModelVulkan(std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t, std::shared_ptr<RendererVulkan> r)
+	ModelVulkan::ModelVulkan(std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t, VkDevice d)
 		: Model{ std::move(s), t }
-		, renderer{ r }
+		, device{ d }
 	{
 	}
 
 	ModelVulkan::~ModelVulkan()
 	{
-		VkDevice device = renderer->GetDevice();
 		vkDestroyBuffer(device, VB, nullptr);
 		vkFreeMemory(device, vertexBufferMemory, nullptr);
 	}
@@ -35,6 +34,7 @@ namespace gg
 
 	void ModelVulkan::CreateVertexBuffer(Mesh const& mesh)
 	{
+		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
 		VkDevice device = renderer->GetDevice();
 

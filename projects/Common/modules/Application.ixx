@@ -16,7 +16,11 @@ namespace gg
 	export class Application
 	{
 	public:
-		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
+		static std::shared_ptr<Application> Init(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
+		static void Destroy();
+		static bool IsInitialized();
+		static std::shared_ptr<Application> Get();
+
 		~Application();
 
 		Application(Application const&) = delete;
@@ -35,6 +39,10 @@ namespace gg
 		std::shared_ptr<TimeManager> GetTimeManager();
 		std::shared_ptr<Renderer> GetRenderer();
 	private:
+		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
+
+		static std::shared_ptr<Application> INSTANCE;
+
 		bool isPaused{ false };
 
 		std::shared_ptr<InputManager> inputManager;

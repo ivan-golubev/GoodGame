@@ -26,9 +26,9 @@ export namespace gg
 		ShaderProgramVulkan() = default;
 		ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice);
 
+		VkDevice device;
 		VkShaderModule vertexShader{ nullptr };
 		VkShaderModule fragmentShader{ nullptr };
-		VkDevice device{ nullptr };
 
 		friend class RendererVulkan;
 	};

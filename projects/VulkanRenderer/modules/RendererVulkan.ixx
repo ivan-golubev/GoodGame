@@ -32,6 +32,8 @@ namespace gg
 		RendererVulkan(RendererSettings const&);
 		~RendererVulkan();
 
+		static std::shared_ptr<RendererVulkan> Get();
+
 		RendererVulkan(RendererVulkan const&) = delete;
 		RendererVulkan& operator=(RendererVulkan const&) = delete;
 

@@ -1,5 +1,6 @@
 module;
 #include <SDL2/SDL_video.h>
+#include <memory>
 export module ApplicationSettings;
 
 import Application;
@@ -20,5 +21,5 @@ export namespace gg
 		RendererType rendererType;
 	};
 
-	Application MakeApplication(ApplicationSettings const&);
+	std::shared_ptr<Application> MakeApplication(ApplicationSettings const&);
 } // namespace gg 

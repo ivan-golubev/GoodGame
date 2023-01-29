@@ -4,14 +4,13 @@ module;
 export module ModelVulkan;
 
 import Model;
-import RendererVulkan;
 
 namespace gg
 {
 	export struct ModelVulkan : public Model
 	{
 	public:
-		ModelVulkan(std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>, std::shared_ptr<RendererVulkan>);
+		ModelVulkan(std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>, VkDevice);
 		~ModelVulkan() noexcept;
 
 		void CreateVertexBuffers();
@@ -19,7 +18,7 @@ namespace gg
 	private:
 		void CreateVertexBuffer(Mesh const&);
 
-		std::shared_ptr<RendererVulkan> renderer;
+		VkDevice device;
 		VkBuffer VB{};
 		VkDeviceMemory vertexBufferMemory{};
 	};

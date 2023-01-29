@@ -15,7 +15,7 @@ using std::chrono::nanoseconds;
 
 namespace gg
 {
-	export class Renderer : public std::enable_shared_from_this<Renderer>
+	export class Renderer
 	{
 	public:
 		Renderer() = default;

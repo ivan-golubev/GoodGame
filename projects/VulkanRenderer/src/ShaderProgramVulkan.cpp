@@ -7,6 +7,7 @@ module ShaderProgramVulkan;
 
 import Application;
 import ErrorHandling;
+import RendererVulkan;
 
 namespace
 {
@@ -29,10 +30,11 @@ namespace
 
 namespace gg
 {
-	ShaderProgramVulkan::ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice device)
+	ShaderProgramVulkan::ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice d)
 		: ShaderProgram(vertexShaderRelativePath, fragmentShaderRelativePath)
-		, device{ device }
+		, device { d }
 	{
+		VkDevice device{ RendererVulkan::Get()->GetDevice() };
 		vertexShader = createShaderModule(device, vertexShaderBlob);
 		fragmentShader = createShaderModule(device, fragmentShaderBlob);
 
