@@ -45,7 +45,8 @@ using std::chrono::nanoseconds;
 
 namespace
 {
-	std::string const shaderExtensionVulkan{ ".spv" };
+	std::string const shaderExtensionVulkan{ "spv" };
+	std::string const shadersLocation{ "shaders/spirv" };
 	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
 
 	constexpr std::array<char const*, 1> deviceExtensions
@@ -886,9 +887,11 @@ namespace gg
 		currentFrame = (currentFrame + 1) % maxFramesInFlight;
 	}
 
-	std::unique_ptr<ShaderProgram> RendererVulkan::LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	std::unique_ptr<ShaderProgram> RendererVulkan::LoadShader(std::string const& shaderName)
 	{
-		ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath + shaderExtensionVulkan, fragmentShaderRelativePath + shaderExtensionVulkan, device);
+		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
+		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
+		ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath, fragmentShaderRelativePath, device);
 		return std::unique_ptr<ShaderProgram>{ shader };
 	}
 

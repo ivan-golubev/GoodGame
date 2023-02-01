@@ -29,7 +29,7 @@ namespace gg
 
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(nanoseconds deltaTime) = 0;
-		virtual std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) = 0;
+		virtual std::unique_ptr<ShaderProgram> LoadShader(std::string const& shaderName) = 0;
 		virtual std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath) = 0;
 		virtual void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>) = 0;
 	};

@@ -42,7 +42,7 @@ namespace gg
 
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
-		std::unique_ptr<ShaderProgram> LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath) override;
+		std::unique_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
 		std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath) override;
 		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>) override;
 

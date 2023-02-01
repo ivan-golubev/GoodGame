@@ -31,7 +31,8 @@ using std::chrono::nanoseconds;
 
 namespace
 {
-	std::string const shaderExtensionVulkan{ ".cso" };
+	std::string const shaderExtensionD3D12{ "cso" };
+	std::string const shadersLocation{ "shaders/dxil" };
 	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
 
 	HWND getWindowHandle(SDL_Window* windowHandle)
@@ -297,8 +298,10 @@ namespace gg
 	//	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	//}
 
-	std::unique_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	std::unique_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
+		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
+		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		//ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath + shaderExtensionVulkan, fragmentShaderRelativePath + shaderExtensionVulkan, device);
 		//return std::unique_ptr<ShaderProgram>{ shader };
 		__debugbreak(); //TODO: implement
