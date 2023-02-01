@@ -90,7 +90,7 @@ int main()
 
 	try
 	{
-		ApplicationSettings const appSettings{ width, height, window, RendererType::D3D12 };
+		ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
 		std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the Vulkan application");
 
@@ -98,7 +98,7 @@ int main()
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
 			// TODO: texture name should be read from the model itself
 			std::shared_ptr<Texture> texture{ renderer->LoadTexture("../../../assets/src/textures/CubeColor.tga") };
-			std::unique_ptr<ShaderProgram> shader{ renderer->LoadShader("shaders/textured_surface_VS", "shaders/textured_surface_PS") };
+			std::unique_ptr<ShaderProgram> shader{ renderer->LoadShader("shaders/spirv/textured_surface_VS", "shaders/spirv/textured_surface_PS") };
 			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), texture);
 		}
 		MainLoop(app);

@@ -82,7 +82,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
+      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir) vulkan
+pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir) d3d12</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
@@ -109,7 +110,8 @@
       </EntryPointSymbol>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
+      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir) vulkan
+pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir) d3d12</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
@@ -136,7 +138,8 @@
       </EntryPointSymbol>
     </Link>
     <PostBuildEvent>
-      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)</Command>
+      <Command>pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir) vulkan
+pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir) d3d12</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Compiling shaders...</Message>
@@ -153,6 +156,10 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
+  <Target Name="DeleteShaders" AfterTargets="Clean">
+    <Message Text="Deleting compiled shaders"/>
+    <RemoveDir Directories="$(TargetDir)\shaders" />
+  </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{1e183599-3c64-448b-b0a2-ab14ab71285b}</Project>
