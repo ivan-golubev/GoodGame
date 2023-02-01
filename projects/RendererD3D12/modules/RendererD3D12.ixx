@@ -18,6 +18,7 @@ import TimeManager;
 import Model;
 import Renderer;
 import Texture;
+import ModelD3D12;
 
 using DirectX::XMMATRIX;
 using Microsoft::WRL::ComPtr;
@@ -52,6 +53,8 @@ namespace gg
 		void ResizeRenderTargets();
 		void ResizeDepthBuffer();
 		void ResizeWindow();
+		void CreateGraphicsPipeline();
+
 		void CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,
 			ComPtr<ID3D12Resource>& gpuResource,
@@ -92,24 +95,8 @@ namespace gg
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		uint32_t dsvDescriptorSize;
 
-		/* Vertex and Index Buffers for the cube. TODO: There is a better place for them. */
-		ComPtr<ID3D12Resource> VB_GPU_Resource;
-		ComPtr<ID3D12Resource> VB_CPU_Resource;
-		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
-
-		ComPtr<ID3D12Resource> IB_GPU_Resource;
-		ComPtr<ID3D12Resource> IB_CPU_Resource;
-		D3D12_INDEX_BUFFER_VIEW indexBufferView;
-
-		/* Shaders */
-		ComPtr<ID3DBlob> vertexShaderBlob;
-		ComPtr<ID3DBlob> pixelShaderBlob;
-
-		/* TODO: move this to a "game_object" class */
-		uint32_t indexCount;
-
 		// TODO: populate the model here
-		//std::shared_ptr<ModelD3D12> model;
+		std::shared_ptr<ModelD3D12> model;
 		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;
 

@@ -90,7 +90,7 @@ int main()
 
 	try
 	{
-		ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
+		ApplicationSettings const appSettings{ width, height, window, RendererType::D3D12 };
 		std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the application");
 

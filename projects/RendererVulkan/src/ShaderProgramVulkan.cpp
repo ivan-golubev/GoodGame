@@ -5,7 +5,6 @@ module;
 #include <vulkan/vulkan.h>
 module ShaderProgramVulkan;
 
-import Application;
 import ErrorHandling;
 import RendererVulkan;
 
@@ -32,7 +31,7 @@ namespace gg
 {
 	ShaderProgramVulkan::ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice d)
 		: ShaderProgram(vertexShaderRelativePath, fragmentShaderRelativePath)
-		, device { d }
+		, device{ d }
 	{
 		VkDevice device{ RendererVulkan::Get()->GetDevice() };
 		vertexShader = createShaderModule(device, vertexShaderBlob);

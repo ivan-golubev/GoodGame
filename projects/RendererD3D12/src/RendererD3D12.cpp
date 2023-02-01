@@ -24,6 +24,9 @@ import GlobalSettings;
 import Input;
 import PipelineStateStream;
 import Vertex;
+import ShaderProgram;
+import ShaderProgramD3D12;
+import ModelD3D12;
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -163,23 +166,17 @@ namespace gg
 		ResizeDepthBuffer();
 
 		/* Read shaders */
-		{
-			// TODO: stopped here, need to load shaders exactly as the VulkanRenderer is doing
-			__debugbreak();
-			ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_VS.cso", &vertexShaderBlob));
-			ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_PS.cso", &pixelShaderBlob));
-			// TODO: can I set the shader name ?
-		}
+		//{
+		//	ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_VS.cso", &vertexShaderBlob));
+		//	ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_PS.cso", &pixelShaderBlob));
+		//}
+
+		// Now shaders and geometry are loaded outside of the renderer, TODO: remove this temp code
+
 		//UploadGeometry();
-		__debugbreak(); // ?
+		//__debugbreak();
 
-		/* Specify the input layout */
-		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
-			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-		};
-
-		{
+		{ /* create the root signature */
 			/* Check for the highest supported root signature */
 			// TODO: move the root signature to HLSL and precompile it
 			D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData{};
@@ -214,111 +211,65 @@ namespace gg
 			);
 			SetName(rootSignature.Get(), L"RootSignature");
 		}
-
-		{ // PSO
-			D3D12_RT_FORMAT_ARRAY rtvFormats{};
-			rtvFormats.NumRenderTargets = 1;
-			rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-			CD3DX12_BLEND_DESC blendDesc{ D3D12_DEFAULT };
-			CD3DX12_RASTERIZER_DESC rasterizerDesc{ D3D12_DEFAULT };
-
-			PipelineStateStream pipelineStateStream{};
-			pipelineStateStream.pRootSignature = rootSignature.Get();
-			pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
-			pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-			pipelineStateStream.BlendState = blendDesc;
-			pipelineStateStream.RasterizerState = rasterizerDesc;
-			pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
-			pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
-			pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-			pipelineStateStream.RTVFormats = rtvFormats;
-
-			D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc{
-				sizeof(PipelineStateStream), &pipelineStateStream
-			};
-			ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&pipelineState)));
-			SetName(pipelineState.Get(), L"DefaultPipelineState");
-		}
-
 	}
 
-	// TODO: this is no longer needed, we load from a model now.
-	// but need to extract the command list stuff here
+	void RendererD3D12::CreateGraphicsPipeline()
+	{
+		BreakIfFalse(model->shaderProgram.get());
+		ShaderProgramD3D12* shaderProgram = dynamic_cast<ShaderProgramD3D12*>(model->shaderProgram.get());
 
-	//void RendererD3D12::UploadGeometry()
-	//{
-	//	/* Initialize the vertices. TODO: move to a separate class */
-	//	// TODO: in fact, cubes are not fun, read data from an .fbx
-	//	std::vector<Vertex> const vertices{
-	//		/*  x      y      z     w     r      g    b     a */
-	//		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f}, // 0
-	//		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f}, // 1
-	//		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f}, // 2
-	//		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f}, // 3
-	//		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f}, // 4
-	//		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f}, // 5
-	//		{ 1.0f,  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f}, // 6
-	//		{ 1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f}, // 7
-	//	};
-	//	std::vector<uint32_t> const indices{
-	//		0, 1, 2, 0, 2, 3,
-	//		4, 6, 5, 4, 7, 6,
-	//		4, 5, 1, 4, 1, 0,
-	//		3, 2, 6, 3, 6, 7,
-	//		1, 5, 6, 1, 6, 2,
-	//		4, 0, 3, 4, 3, 7
-	//	};
-	//	indexCount = static_cast<uint32_t>(indices.size());
+		/* Specify the input layout */
+		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
+			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		};
 
-	//	ThrowIfFailed(mCommandAllocator->Reset());
-	//	ThrowIfFailed(commandList->Reset(mCommandAllocator.Get(), pipelineState.Get()));
+		D3D12_RT_FORMAT_ARRAY rtvFormats{};
+		rtvFormats.NumRenderTargets = 1;
+		rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	//	uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
-	//	uint32_t const IB_sizeBytes = static_cast<uint32_t>(indices.size() * sizeof(uint32_t));
+		CD3DX12_BLEND_DESC blendDesc{ D3D12_DEFAULT };
+		CD3DX12_RASTERIZER_DESC rasterizerDesc{ D3D12_DEFAULT };
 
-	//	CreateBuffer(commandList, VB_GPU_Resource, VB_CPU_Resource, vertices.data(), VB_sizeBytes, L"VertexBuffer");
-	//	CreateBuffer(commandList, IB_GPU_Resource, IB_CPU_Resource, indices.data(), IB_sizeBytes, L"IndexBuffer");
+		PipelineStateStream pipelineStateStream{};
+		pipelineStateStream.pRootSignature = rootSignature.Get();
+		pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
+		pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		pipelineStateStream.BlendState = blendDesc;
+		pipelineStateStream.RasterizerState = rasterizerDesc;
+		pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get());
+		pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get());
+		pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+		pipelineStateStream.RTVFormats = rtvFormats;
 
-	//	ThrowIfFailed(commandList->Close());
-
-	//	/* Upload Vertex and Index buffers */
-	//	ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
-	//	mCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-	//	WaitForPreviousFrame();
-
-	//	/* Init the Vertex/Index buffer views */
-	//	vertexBufferView.BufferLocation = VB_GPU_Resource->GetGPUVirtualAddress();
-	//	vertexBufferView.SizeInBytes = VB_sizeBytes;
-	//	vertexBufferView.StrideInBytes = sizeof(Vertex);
-
-	//	indexBufferView.BufferLocation = IB_GPU_Resource->GetGPUVirtualAddress();
-	//	indexBufferView.SizeInBytes = IB_sizeBytes;
-	//	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	//}
+		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc{
+			sizeof(PipelineStateStream), &pipelineStateStream
+		};
+		ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&pipelineState)));
+		SetName(pipelineState.Get(), L"DefaultPipelineState");
+	}
 
 	std::unique_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
-		//ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath + shaderExtensionVulkan, fragmentShaderRelativePath + shaderExtensionVulkan, device);
-		//return std::unique_ptr<ShaderProgram>{ shader };
-		__debugbreak(); //TODO: implement
-		return {};
+		ShaderProgram* shader = new ShaderProgramD3D12(vertexShaderRelativePath, fragmentShaderRelativePath);
+		return std::unique_ptr<ShaderProgram>{ shader };
 	}
 
 	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& textureRelativePath)
 	{
 		//Texture* texture = new TextureVulkan(textureRelativePath, device);
 		//return std::shared_ptr<Texture>{ texture };
-		__debugbreak(); //TODO: implement
+		//__debugbreak(); //TODO: implement
 		return {};
 	}
 
 	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
 	{
+		// TODO: load the model here, the model will contain shaders
 		__debugbreak(); //TODO: implement		
+		CreateGraphicsPipeline();
 	}
 
 	void RendererD3D12::ResizeWindow()
@@ -506,8 +457,8 @@ namespace gg
 		/* Set all the state first */
 		{
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-			commandList->IASetIndexBuffer(&indexBufferView);
+			commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
+			commandList->IASetIndexBuffer(&model->indexBufferView);
 
 			commandList->RSSetViewports(1, &mViewport);
 			commandList->RSSetScissorRects(1, &mScissorRect);
@@ -535,7 +486,8 @@ namespace gg
 				float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
 				commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 				commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-				commandList->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);
+				__debugbreak(); // TODO: replace with DrawInstanced
+				commandList->DrawIndexedInstanced(model->indexCount, 1, 0, 0, 0);
 			}
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(
