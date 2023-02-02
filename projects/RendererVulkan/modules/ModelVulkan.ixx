@@ -1,5 +1,6 @@
 module;
 #include <memory>
+#include <string>
 #include <vulkan/vulkan.h>
 export module ModelVulkan;
 
@@ -10,16 +11,14 @@ namespace gg
 	export struct ModelVulkan : public Model
 	{
 	public:
-		ModelVulkan(std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>, VkDevice);
+		ModelVulkan(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>, VkDevice);
 		~ModelVulkan() noexcept;
 
-		void CreateVertexBuffers();
-		VkBuffer GetVertexBuffer() const;
 	private:
-		void CreateVertexBuffer(Mesh const&);
-
 		VkDevice device;
 		VkBuffer VB{};
 		VkDeviceMemory vertexBufferMemory{};
+
+		friend class RendererVulkan;
 	};
 } //namespace gg

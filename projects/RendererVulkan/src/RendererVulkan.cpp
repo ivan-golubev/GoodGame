@@ -30,7 +30,6 @@ import GlobalSettings;
 import Input;
 import Vertex;
 import VertexVulkan;
-import ModelLoader;
 import ShaderProgramVulkan;
 import Texture;
 import TextureVulkan;
@@ -903,15 +902,39 @@ namespace gg
 
 	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
 	{
-		model = std::make_shared<ModelVulkan>(std::move(shader), texture, device);
-		LoadMeshes(modelRelativePath, model);
-		model->CreateVertexBuffers();
+		model = std::make_shared<ModelVulkan>(modelRelativePath, std::move(shader), texture, device);
+		CreateVertexBuffer(model);
 
 		CreateDescriptorPool();
 		std::shared_ptr<TextureVulkan> textureVulkan{ dynamic_pointer_cast<TextureVulkan>(model->texture) };
 		CreateDescriptorSets(textureVulkan->textureImageView, textureVulkan->textureSampler);
 
 		CreateGraphicsPipeline();
+	}
+
+	void RendererVulkan::CreateVertexBuffer(std::shared_ptr<ModelVulkan> inputModel)
+	{
+		// TODO: handle multiple meshes properly, need to create multiple Vertex Buffers
+		BreakIfFalse(inputModel->meshes.size() < 2);
+		Mesh const& mesh{ inputModel->meshes[0] };
+
+		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
+
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		CreateBuffer(stagingBuffer, stagingBufferMemory, VB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+		void* mappedData;
+		vkMapMemory(device, stagingBufferMemory, 0, VB_sizeBytes, 0, &mappedData);
+		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(VB_sizeBytes));
+		vkUnmapMemory(device, stagingBufferMemory);
+
+		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		CreateBuffer(inputModel->VB, inputModel->vertexBufferMemory, VB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		CopyBuffer(stagingBuffer, inputModel->VB, VB_sizeBytes);
+
+		vkDestroyBuffer(device, stagingBuffer, nullptr);
+		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
 
 	VkResult RendererVulkan::Present(uint32_t imageIndex)
@@ -969,7 +992,7 @@ namespace gg
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-		VkBuffer vertexBuffers[]{ model->GetVertexBuffer() };
+		VkBuffer vertexBuffers[]{ model->VB };
 		VkDeviceSize offsets[]{ 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 

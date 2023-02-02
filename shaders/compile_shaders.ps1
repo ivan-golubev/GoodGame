@@ -8,7 +8,7 @@ if ($RendererType -eq "vulkan")
 	# Vulkan SDK Environment variable is set via VulkanSDK installer (https://vulkan.lunarg.com)
 	$global:Compiler = "${Env:VULKAN_SDK}\Bin\dxc.exe"
 	$global:OutputDir = "${TargetDir}\shaders\spirv"
-	$global:ShaderModel = "6_7"
+	$global:ShaderModel = "6_0"
 	$global:Extention = "spv"
 } 
 else 
@@ -16,7 +16,7 @@ else
 	# Windows 11 SDK (10.0.22000.0)
 	$global:Compiler = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\dxc.exe"
 	$global:OutputDir = "${TargetDir}\shaders\dxil"
-	$global:ShaderModel = "6_6"
+	$global:ShaderModel = "6_0"
 	$global:Extention = "cso"
 }
 

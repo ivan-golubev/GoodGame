@@ -1,7 +1,10 @@
 module;
+#include <string>
 #include <cstdint>
 #include <memory>
 module Model;
+
+import ModelLoader;
 
 namespace gg
 {
@@ -28,10 +31,11 @@ namespace gg
 		return *this;
 	}
 
-	Model::Model(std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
+	Model::Model(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
 		: shaderProgram{ std::move(s) }
 		, texture{ t }
 	{
+		LoadMeshes(modelRelativePath, *this);
 	}
 
 	Model::Model(Model&& other) noexcept

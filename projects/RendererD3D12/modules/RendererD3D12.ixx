@@ -54,6 +54,7 @@ namespace gg
 		void ResizeDepthBuffer();
 		void ResizeWindow();
 		void CreateGraphicsPipeline();
+		void CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
 
 		void CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,
@@ -95,7 +96,6 @@ namespace gg
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		uint32_t dsvDescriptorSize;
 
-		// TODO: populate the model here
 		std::shared_ptr<ModelD3D12> model;
 		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;

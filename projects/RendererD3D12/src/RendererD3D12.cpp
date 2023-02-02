@@ -267,9 +267,36 @@ namespace gg
 
 	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
 	{
-		// TODO: load the model here, the model will contain shaders
-		__debugbreak(); //TODO: implement		
+		model = std::make_shared<ModelD3D12>(modelRelativePath, std::move(shader), texture);
+		CreateVertexBuffer(model);
 		CreateGraphicsPipeline();
+	}
+
+	void RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> inputModel)
+	{
+		// TODO: handle multiple meshes properly, need to create multiple Vertex Buffers
+		BreakIfFalse(inputModel->meshes.size() < 2);
+		Mesh const& mesh{ inputModel->meshes[0] };
+
+		//ThrowIfFailed(commandAllocator->Reset());
+		//ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
+
+		//uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
+
+		//CreateBuffer(commandList, VB_GPU_Resource, VB_CPU_Resource, vertices.data(), VB_sizeBytes, L"VertexBuffer");
+
+		//ThrowIfFailed(commandList->Close());
+
+		///* Upload Vertex and Index buffers */
+		//ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
+		//commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+		//WaitForPreviousFrame();
+
+		///* Init the Vertex buffer view */
+		//vertexBufferView.BufferLocation = VB_GPU_Resource->GetGPUVirtualAddress();
+		//vertexBufferView.SizeInBytes = VB_sizeBytes;
+		//vertexBufferView.StrideInBytes = sizeof(Vertex);
 	}
 
 	void RendererD3D12::ResizeWindow()
@@ -458,7 +485,7 @@ namespace gg
 		{
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
-			commandList->IASetIndexBuffer(&model->indexBufferView);
+			//commandList->IASetIndexBuffer(&model->indexBufferView);
 
 			commandList->RSSetViewports(1, &mViewport);
 			commandList->RSSetScissorRects(1, &mScissorRect);
@@ -487,7 +514,7 @@ namespace gg
 				commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 				commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 				__debugbreak(); // TODO: replace with DrawInstanced
-				commandList->DrawIndexedInstanced(model->indexCount, 1, 0, 0, 0);
+				//commandList->DrawIndexedInstanced(model->indexCount, 1, 0, 0, 0);
 			}
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(

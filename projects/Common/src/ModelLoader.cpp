@@ -6,7 +6,6 @@ module;
 #include <DirectXMath.h>
 #include <filesystem>
 #include <format>
-#include <memory>
 #include <string>
 #include <vector>
 module ModelLoader;
@@ -55,7 +54,7 @@ namespace
 		return mesh;
 	}
 
-	bool LoadMeshesAssimp(std::string const& modelAbsolutePath, std::shared_ptr<Model> outModel)
+	bool LoadMeshesAssimp(std::string const& modelAbsolutePath, Model& outModel)
 	{
 		Assimp::Importer importer;
 		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
@@ -68,14 +67,14 @@ namespace
 		if (!scene)
 			throw AssetLoadException(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
 		for (unsigned int i{ 0 }; i < scene->mNumMeshes; ++i)
-			outModel->meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
+			outModel.meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
 		return true;
 	}
 }
 
 namespace gg
 {
-	void LoadMeshes(std::string const& modelRelativePath, std::shared_ptr<Model> model)
+	void LoadMeshes(std::string const& modelRelativePath, Model& model)
 	{
 		std::string modelFileAbsPath{ std::filesystem::absolute(modelRelativePath).generic_string() };
 		if (!LoadMeshesAssimp(modelFileAbsPath, model))

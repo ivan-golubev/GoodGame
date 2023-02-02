@@ -91,6 +91,8 @@ namespace gg
 
 		void CreateImageViews();
 
+		void CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
+
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
 		void CreateIndexBuffer(Mesh const&);

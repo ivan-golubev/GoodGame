@@ -1,4 +1,5 @@
 module;
+#include <string>
 #include <memory>
 module ModelD3D12;
 
@@ -6,8 +7,8 @@ import Model;
 
 namespace gg
 {
-	ModelD3D12::ModelD3D12(std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
-		: Model{ std::move(s), t }
+	ModelD3D12::ModelD3D12(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
+		: Model{ modelRelativePath, std::move(s), t }
 	{
 
 
@@ -38,32 +39,6 @@ namespace gg
 		//		4, 0, 3, 4, 3, 7
 		//	};
 		//	indexCount = static_cast<uint32_t>(indices.size());
-
-		//	ThrowIfFailed(mCommandAllocator->Reset());
-		//	ThrowIfFailed(commandList->Reset(mCommandAllocator.Get(), pipelineState.Get()));
-
-		//	uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
-		//	uint32_t const IB_sizeBytes = static_cast<uint32_t>(indices.size() * sizeof(uint32_t));
-
-		//	CreateBuffer(commandList, VB_GPU_Resource, VB_CPU_Resource, vertices.data(), VB_sizeBytes, L"VertexBuffer");
-		//	CreateBuffer(commandList, IB_GPU_Resource, IB_CPU_Resource, indices.data(), IB_sizeBytes, L"IndexBuffer");
-
-		//	ThrowIfFailed(commandList->Close());
-
-		//	/* Upload Vertex and Index buffers */
-		//	ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
-		//	mCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-		//	WaitForPreviousFrame();
-
-		//	/* Init the Vertex/Index buffer views */
-		//	vertexBufferView.BufferLocation = VB_GPU_Resource->GetGPUVirtualAddress();
-		//	vertexBufferView.SizeInBytes = VB_sizeBytes;
-		//	vertexBufferView.StrideInBytes = sizeof(Vertex);
-
-		//	indexBufferView.BufferLocation = IB_GPU_Resource->GetGPUVirtualAddress();
-		//	indexBufferView.SizeInBytes = IB_sizeBytes;
-		//	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 		//}
 	}
 
@@ -71,4 +46,5 @@ namespace gg
 	{
 
 	}
+
 } //namespace gg

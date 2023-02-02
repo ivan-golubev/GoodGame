@@ -1,4 +1,5 @@
 module;
+#include <string>
 #include <memory>
 #include <vector>
 export module Model;
@@ -34,7 +35,7 @@ export namespace gg
 
 	struct Model
 	{
-		Model(std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>);
+		Model(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>);
 		virtual ~Model() noexcept = default;
 		Model(Model const&) = delete;
 		Model& operator=(Model const&) = delete;
