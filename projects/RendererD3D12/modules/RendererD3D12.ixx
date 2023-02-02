@@ -65,7 +65,6 @@ namespace gg
 			std::wstring const& resourceName
 		);
 
-
 		uint32_t width{};
 		uint32_t height{};
 		HWND windowHandle{ nullptr };
@@ -90,6 +89,7 @@ namespace gg
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandles[maxFramesInFlight];
 		ComPtr<ID3D12DescriptorHeap> renderTargetViewHeap;
 		uint32_t rtvDescriptorSize;
+		uint32_t frameIndex{ 0 };
 
 		/* Depth */
 		ComPtr<ID3D12Resource> depthBuffer;
@@ -97,15 +97,18 @@ namespace gg
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		uint32_t dsvDescriptorSize;
 
+		/* Shader resources */
+		ComPtr<ID3D12DescriptorHeap> srvHeap;
+
 		std::shared_ptr<ModelD3D12> model;
 		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;
 
 		/* Synchronization objects */
 		ComPtr<ID3D12Fence> fence;
-		uint32_t frameIndex{ 0 };
 		uint64_t fenceValue{ 0 };
 		HANDLE fenceEvent{ nullptr };
+		// TODO: there should be two fences and two fence values
 	};
 
 } // namespace gg

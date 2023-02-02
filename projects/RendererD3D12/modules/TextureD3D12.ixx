@@ -18,8 +18,8 @@ export namespace gg
 		~TextureD3D12();
 
 	private:
-		ComPtr<ID3D12Resource> Texture_GPU_Resource;
-		ComPtr<ID3D12Resource> Texture_CPU_Resource;
+		ComPtr<ID3D12Resource> texture_CPU_Resource;
+		ComPtr<ID3D12Resource> texture_GPU_Resource;
 
 		friend class RendererD3D12;
 	};
