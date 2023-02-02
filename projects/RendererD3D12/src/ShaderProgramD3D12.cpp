@@ -1,5 +1,6 @@
 module;
 #include <string>
+#include <filesystem>
 #include <d3dcompiler.h>
 module ShaderProgramD3D12;
 
@@ -13,9 +14,10 @@ namespace gg
 
 	ShaderProgramD3D12::ShaderProgramD3D12(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
 	{
-		// TODO: read the textured surface shader later
-		ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_VS.cso", &vertexShaderBlob));
-		ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_PS.cso", &fragmentShaderBlob));
+		std::wstring vertexShaderAbsPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_wstring() };
+		std::wstring fragmentShaderAbsPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_wstring() };
+		ThrowIfFailed(D3DReadFileToBlob(vertexShaderAbsPath.data(), &vertexShaderBlob));
+		ThrowIfFailed(D3DReadFileToBlob(fragmentShaderAbsPath.data(), &fragmentShaderBlob));
 	}
 
 	ShaderProgramD3D12::ShaderProgramD3D12(ShaderProgramD3D12&& other) noexcept

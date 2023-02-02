@@ -139,7 +139,6 @@
     <ClCompile Include="src\Logging.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\ModelLoader.cpp" />
-    <ClCompile Include="src\ShaderProgram.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\TimeManager.cpp" />
   </ItemGroup>

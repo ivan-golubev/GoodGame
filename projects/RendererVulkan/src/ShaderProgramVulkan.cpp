@@ -2,6 +2,8 @@ module;
 #include <memory>
 #include <string>
 #include <utility>
+#include <fstream>
+#include <filesystem>
 #include <vulkan/vulkan.h>
 module ShaderProgramVulkan;
 
@@ -25,14 +27,36 @@ namespace
 		}
 		return shaderModule;
 	}
+
+	std::string readFile(std::string const& filename)
+	{
+		std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+		if (!file.is_open())
+		{
+			throw AssetLoadException(std::format("failed to open file: {}", filename));
+		}
+
+		size_t fileSize = static_cast<size_t>(file.tellg());
+		std::string buffer{};
+		buffer.resize(fileSize);
+		file.seekg(0);
+		file.read(buffer.data(), fileSize);
+		file.close();
+		return buffer;
+	}
 }
 
 namespace gg
 {
 	ShaderProgramVulkan::ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice d)
-		: ShaderProgram(vertexShaderRelativePath, fragmentShaderRelativePath)
+		: vertexShaderBlob{ readFile(std::filesystem::absolute(vertexShaderRelativePath).generic_string()) }
+		, fragmentShaderBlob{ readFile(std::filesystem::absolute(fragmentShaderRelativePath).generic_string()) }
 		, device{ d }
 	{
+		BreakIfFalse(vertexShaderBlob.size() != 0);
+		BreakIfFalse(fragmentShaderBlob.size() != 0);
+
 		VkDevice device{ RendererVulkan::Get()->GetDevice() };
 		vertexShader = createShaderModule(device, vertexShaderBlob);
 		fragmentShader = createShaderModule(device, fragmentShaderBlob);
