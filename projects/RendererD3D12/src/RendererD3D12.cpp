@@ -278,25 +278,25 @@ namespace gg
 		BreakIfFalse(inputModel->meshes.size() < 2);
 		Mesh const& mesh{ inputModel->meshes[0] };
 
-		//ThrowIfFailed(commandAllocator->Reset());
-		//ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
+		ThrowIfFailed(commandAllocator->Reset());
+		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
 
-		//uint32_t const VB_sizeBytes = static_cast<uint32_t>(vertices.size() * sizeof(Vertex));
+		uint64_t const VB_sizeBytes = mesh.VerticesSizeBytes();;
 
-		//CreateBuffer(commandList, VB_GPU_Resource, VB_CPU_Resource, vertices.data(), VB_sizeBytes, L"VertexBuffer");
+		CreateBuffer(commandList, inputModel->VB_GPU_Resource, inputModel->VB_CPU_Resource, mesh.vertices.data(), VB_sizeBytes, L"VertexBuffer");
 
-		//ThrowIfFailed(commandList->Close());
+		ThrowIfFailed(commandList->Close());
 
-		///* Upload Vertex and Index buffers */
-		//ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
-		//commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+		/* Upload Vertex and Index buffers */
+		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
+		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-		//WaitForPreviousFrame();
+		WaitForPreviousFrame();
 
-		///* Init the Vertex buffer view */
-		//vertexBufferView.BufferLocation = VB_GPU_Resource->GetGPUVirtualAddress();
-		//vertexBufferView.SizeInBytes = VB_sizeBytes;
-		//vertexBufferView.StrideInBytes = sizeof(Vertex);
+		/* Init the Vertex buffer view */
+		inputModel->vertexBufferView.BufferLocation = inputModel->VB_GPU_Resource->GetGPUVirtualAddress();
+		inputModel->vertexBufferView.SizeInBytes = static_cast<uint32_t>(VB_sizeBytes);
+		inputModel->vertexBufferView.StrideInBytes = sizeof(Vertex);
 	}
 
 	void RendererD3D12::ResizeWindow()
