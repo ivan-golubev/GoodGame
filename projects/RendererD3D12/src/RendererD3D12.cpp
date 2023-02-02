@@ -485,7 +485,6 @@ namespace gg
 		{
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
-			//commandList->IASetIndexBuffer(&model->indexBufferView);
 
 			commandList->RSSetViewports(1, &mViewport);
 			commandList->RSSetScissorRects(1, &mScissorRect);
@@ -513,8 +512,7 @@ namespace gg
 				float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
 				commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 				commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-				__debugbreak(); // TODO: replace with DrawInstanced
-				//commandList->DrawIndexedInstanced(model->indexCount, 1, 0, 0, 0);
+				commandList->DrawInstanced(model->meshes[0].GetVertexCount(), 1, 0, 0);
 			}
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(
