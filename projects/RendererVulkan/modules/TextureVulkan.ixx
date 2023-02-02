@@ -1,6 +1,5 @@
 module;
 #include <string>
-#include <memory>
 #include <vulkan/vulkan.h>
 export module TextureVulkan;
 

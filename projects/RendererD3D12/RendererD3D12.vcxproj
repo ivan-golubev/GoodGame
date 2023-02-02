@@ -128,10 +128,12 @@
     <ClCompile Include="modules\D3DHelpers.ixx" />
     <ClCompile Include="modules\PipelineStateStream.ixx" />
     <ClCompile Include="modules\ShaderProgramD3D12.ixx" />
+    <ClCompile Include="modules\TextureD3D12.ixx" />
     <ClCompile Include="src\ModelD3D12.cpp" />
     <ClCompile Include="src\RendererD3D12.cpp" />
     <ClCompile Include="src\D3DHelpers.cpp" />
     <ClCompile Include="src\ShaderProgramD3D12.cpp" />
+    <ClCompile Include="src\TextureD3D12.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

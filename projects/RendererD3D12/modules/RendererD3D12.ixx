@@ -65,13 +65,14 @@ namespace gg
 			std::wstring const& resourceName
 		);
 
-		static constexpr int8_t mFrameCount{ 2 };
 
 		uint32_t width{};
 		uint32_t height{};
 		HWND windowHandle{ nullptr };
+		SDL_Window* windowHandleSDL{ nullptr };
 
-		bool mWindowResized{ true };
+		static constexpr int8_t maxFramesInFlight{ 2 };
+		bool isWindowResized{ true };
 
 		D3D12_VIEWPORT mViewport;
 		D3D12_RECT mScissorRect;
@@ -85,8 +86,8 @@ namespace gg
 		ComPtr<ID3D12RootSignature> rootSignature;
 
 		/* Render Targets */
-		ComPtr<ID3D12Resource> renderTargets[mFrameCount];
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandles[mFrameCount];
+		ComPtr<ID3D12Resource> renderTargets[maxFramesInFlight];
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandles[maxFramesInFlight];
 		ComPtr<ID3D12DescriptorHeap> renderTargetViewHeap;
 		uint32_t rtvDescriptorSize;
 

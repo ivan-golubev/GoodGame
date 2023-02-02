@@ -11,6 +11,7 @@ module;
 #include <wrl.h>
 #include <vector>
 #include <SDL2/SDL_syswm.h>
+#include <SDL2/SDL.h>
 
 #include <windows.h>
 #include <WinPixEventRuntime/pix3.h> // has to be the last - depends on types in windows.h
@@ -27,6 +28,7 @@ import Vertex;
 import ShaderProgram;
 import ShaderProgramD3D12;
 import ModelD3D12;
+import TextureD3D12;
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -53,6 +55,7 @@ namespace gg
 		: width{ rs.width }
 		, height{ rs.height }
 		, windowHandle{ getWindowHandle(rs.windowHandle) }
+		, windowHandleSDL{ rs.windowHandle }
 		, timeManager{ rs.timeManager }
 		, camera{ std::make_unique<Camera>(rs.inputManager) }
 		, mScissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
@@ -97,7 +100,7 @@ namespace gg
 
 		{ /* Create a swap chain */
 			DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-			swapChainDesc.BufferCount = mFrameCount;
+			swapChainDesc.BufferCount = maxFramesInFlight;
 			swapChainDesc.Width = width;
 			swapChainDesc.Height = height;
 			swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -122,7 +125,7 @@ namespace gg
 
 		{ /* Describe and create a render target view (RTV) descriptor heap. */
 			D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-			rtvHeapDesc.NumDescriptors = mFrameCount;
+			rtvHeapDesc.NumDescriptors = maxFramesInFlight;
 			rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 			rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 			ThrowIfFailed(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&renderTargetViewHeap)));
@@ -164,17 +167,6 @@ namespace gg
 		}
 		/* Create depth buffer */
 		ResizeDepthBuffer();
-
-		/* Read shaders */
-		//{
-		//	ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_VS.cso", &vertexShaderBlob));
-		//	ThrowIfFailed(D3DReadFileToBlob(L"shaders//colored_surface_PS.cso", &pixelShaderBlob));
-		//}
-
-		// Now shaders and geometry are loaded outside of the renderer, TODO: remove this temp code
-
-		//UploadGeometry();
-		//__debugbreak();
 
 		{ /* create the root signature */
 			/* Check for the highest supported root signature */
@@ -259,10 +251,24 @@ namespace gg
 
 	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& textureRelativePath)
 	{
-		//Texture* texture = new TextureVulkan(textureRelativePath, device);
-		//return std::shared_ptr<Texture>{ texture };
-		//__debugbreak(); //TODO: implement
-		return {};
+		TextureD3D12* texture = new TextureD3D12(textureRelativePath);
+
+		/* uploading the texture  */
+		ThrowIfFailed(commandAllocator->Reset());
+		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
+
+		CreateBuffer(commandList, texture->Texture_GPU_Resource, texture->Texture_CPU_Resource, texture->pixels, texture->SizeBytes(), L"TextureBuffer");
+		ThrowIfFailed(commandList->Close());
+
+		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
+		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+		//__debugbreak();
+		// how to create a sampler ?
+
+		WaitForPreviousFrame();
+
+		return std::shared_ptr<Texture>{ texture };
 	}
 
 	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
@@ -281,10 +287,9 @@ namespace gg
 		ThrowIfFailed(commandAllocator->Reset());
 		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
 
-		uint64_t const VB_sizeBytes = mesh.VerticesSizeBytes();;
+		uint64_t const VB_sizeBytes = mesh.VerticesSizeBytes();
 
 		CreateBuffer(commandList, inputModel->VB_GPU_Resource, inputModel->VB_CPU_Resource, mesh.vertices.data(), VB_sizeBytes, L"VertexBuffer");
-
 		ThrowIfFailed(commandList->Close());
 
 		/* Upload Vertex and Index buffers */
@@ -304,17 +309,17 @@ namespace gg
 		mViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		ResizeRenderTargets();
 		ResizeDepthBuffer();
-		mWindowResized = false;
+		isWindowResized = false;
 	}
 
 	void RendererD3D12::ResizeRenderTargets()
 	{
-		for (uint32_t i{ 0 }; i < mFrameCount; ++i)
+		for (uint32_t i{ 0 }; i < maxFramesInFlight; ++i)
 			renderTargets[i].Reset();
 
-		ThrowIfFailed(swapChain->ResizeBuffers(mFrameCount, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
+		ThrowIfFailed(swapChain->ResizeBuffers(maxFramesInFlight, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
 
-		for (uint8_t n = 0; n < mFrameCount; n++)
+		for (uint8_t n = 0; n < maxFramesInFlight; n++)
 		{
 			ThrowIfFailed(swapChain->GetBuffer(n, IID_PPV_ARGS(&renderTargets[n])));
 			rtvHandles[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), n, rtvDescriptorSize);
@@ -413,6 +418,12 @@ namespace gg
 		 cleaned up by the destructor. */
 		WaitForPreviousFrame();
 		CloseHandle(fenceEvent);
+
+		/* destroys the associated shaders and textures */
+		model.reset();
+
+		SDL_DestroyWindow(windowHandleSDL);
+		SDL_Quit();
 	}
 
 	std::shared_ptr<RendererD3D12> RendererD3D12::Get()
@@ -424,14 +435,14 @@ namespace gg
 
 	void RendererD3D12::OnWindowResized(uint32_t width, uint32_t height)
 	{
-		mWindowResized = true;
+		isWindowResized = true;
 		width = std::max(8u, width);
 		height = std::max(8u, height);
 	}
 
 	void RendererD3D12::Render(nanoseconds deltaTime)
 	{
-		if (mWindowResized)
+		if (isWindowResized)
 		{
 			ResizeWindow();
 			float windowAspectRatio{ width / static_cast<float>(height) };

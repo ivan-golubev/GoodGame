@@ -122,7 +122,7 @@ namespace gg
 
 		uint32_t width{};
 		uint32_t height{};
-		SDL_Window* windowHandle{ nullptr };
+		SDL_Window* windowHandleSDL{ nullptr };
 
 		VkCommandPool commandPool{};
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers;

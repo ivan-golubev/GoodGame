@@ -93,15 +93,15 @@ namespace gg
 	RendererVulkan::RendererVulkan(RendererSettings const& rs)
 		: width{ rs.width }
 		, height{ rs.height }
-		, windowHandle{ rs.windowHandle }
+		, windowHandleSDL{ rs.windowHandle }
 		, timeManager{ rs.timeManager }
 		, camera{ std::make_unique<Camera>(rs.inputManager) }
 	{
 		uint32_t extension_count;
-		if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, nullptr))
+		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extension_count, nullptr))
 			throw VulkanInitException("Could not get the number of required instance extensions from SDL.");
 		std::vector<char const*> extensions(extension_count);
-		if (!SDL_Vulkan_GetInstanceExtensions(windowHandle, &extension_count, extensions.data()))
+		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extension_count, extensions.data()))
 			throw VulkanInitException("Could not get the names of required instance extensions from SDL.");
 
 		std::vector<char const*> layers;
@@ -113,7 +113,7 @@ namespace gg
 		CreateVkInstance(layers, extensions);
 
 		/* Create a surface for rendering */
-		if (!SDL_Vulkan_CreateSurface(windowHandle, instance, &surface))
+		if (!SDL_Vulkan_CreateSurface(windowHandleSDL, instance, &surface))
 			throw VulkanInitException("Could not create a Vulkan surface.");
 
 		SelectPhysicalDevice();
@@ -171,7 +171,7 @@ namespace gg
 			return capabilities.currentExtent;
 
 		int width, height;
-		SDL_Vulkan_GetDrawableSize(windowHandle, &width, &height);
+		SDL_Vulkan_GetDrawableSize(windowHandleSDL, &width, &height);
 
 		return
 		{
@@ -824,7 +824,7 @@ namespace gg
 		vkDestroyDevice(device, nullptr);
 		vkDestroyInstance(instance, nullptr);
 
-		SDL_DestroyWindow(windowHandle);
+		SDL_DestroyWindow(windowHandleSDL);
 		SDL_Quit();
 	}
 
