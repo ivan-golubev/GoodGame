@@ -129,7 +129,7 @@ namespace gg
 			rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 			rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 			ThrowIfFailed(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&renderTargetViewHeap)));
-
+			SetName(renderTargetViewHeap.Get(), L"RTV_DescriptorHeap");
 			rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		}
 
@@ -139,6 +139,7 @@ namespace gg
 			srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 			srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 			ThrowIfFailed(device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap)));
+			SetName(srvHeap.Get(), L"SRV_DescriptorHeap");
 		}
 
 		/* Create render targets */
@@ -200,14 +201,14 @@ namespace gg
 			rootParameters[1].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 			D3D12_STATIC_SAMPLER_DESC sampler{};
-			sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-			sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-			sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-			sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+			sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+			sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+			sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+			sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 			sampler.MipLODBias = 0;
 			sampler.MaxAnisotropy = 0;
-			sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-			sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+			sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+			sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 			sampler.MinLOD = 0.0f;
 			sampler.MaxLOD = D3D12_FLOAT32_MAX;
 			sampler.ShaderRegister = 1;
@@ -304,6 +305,7 @@ namespace gg
 			nullptr,
 			IID_PPV_ARGS(&texture->texture_GPU_Resource)
 		));
+		SetName(texture->texture_GPU_Resource.Get(), texture->GetName());
 		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(texture->texture_GPU_Resource.Get(), 0, 1);
 
 		CD3DX12_HEAP_PROPERTIES const uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
@@ -316,10 +318,10 @@ namespace gg
 			nullptr,
 			IID_PPV_ARGS(&texture->texture_CPU_Resource)));
 
-		/* Copy data to the intermediate upload heapand then schedule a copy
+		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the Texture2D. */
-		D3D12_SUBRESOURCE_DATA textureData = {};
-		textureData.pData = &texture->pixels;
+		D3D12_SUBRESOURCE_DATA textureData{};
+		textureData.pData = texture->pixels;
 		textureData.RowPitch = texture->width * texture->channels;
 		textureData.SlicePitch = textureData.RowPitch * texture->height;
 
@@ -577,11 +579,12 @@ namespace gg
 
 			commandList->SetPipelineState(pipelineState.Get());
 			commandList->SetGraphicsRootSignature(rootSignature.Get());
-			commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
-			commandList->SetGraphicsRootDescriptorTable(1, srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 			ID3D12DescriptorHeap* ppHeaps[]{ srvHeap.Get() };
 			commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+			commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
+			commandList->SetGraphicsRootDescriptorTable(1, srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 			commandList->OMSetRenderTargets(1, &rtvHandles[frameIndex], true, &dsvHandle);
 		}

@@ -11,12 +11,6 @@ namespace gg
 	TextureD3D12::TextureD3D12(std::string const& textureRelativePath)
 		: Texture(textureRelativePath)
 	{
-		// need to create image view and sampler
-		// and transition the resource state
-	}
-
-	TextureD3D12::~TextureD3D12()
-	{
 	}
 
 } // namespace gg

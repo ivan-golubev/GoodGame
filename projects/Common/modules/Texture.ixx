@@ -11,6 +11,8 @@ namespace gg
 		virtual ~Texture();
 		uint64_t SizeBytes() const;
 
+		std::wstring GetName();
+
 		std::string const absPath;
 		uint32_t width;
 		uint32_t height;

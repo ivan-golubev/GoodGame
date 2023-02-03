@@ -15,7 +15,6 @@ export namespace gg
 	{
 	public:
 		TextureD3D12(std::string const& textureRelativePath);
-		~TextureD3D12();
 
 	private:
 		ComPtr<ID3D12Resource> texture_CPU_Resource;

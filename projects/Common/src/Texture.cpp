@@ -16,6 +16,12 @@ namespace gg
 		this->channels = channels;
 	}
 
+	std::wstring Texture::GetName()
+	{
+		std::wstring baseName{ std::filesystem::path(absPath).stem() };
+		return L"Texture_" + baseName;
+	}
+
 	Texture::~Texture()
 	{
 		stbi_image_free(pixels);
