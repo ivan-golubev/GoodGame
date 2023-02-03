@@ -348,8 +348,9 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
-	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
+	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader)
 	{
+		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
 		model = std::make_shared<ModelD3D12>(modelRelativePath, std::move(shader), texture);
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline();

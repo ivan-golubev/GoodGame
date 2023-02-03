@@ -900,8 +900,9 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
-	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture)
+	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader)
 	{
+		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
 		model = std::make_shared<ModelVulkan>(modelRelativePath, std::move(shader), texture, device);
 		CreateVertexBuffer(model);
 

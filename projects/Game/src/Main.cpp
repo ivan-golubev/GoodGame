@@ -96,10 +96,8 @@ int main()
 
 		{
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
-			// TODO: texture name should be read from the model itself
-			std::shared_ptr<Texture> texture{ renderer->LoadTexture("../../../assets/src/textures/CubeColor.tga") };
 			std::unique_ptr<ShaderProgram> shader{ renderer->LoadShader("textured_surface") };
-			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), texture);
+			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader));
 		}
 		MainLoop(app);
 		Application::Destroy();
