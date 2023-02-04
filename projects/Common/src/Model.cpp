@@ -2,9 +2,14 @@ module;
 #include <string>
 #include <cstdint>
 #include <memory>
+#include <DirectXMath.h>
 module Model;
 
 import ModelLoader;
+
+using DirectX::XMMATRIX;
+using DirectX::XMVECTOR;
+using DirectX::XMMatrixTranslationFromVector;
 
 namespace gg
 {
@@ -56,6 +61,11 @@ namespace gg
 			texture = std::move(other.texture);
 		}
 		return *this;
+	}
+
+	void Model::SetPosition(XMVECTOR& position)
+	{
+		translation = XMMatrixTranslationFromVector(position);
 	}
 
 } // namespace gg

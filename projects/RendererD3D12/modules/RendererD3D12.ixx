@@ -21,6 +21,7 @@ import Texture;
 import ModelD3D12;
 
 using DirectX::XMMATRIX;
+using DirectX::XMVECTOR;
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
 
@@ -44,7 +45,7 @@ namespace gg
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
 		std::unique_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
-		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>) override;
+		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, XMVECTOR& position) override;
 
 	private:
 		void PopulateCommandList(XMMATRIX const& mvpMatrix);

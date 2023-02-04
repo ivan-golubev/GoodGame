@@ -37,6 +37,7 @@ import ModelLoader;
 import ModelVulkan;
 
 using DirectX::XMMATRIX;
+using DirectX::XMVECTOR;
 using DirectX::XMMatrixRotationY;
 using DirectX::XMMatrixRotationZ;
 using DirectX::XMMatrixMultiply;
@@ -854,7 +855,7 @@ namespace gg
 
 		/* Rotate the model */
 		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
-		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)) };
+		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)), model->translation) };
 
 		camera->UpdateCamera(deltaTime);
 		XMMATRIX const& viewMatrix{ camera->GetViewMatrix() };
@@ -900,10 +901,11 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
-	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader)
+	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, XMVECTOR& position)
 	{
 		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
 		model = std::make_shared<ModelVulkan>(modelRelativePath, std::move(shader), texture, device);
+		model->SetPosition(position);
 		CreateVertexBuffer(model);
 
 		CreateDescriptorPool();

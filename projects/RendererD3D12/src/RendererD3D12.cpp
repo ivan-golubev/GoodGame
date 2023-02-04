@@ -348,10 +348,11 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
-	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader)
+	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, XMVECTOR& position)
 	{
 		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
 		model = std::make_shared<ModelD3D12>(modelRelativePath, std::move(shader), texture);
+		model->SetPosition(position);
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline();
 	}
@@ -529,7 +530,7 @@ namespace gg
 
 		/* Rotate the model */
 		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
-		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)) };
+		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)), model->translation) };
 
 		camera->UpdateCamera(deltaTime);
 		XMMATRIX const& viewMatrix{ camera->GetViewMatrix() };

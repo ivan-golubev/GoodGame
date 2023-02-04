@@ -2,11 +2,15 @@ module;
 #include <string>
 #include <memory>
 #include <vector>
+#include <DirectXMath.h>
 export module Model;
 
 import Vertex;
 import ShaderProgram;
 import Texture;
+
+using DirectX::XMVECTOR;
+using DirectX::XMMATRIX;
 
 export namespace gg
 {
@@ -41,6 +45,10 @@ export namespace gg
 		Model& operator=(Model const&) = delete;
 		Model(Model&&) noexcept;
 		Model& operator=(Model&&) noexcept;
+
+		XMMATRIX translation{};
+
+		void SetPosition(XMVECTOR& position);
 
 		std::unique_ptr<ShaderProgram> shaderProgram;
 		std::shared_ptr<Texture> texture;

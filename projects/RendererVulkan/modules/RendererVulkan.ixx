@@ -20,6 +20,7 @@ import Renderer;
 import Texture;
 
 using DirectX::XMMATRIX;
+using DirectX::XMVECTOR;
 using std::chrono::nanoseconds;
 
 namespace gg
@@ -43,7 +44,7 @@ namespace gg
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
 		std::unique_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
-		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>) override;
+		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, XMVECTOR& position) override;
 
 		VkDevice GetDevice() const;
 

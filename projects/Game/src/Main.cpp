@@ -5,6 +5,7 @@
 #include <thread>
 #include <cassert>
 #include <memory>
+#include <DirectXMath.h>
 
 import Application;
 import ApplicationSettings;
@@ -15,6 +16,8 @@ import ModelLoader;
 import ShaderProgram;
 import ShaderProgramVulkan;
 import Texture;
+
+using DirectX::XMVECTOR;
 
 namespace
 {
@@ -97,7 +100,8 @@ int main()
 		{
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
 			std::unique_ptr<ShaderProgram> shader{ renderer->LoadShader("textured_surface") };
-			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader));
+			XMVECTOR position{ 0.f, 0.f, 0.f };
+			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), position);
 		}
 		MainLoop(app);
 		Application::Destroy();
