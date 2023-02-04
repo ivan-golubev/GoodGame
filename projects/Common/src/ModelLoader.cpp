@@ -8,6 +8,7 @@ module;
 #include <format>
 #include <string>
 #include <vector>
+#include <tiny_gltf.h>
 module ModelLoader;
 
 import Logging;
@@ -19,6 +20,9 @@ using DirectX::XMFLOAT2;
 using gg::Mesh;
 using gg::Model;
 using gg::AssetLoadException;
+using gg::DebugLog;
+using gg::DebugLevel;
+using gg::BreakIfFalse;
 
 namespace
 {
@@ -70,6 +74,77 @@ namespace
 			outModel.meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
 		return true;
 	}
+
+	bool LoadMeshesTinyGltf(std::string const& modelAbsolutePath, Model& outModel)
+	{
+		tinygltf::Model model;
+		tinygltf::TinyGLTF loader;
+		std::string err;
+		std::string warn;
+
+		/* assume the input model is GLTF 2.0 binary (.glb) */
+		BreakIfFalse(modelAbsolutePath.ends_with(".glb"));
+		bool loadResult = loader.LoadBinaryFromFile(&model, &err, &warn, modelAbsolutePath);
+		if (!warn.empty())
+			DebugLog(DebugLevel::Error, warn);
+
+		if (!err.empty())
+			DebugLog(DebugLevel::Error, err);
+
+		if (!loadResult)
+		{
+			DebugLog(DebugLevel::Error, "Failed to parse glTF\n");
+			return false;
+		}
+		/* At least one mesh should be in the model */
+		BreakIfFalse(model.meshes.size() > 0);
+		tinygltf::Mesh& gltfMesh = model.meshes[0];
+
+		/* At least one primitive should be in the mesh */
+		BreakIfFalse(gltfMesh.primitives.size() > 0);
+		tinygltf::Primitive& primitive = gltfMesh.primitives[0];
+
+		/* Expecting two attributes - position and texture coordinates */
+		BreakIfFalse(primitive.attributes.size() >= 2);
+		int positionAccessorIx = primitive.attributes.at("POSITION");
+		int texcoordAccessorIx = primitive.attributes.at("TEXCOORD_0");
+
+		tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorIx];
+		tinygltf::Accessor& texcoordAccessor = model.accessors[texcoordAccessorIx];
+		/* expect the same number of positions and tex coordinates == vertex count */
+		BreakIfFalse(positionAccessor.count == texcoordAccessor.count);
+
+		int positionBufferIx = model.bufferViews[positionAccessor.bufferView].buffer;
+		int texcoordBufferIx = model.bufferViews[texcoordAccessor.bufferView].buffer;
+
+		/* expect positions and texture coordinates in one buffer */
+		BreakIfFalse(positionBufferIx == texcoordBufferIx);
+		tinygltf::Buffer& buffer = model.buffers[positionBufferIx];
+
+		int offsetBytes = (3 + 2) * sizeof(float); // each vertex has xyz position and uv texture coordinates = 5 floats
+		Mesh outMesh{};
+		for (int i = 0; i < positionAccessor.count; ++i)
+		{
+			int offset = i * offsetBytes;
+			float x, y, z, u, v;
+			memcpy(&x, &buffer.data[offset], sizeof(float));
+			memcpy(&y, &buffer.data[offset + sizeof(float)], sizeof(float));
+			memcpy(&z, &buffer.data[offset + 2 * sizeof(float)], sizeof(float));
+			memcpy(&u, &buffer.data[offset + 3 * sizeof(float)], sizeof(float));
+			memcpy(&v, &buffer.data[offset + 4 * sizeof(float)], sizeof(float));
+			outMesh.vertices.emplace_back(
+				x,
+				y,
+				z,
+				1.0f, // w
+				u,
+				v
+			);
+		}
+		outModel.meshes.emplace_back(std::move(outMesh));
+		//gltfMesh.name
+		return true;
+	}
 }
 
 namespace gg
@@ -77,7 +152,8 @@ namespace gg
 	void LoadMeshes(std::string const& modelRelativePath, Model& model)
 	{
 		std::string modelFileAbsPath{ std::filesystem::absolute(modelRelativePath).generic_string() };
-		if (!LoadMeshesAssimp(modelFileAbsPath, model))
+		//if (!LoadMeshesAssimp(modelFileAbsPath, model))
+		if (!LoadMeshesTinyGltf(modelFileAbsPath, model))
 			throw AssetLoadException(std::format("Failed to read the input model: {}", modelFileAbsPath));
 	}
 

@@ -64,7 +64,7 @@
   <Import Project="$(SolutionDir)\props\Global.props" />
   <Import Project="$(SolutionDir)\props\Vulkan.props" />
   <Import Project="$(SolutionDir)\props\Assimp.props" />
-  <Import Project="$(SolutionDir)\props\StbImage.props" />
+  <Import Project="$(SolutionDir)\props\TinyGLTF.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -119,6 +119,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\lib\tinygltf\tiny_gltf.cc" />
     <ClCompile Include="modules\Application.ixx" />
     <ClCompile Include="modules\Camera.ixx" />
     <ClCompile Include="modules\ErrorHandling.ixx" />

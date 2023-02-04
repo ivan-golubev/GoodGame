@@ -8,6 +8,12 @@
     <Filter Include="Modules">
       <UniqueIdentifier>{0cf92c53-d22d-4ec7-829e-2e1650108517}</UniqueIdentifier>
     </Filter>
+    <Filter Include="External Sources">
+      <UniqueIdentifier>{19e2e1cf-cbdf-4b5e-9f6d-04f9b0e2b4e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External Sources\tinygltf">
+      <UniqueIdentifier>{2a3d315a-006a-4b03-8fe6-2fad675fa4f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="modules\Application.ixx">
@@ -75,6 +81,9 @@
     </ClCompile>
     <ClCompile Include="src\Texture.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\lib\tinygltf\tiny_gltf.cc">
+      <Filter>External Sources\tinygltf</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
