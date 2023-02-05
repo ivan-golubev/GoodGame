@@ -11,9 +11,11 @@ import TimeManager;
 import Input;
 import ShaderProgram;
 import Texture;
+import Camera;
 
 using std::chrono::nanoseconds;
 using DirectX::XMVECTOR;
+using DirectX::XMMATRIX;
 
 namespace gg
 {
@@ -43,5 +45,7 @@ namespace gg
 		std::shared_ptr<TimeManager> timeManager;
 		std::shared_ptr<InputManager> inputManager;
 	};
+
+	export XMMATRIX UpdateMVP(XMMATRIX modelTranslation, double currentTimeSec, Camera const&);
 
 } // namespace gg

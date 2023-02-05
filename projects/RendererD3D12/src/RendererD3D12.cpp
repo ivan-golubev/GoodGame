@@ -540,19 +540,11 @@ namespace gg
 			camera->UpdateProjectionMatrix(windowAspectRatio);
 		}
 
-		// TODO: render all the models in the list
-		auto& model = models[0];
-
-		/* Rotate the model */
-		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
-		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)), model->translation) };
-
 		camera->UpdateCamera(deltaTime);
-		XMMATRIX const& viewMatrix{ camera->GetViewMatrix() };
-		XMMATRIX const& mProjectionMatrix{ camera->GetProjectionMatrix() };
 
-		XMMATRIX mvpMatrix{ XMMatrixMultiply(modelMatrix, viewMatrix) };
-		mvpMatrix = XMMatrixMultiply(mvpMatrix, mProjectionMatrix);
+		// just rendering the first model for now. TODO: render the entire list
+		std::shared_ptr<ModelD3D12> model = models[0];
+		XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
 
 		/* Record all the commands we need to render the scene into the command list. */
 		PopulateCommandList(mvpMatrix, model->pipelineState);

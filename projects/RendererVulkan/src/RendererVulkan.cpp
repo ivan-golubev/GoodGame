@@ -7,7 +7,6 @@ module;
 #include <format>
 #include <glm/glm.hpp>
 #include <limits>
-#include <numbers>
 #include <optional>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -853,19 +852,11 @@ namespace gg
 		else if (result != VK_SUCCESS)
 			throw VulkanRenderException("failed to acquire swap chain image!");
 
-		// just rendering the first model for now. TODO: render the entire list
-		auto& model = models[0];
-
-		/* Rotate the model */
-		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
-		XMMATRIX const modelMatrix{ XMMatrixMultiply(XMMatrixMultiply(XMMatrixRotationY(rotation), XMMatrixRotationZ(rotation)), model->translation) };
-
 		camera->UpdateCamera(deltaTime);
-		XMMATRIX const& viewMatrix{ camera->GetViewMatrix() };
-		XMMATRIX const& projectionMatrix{ camera->GetProjectionMatrix() };
 
-		XMMATRIX mvpMatrix{ XMMatrixMultiply(modelMatrix, viewMatrix) };
-		mvpMatrix = XMMatrixMultiply(mvpMatrix, projectionMatrix);
+		// just rendering the first model for now. TODO: render the entire list
+		std::shared_ptr<ModelVulkan> model = models[0];
+		XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
 
 		/* submit the UBO data */
 		void* data;
@@ -877,7 +868,7 @@ namespace gg
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 		/* Record all the commands we need to render the scene into the command list. */
-		RecordCommandBuffer(commandBuffers[currentFrame], model->graphicsPipeline, imageIndex, mvpMatrix);
+		RecordCommandBuffer(commandBuffers[currentFrame], model->graphicsPipeline, imageIndex);
 		/* Execute the commands */
 		SubmitCommands();
 		/* Present the frame and inefficiently wait for the frame to render. */
@@ -983,7 +974,7 @@ namespace gg
 			throw VulkanRenderException("failed to submit a command buffer!");
 	}
 
-	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline graphicsPipeline, uint32_t imageIndex, XMMATRIX const& mvpMatrix)
+	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline graphicsPipeline, uint32_t imageIndex)
 	{
 		auto& model = models[0];
 		vkResetCommandBuffer(commandBuffer, 0);
