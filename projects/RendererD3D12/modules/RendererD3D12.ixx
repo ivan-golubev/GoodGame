@@ -46,16 +46,19 @@ namespace gg
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
-		std::shared_ptr<Texture> LoadTexture(std::string const& name) override;
 
 	private:
-		void PopulateCommandList(XMMATRIX const& mvpMatrix);
+		void PopulateCommandList(XMMATRIX const& mvpMatrix, ComPtr<ID3D12PipelineState>);
 		void WaitForPreviousFrame();
 		void ResizeRenderTargets();
 		void ResizeDepthBuffer();
 		void ResizeWindow();
-		void CreateGraphicsPipeline();
+
+		void CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model);
 		void CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
+		void LoadTextures(std::shared_ptr<ModelD3D12>);
+
+		std::shared_ptr<Texture> LoadTexture(std::string const& name, ComPtr<ID3D12PipelineState> pipelineState);
 
 		void CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,
@@ -82,7 +85,6 @@ namespace gg
 		ComPtr<ID3D12CommandAllocator> commandAllocator;
 		ComPtr<ID3D12GraphicsCommandList> commandList;
 		ComPtr<IDXGISwapChain3> swapChain;
-		ComPtr<ID3D12PipelineState> pipelineState;
 		ComPtr<ID3D12RootSignature> rootSignature;
 
 		/* Render Targets */

@@ -14,8 +14,6 @@ import Logging;
 import Model;
 import ShaderProgram;
 import ErrorHandling;
-import Application;
-import Renderer;
 
 using DirectX::XMFLOAT2;
 using gg::Mesh;
@@ -72,15 +70,15 @@ namespace gg
 		);
 		if (!scene)
 			throw AssetLoadException(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
+
+		BreakIfFalse(scene->mNumMeshes > 0);
+		model.name = scene->mMeshes[0]->mName.C_Str();
 		/* Load meshes */
 		for (unsigned int i{ 0 }; i < scene->mNumMeshes; ++i)
 			model.meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
-		/* Load textures */
-		std::shared_ptr<Renderer> renderer{ Application::Get()->GetRenderer() };
+		/* Save texture names */
 		for (uint32_t i = 0; i < scene->mNumTextures; ++i)
-			model.textures.emplace_back(
-				renderer->LoadTexture(scene->mTextures[i]->mFilename.C_Str())
-			);
+			model.textureNames.emplace_back(scene->mTextures[i]->mFilename.C_Str());
 	}
 
 } // namespace gg

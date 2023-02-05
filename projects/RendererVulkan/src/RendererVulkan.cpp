@@ -301,9 +301,8 @@ namespace gg
 			throw VulkanInitException("failed to create descriptor set layout!");
 	}
 
-	void RendererVulkan::CreateGraphicsPipeline()
+	void RendererVulkan::CreateGraphicsPipeline(std::shared_ptr<ModelVulkan> model)
 	{
-		auto& model = models[0];
 		BreakIfFalse(model->shaderProgram.get());
 		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(model->shaderProgram.get());
 
@@ -409,7 +408,7 @@ namespace gg
 		pipelineInfo.renderPass = renderPass;
 		pipelineInfo.subpass = 0;
 
-		if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline))
+		if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &model->graphicsPipeline))
 		{
 			throw VulkanInitException("failed to create graphics pipeline!");
 		}
@@ -730,8 +729,8 @@ namespace gg
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		for (auto imageView : swapChainImageViews)
 			vkDestroyImageView(device, imageView, nullptr);
-
-		vkDestroyPipeline(device, graphicsPipeline, nullptr);
+		for (auto model : models)
+			vkDestroyPipeline(device, model->graphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 		vkDestroyRenderPass(device, renderPass, nullptr);
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
@@ -745,7 +744,8 @@ namespace gg
 		CreateSwapChain();
 		CreateImageViews();
 		CreateRenderPass();
-		CreateGraphicsPipeline();
+		for (auto model : models)
+			CreateGraphicsPipeline(model);
 		CreateFrameBuffers();
 	}
 
@@ -877,7 +877,7 @@ namespace gg
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 		/* Record all the commands we need to render the scene into the command list. */
-		RecordCommandBuffer(commandBuffers[currentFrame], imageIndex, mvpMatrix);
+		RecordCommandBuffer(commandBuffers[currentFrame], model->graphicsPipeline, imageIndex, mvpMatrix);
 		/* Execute the commands */
 		SubmitCommands();
 		/* Present the frame and inefficiently wait for the frame to render. */
@@ -898,6 +898,12 @@ namespace gg
 		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
+	void RendererVulkan::LoadTextures(std::shared_ptr<ModelVulkan> model)
+	{
+		for (std::string const& textureName : model->textureNames)
+			model->textures.emplace_back(LoadTexture(textureName));
+	}
+
 	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& name)
 	{
 		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
@@ -913,10 +919,11 @@ namespace gg
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
 
-		models.push_back(model);
-
 		CreateVertexBuffer(model);
-		CreateGraphicsPipeline();
+		CreateGraphicsPipeline(model);
+		LoadTextures(model);
+
+		models.push_back(model);
 	}
 
 	void RendererVulkan::CreateVertexBuffer(std::shared_ptr<ModelVulkan> inputModel)
@@ -976,7 +983,7 @@ namespace gg
 			throw VulkanRenderException("failed to submit a command buffer!");
 	}
 
-	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix)
+	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline graphicsPipeline, uint32_t imageIndex, XMMATRIX const& mvpMatrix)
 	{
 		auto& model = models[0];
 		vkResetCommandBuffer(commandBuffer, 0);

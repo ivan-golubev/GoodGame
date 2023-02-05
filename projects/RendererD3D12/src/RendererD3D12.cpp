@@ -231,9 +231,8 @@ namespace gg
 		}
 	}
 
-	void RendererD3D12::CreateGraphicsPipeline()
+	void RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
 	{
-		std::shared_ptr<ModelD3D12> model = models[0];
 		BreakIfFalse(model->shaderProgram.get());
 		ShaderProgramD3D12* shaderProgram = dynamic_cast<ShaderProgramD3D12*>(model->shaderProgram.get());
 
@@ -264,8 +263,10 @@ namespace gg
 		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc{
 			sizeof(PipelineStateStream), &pipelineStateStream
 		};
-		ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&pipelineState)));
-		SetName(pipelineState.Get(), L"DefaultPipelineState");
+		ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&model->pipelineState)));
+		std::string const psoName{ std::format("PSO_{}", model->name) };
+		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
+		SetName(model->pipelineState.Get(), psoNameW);
 	}
 
 	std::shared_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& shaderName)
@@ -276,7 +277,14 @@ namespace gg
 		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
-	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name)
+	void RendererD3D12::LoadTextures(std::shared_ptr<ModelD3D12> model)
+	{
+
+		for (std::string const& textureName : model->textureNames)
+			model->textures.emplace_back(LoadTexture(textureName, model->pipelineState));
+	}
+
+	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12PipelineState> pipelineState)
 	{
 		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
 		TextureD3D12* texture = new TextureD3D12(textureAbsolutePath);
@@ -353,24 +361,26 @@ namespace gg
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
-		models.push_back(model);
 
+		CreateGraphicsPipeline(model);
 		CreateVertexBuffer(model);
-		CreateGraphicsPipeline();
+		LoadTextures(model);
+
+		models.push_back(model);
 	}
 
-	void RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> inputModel)
+	void RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> model)
 	{
 		// TODO: handle multiple meshes properly, need to create multiple Vertex Buffers
-		BreakIfFalse(inputModel->meshes.size() < 2);
-		Mesh const& mesh{ inputModel->meshes[0] };
+		BreakIfFalse(model->meshes.size() < 2);
+		Mesh const& mesh{ model->meshes[0] };
 
 		ThrowIfFailed(commandAllocator->Reset());
-		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
+		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), model->pipelineState.Get()));
 
 		uint64_t const VB_sizeBytes = mesh.VerticesSizeBytes();
 
-		CreateBuffer(commandList, inputModel->VB_GPU_Resource, inputModel->VB_CPU_Resource, mesh.vertices.data(), VB_sizeBytes, L"VertexBuffer");
+		CreateBuffer(commandList, model->VB_GPU_Resource, model->VB_CPU_Resource, mesh.vertices.data(), VB_sizeBytes, L"VertexBuffer");
 		ThrowIfFailed(commandList->Close());
 
 		/* Upload Vertex and Index buffers */
@@ -380,9 +390,9 @@ namespace gg
 		WaitForPreviousFrame();
 
 		/* Init the Vertex buffer view */
-		inputModel->vertexBufferView.BufferLocation = inputModel->VB_GPU_Resource->GetGPUVirtualAddress();
-		inputModel->vertexBufferView.SizeInBytes = static_cast<uint32_t>(VB_sizeBytes);
-		inputModel->vertexBufferView.StrideInBytes = sizeof(Vertex);
+		model->vertexBufferView.BufferLocation = model->VB_GPU_Resource->GetGPUVirtualAddress();
+		model->vertexBufferView.SizeInBytes = static_cast<uint32_t>(VB_sizeBytes);
+		model->vertexBufferView.StrideInBytes = sizeof(Vertex);
 	}
 
 	void RendererD3D12::ResizeWindow()
@@ -545,7 +555,7 @@ namespace gg
 		mvpMatrix = XMMatrixMultiply(mvpMatrix, mProjectionMatrix);
 
 		/* Record all the commands we need to render the scene into the command list. */
-		PopulateCommandList(mvpMatrix);
+		PopulateCommandList(mvpMatrix, model->pipelineState);
 
 		/* Execute the command list. */
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
@@ -570,7 +580,7 @@ namespace gg
 		}
 	}
 
-	void RendererD3D12::PopulateCommandList(XMMATRIX const& mvpMatrix)
+	void RendererD3D12::PopulateCommandList(XMMATRIX const& mvpMatrix, ComPtr<ID3D12PipelineState> pipelineState)
 	{
 		//ThrowIfFailed(mCommandAllocator->Reset());
 		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));

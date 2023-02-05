@@ -22,6 +22,8 @@ namespace gg
 		VkBuffer VB{};
 		VkDeviceMemory vertexBufferMemory{};
 
+		VkPipeline graphicsPipeline{};
+
 		friend class RendererVulkan;
 	};
 } //namespace gg

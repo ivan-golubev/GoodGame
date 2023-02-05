@@ -46,8 +46,10 @@ export namespace gg
 		void SetPosition(XMVECTOR& position);
 
 		std::shared_ptr<ShaderProgram> shaderProgram;
+		std::vector<std::string> textureNames;
 		std::vector<std::shared_ptr<Texture>> textures;
 		std::vector<Mesh> meshes;
+		std::string name;
 	};
 
 } // namespace gg

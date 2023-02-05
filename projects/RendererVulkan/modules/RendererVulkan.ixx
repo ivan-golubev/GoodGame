@@ -45,7 +45,6 @@ namespace gg
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
-		std::shared_ptr<Texture> LoadTexture(std::string const& name) override;
 
 		VkDevice GetDevice() const;
 
@@ -86,13 +85,17 @@ namespace gg
 		void CreateSwapChain();
 		void CreateRenderPass();
 		void CreateDescriptorSetLayout();
-		void CreateGraphicsPipeline();
-		void CreateFrameBuffers();
 		void CreateCommandPool();
 
 		void CreateImageViews();
 
 		void CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
+		void CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
+		void LoadTextures(std::shared_ptr<ModelVulkan>);
+
+		std::shared_ptr<Texture> LoadTexture(std::string const& name);
+
+		void CreateFrameBuffers();
 
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
@@ -101,7 +104,7 @@ namespace gg
 		void CreateDescriptorPool();
 		void CreateDescriptorSets(VkImageView, VkSampler);
 
-		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix);
+		void RecordCommandBuffer(VkCommandBuffer, VkPipeline graphicsPipeline, uint32_t imageIndex, XMMATRIX const& mvpMatrix);
 		void SubmitCommands();
 
 		VkResult Present(uint32_t imageIndex);
@@ -130,7 +133,6 @@ namespace gg
 		VkRenderPass renderPass{};
 		VkDescriptorSetLayout descriptorSetLayout{};
 		VkPipelineLayout pipelineLayout{};
-		VkPipeline graphicsPipeline{};
 
 		/* Render Targets */
 		std::vector<VkImage> swapChainImages;
