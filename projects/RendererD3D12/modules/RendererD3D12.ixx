@@ -48,7 +48,7 @@ namespace gg
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
 
 	private:
-		void PopulateCommandList(XMMATRIX const& mvpMatrix, ComPtr<ID3D12PipelineState>);
+		void PopulateCommandList();
 		void WaitForPreviousFrame();
 		void ResizeRenderTargets();
 		void ResizeDepthBuffer();
@@ -58,7 +58,7 @@ namespace gg
 		void CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
 		void LoadTextures(std::shared_ptr<ModelD3D12>);
 
-		std::shared_ptr<Texture> LoadTexture(std::string const& name, ComPtr<ID3D12PipelineState> pipelineState);
+		std::shared_ptr<Texture> LoadTexture(std::string const& name);
 
 		void CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,

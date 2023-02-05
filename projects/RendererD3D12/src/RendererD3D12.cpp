@@ -279,19 +279,18 @@ namespace gg
 
 	void RendererD3D12::LoadTextures(std::shared_ptr<ModelD3D12> model)
 	{
-
 		for (std::string const& textureName : model->textureNames)
-			model->textures.emplace_back(LoadTexture(textureName, model->pipelineState));
+			model->textures.emplace_back(LoadTexture(textureName));
 	}
 
-	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12PipelineState> pipelineState)
+	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name)
 	{
 		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
 		TextureD3D12* texture = new TextureD3D12(textureAbsolutePath);
 
 		/* uploading the texture  */
 		ThrowIfFailed(commandAllocator->Reset());
-		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
+		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
 		// Describe and create a Texture2D.
 		D3D12_RESOURCE_DESC textureDesc{};
@@ -541,13 +540,8 @@ namespace gg
 		}
 
 		camera->UpdateCamera(deltaTime);
-
-		// just rendering the first model for now. TODO: render the entire list
-		std::shared_ptr<ModelD3D12> model = models[0];
-		XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
-
 		/* Record all the commands we need to render the scene into the command list. */
-		PopulateCommandList(mvpMatrix, model->pipelineState);
+		PopulateCommandList();
 
 		/* Execute the command list. */
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
@@ -572,31 +566,21 @@ namespace gg
 		}
 	}
 
-	void RendererD3D12::PopulateCommandList(XMMATRIX const& mvpMatrix, ComPtr<ID3D12PipelineState> pipelineState)
+	void RendererD3D12::PopulateCommandList()
 	{
 		//ThrowIfFailed(mCommandAllocator->Reset());
-		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
-
-		std::shared_ptr<ModelD3D12> model = models[0];
+		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
 		uint8_t const frameIndex{ static_cast<uint8_t>(swapChain->GetCurrentBackBufferIndex()) };
-		/* Set all the state first */
+		/* Set all the common state first */
 		{
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
 
 			commandList->RSSetViewports(1, &mViewport);
 			commandList->RSSetScissorRects(1, &mScissorRect);
 
-			commandList->SetPipelineState(pipelineState.Get());
-			commandList->SetGraphicsRootSignature(rootSignature.Get());
-
 			ID3D12DescriptorHeap* ppHeaps[]{ srvHeap.Get() };
 			commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
-			commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
-			commandList->SetGraphicsRootDescriptorTable(1, srvHeap->GetGPUDescriptorHandleForHeapStart());
-
 			commandList->OMSetRenderTargets(1, &rtvHandles[frameIndex], true, &dsvHandle);
 		}
 
@@ -611,13 +595,23 @@ namespace gg
 
 			PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"SampleMarker");
 
-			std::shared_ptr<ModelD3D12> model = models[0];
+			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize };
+			float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
+			commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-			{  /* Record commands */
-				CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize };
-				float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
-				commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-				commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+			/* Set per-model state and draw each */
+			for (std::shared_ptr<ModelD3D12> model : models)
+			{
+				commandList->SetPipelineState(model->pipelineState.Get());
+				commandList->SetGraphicsRootSignature(rootSignature.Get());
+
+				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
+				commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
+				commandList->SetGraphicsRootDescriptorTable(1, srvHeap->GetGPUDescriptorHandleForHeapStart());
+				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
+
+				/* Record commands */
 				commandList->DrawInstanced(model->meshes[0].GetVertexCount(), 1, 0, 0);
 			}
 			/* Indicate that the back buffer will now be used to present. */

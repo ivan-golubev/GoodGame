@@ -93,7 +93,7 @@ int main()
 
 	try
 	{
-		ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
+		ApplicationSettings const appSettings{ width, height, window, RendererType::D3D12 };
 		std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
@@ -102,11 +102,9 @@ int main()
 			XMVECTOR position{ 0.f, 0.f, 0.f };
 			renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
 		}
-		// TODO: need to handle multiple models, each with it's own shader, textures and positions.
-		// should be multiple draw calls. Guess everything is hard-coded right now.
 		{
-			//XMVECTOR position{ 1.f, 1.f, 1.f };
-			//renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
+			XMVECTOR position{ 1.f, 1.f, 1.f };
+			renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
 		}
 
 		MainLoop(app);
