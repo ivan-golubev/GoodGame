@@ -12,8 +12,8 @@ import ErrorHandling;
 
 namespace gg
 {
-	ModelVulkan::ModelVulkan(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t, VkDevice d)
-		: Model{ modelRelativePath, std::move(s), t }
+	ModelVulkan::ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, std::shared_ptr<Texture> t, VkDevice d)
+		: Model{ modelRelativePath, s, t }
 		, device{ d }
 	{
 	}

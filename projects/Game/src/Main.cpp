@@ -97,12 +97,18 @@ int main()
 		std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
+		std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
 		{
-			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
-			std::unique_ptr<ShaderProgram> shader{ renderer->LoadShader("textured_surface") };
 			XMVECTOR position{ 0.f, 0.f, 0.f };
-			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", std::move(shader), position);
+			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", "textured_surface", position);
 		}
+		// TODO: need to handle multiple models, each with it's own shader, textures and positions.
+		// should be multiple draw calls. Guess everything is hard-coded right now.
+		{
+			//XMVECTOR position{ 1.f, 1.f, 1.f };
+			//renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", "textured_surface", position);
+		}
+
 		MainLoop(app);
 		Application::Destroy();
 	}

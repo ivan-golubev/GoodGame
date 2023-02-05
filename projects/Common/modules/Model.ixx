@@ -39,7 +39,7 @@ export namespace gg
 
 	struct Model
 	{
-		Model(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, std::shared_ptr<Texture>);
+		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, std::shared_ptr<Texture>);
 		virtual ~Model() noexcept = default;
 		Model(Model const&) = delete;
 		Model& operator=(Model const&) = delete;
@@ -50,7 +50,7 @@ export namespace gg
 
 		void SetPosition(XMVECTOR& position);
 
-		std::unique_ptr<ShaderProgram> shaderProgram;
+		std::shared_ptr<ShaderProgram> shaderProgram;
 		std::shared_ptr<Texture> texture;
 		std::vector<Mesh> meshes;
 	};

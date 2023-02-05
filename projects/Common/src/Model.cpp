@@ -36,8 +36,8 @@ namespace gg
 		return *this;
 	}
 
-	Model::Model(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
-		: shaderProgram{ std::move(s) }
+	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
+		: shaderProgram{ s }
 		, texture{ t }
 	{
 		LoadMeshes(modelRelativePath, *this);

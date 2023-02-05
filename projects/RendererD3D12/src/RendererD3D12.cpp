@@ -234,6 +234,7 @@ namespace gg
 
 	void RendererD3D12::CreateGraphicsPipeline()
 	{
+		std::shared_ptr<ModelD3D12> model = models[0];
 		BreakIfFalse(model->shaderProgram.get());
 		ShaderProgramD3D12* shaderProgram = dynamic_cast<ShaderProgramD3D12*>(model->shaderProgram.get());
 
@@ -268,12 +269,12 @@ namespace gg
 		SetName(pipelineState.Get(), L"DefaultPipelineState");
 	}
 
-	std::unique_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& shaderName)
+	std::shared_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		ShaderProgram* shader = new ShaderProgramD3D12(vertexShaderRelativePath, fragmentShaderRelativePath);
-		return std::unique_ptr<ShaderProgram>{ shader };
+		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
 	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& textureRelativePath)
@@ -348,11 +349,14 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
-	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, XMVECTOR& position)
+	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
 	{
+		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
-		model = std::make_shared<ModelD3D12>(modelRelativePath, std::move(shader), texture);
+		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, texture);
 		model->SetPosition(position);
+		models.push_back(model);
+
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline();
 	}
@@ -499,7 +503,7 @@ namespace gg
 		CloseHandle(fenceEvent);
 
 		/* destroys the associated shaders and textures */
-		model.reset();
+		models.clear();
 
 		SDL_DestroyWindow(windowHandleSDL);
 		SDL_Quit();
@@ -527,6 +531,9 @@ namespace gg
 			float windowAspectRatio{ width / static_cast<float>(height) };
 			camera->UpdateProjectionMatrix(windowAspectRatio);
 		}
+
+		// TODO: render all the models in the list
+		auto& model = models[0];
 
 		/* Rotate the model */
 		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
@@ -570,6 +577,8 @@ namespace gg
 		//ThrowIfFailed(mCommandAllocator->Reset());
 		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), pipelineState.Get()));
 
+		std::shared_ptr<ModelD3D12> model = models[0];
+
 		uint8_t const frameIndex{ static_cast<uint8_t>(swapChain->GetCurrentBackBufferIndex()) };
 		/* Set all the state first */
 		{
@@ -601,6 +610,8 @@ namespace gg
 			commandList->ResourceBarrier(1, &barrier);
 
 			PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"SampleMarker");
+
+			std::shared_ptr<ModelD3D12> model = models[0];
 
 			{  /* Record commands */
 				CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize };

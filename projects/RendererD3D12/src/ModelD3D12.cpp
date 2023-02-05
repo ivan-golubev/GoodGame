@@ -7,8 +7,8 @@ import Model;
 
 namespace gg
 {
-	ModelD3D12::ModelD3D12(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
-		: Model{ modelRelativePath, std::move(s), t }
+	ModelD3D12::ModelD3D12(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
+		: Model{ modelRelativePath, s, t }
 	{
 	}
 

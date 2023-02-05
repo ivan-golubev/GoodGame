@@ -31,8 +31,8 @@ namespace gg
 
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(nanoseconds deltaTime) = 0;
-		virtual std::unique_ptr<ShaderProgram> LoadShader(std::string const& shaderName) = 0;
-		virtual void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, XMVECTOR& position) = 0;
+		virtual std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) = 0;
+		virtual void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) = 0;
 	};
 
 	export struct RendererSettings

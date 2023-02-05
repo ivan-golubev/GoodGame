@@ -43,8 +43,8 @@ namespace gg
 
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
-		std::unique_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
-		void LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram>, XMVECTOR& position) override;
+		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
+		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
 
 		VkDevice GetDevice() const;
 
@@ -146,7 +146,7 @@ namespace gg
 		VkDescriptorPool descriptorPool;
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets;
 
-		std::shared_ptr<ModelVulkan> model;
+		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;
 

@@ -304,6 +304,7 @@ namespace gg
 
 	void RendererVulkan::CreateGraphicsPipeline()
 	{
+		auto& model = models[0];
 		BreakIfFalse(model->shaderProgram.get());
 		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(model->shaderProgram.get());
 
@@ -819,7 +820,7 @@ namespace gg
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
 		/* destroys the associated shaders and textures */
-		model.reset();
+		models.clear();
 
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 		vkDestroyDevice(device, nullptr);
@@ -852,6 +853,9 @@ namespace gg
 		}
 		else if (result != VK_SUCCESS)
 			throw VulkanRenderException("failed to acquire swap chain image!");
+
+		// just rendering the first model for now. TODO: render the entire list
+		auto& model = models[0];
 
 		/* Rotate the model */
 		float rotation = static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> *timeManager->GetCurrentTimeSec());
@@ -887,12 +891,12 @@ namespace gg
 		currentFrame = (currentFrame + 1) % maxFramesInFlight;
 	}
 
-	std::unique_ptr<ShaderProgram> RendererVulkan::LoadShader(std::string const& shaderName)
+	std::shared_ptr<ShaderProgram> RendererVulkan::LoadShader(std::string const& shaderName)
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
 		ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath, fragmentShaderRelativePath, device);
-		return std::unique_ptr<ShaderProgram>{ shader };
+		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
 	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& textureRelativePath)
@@ -901,12 +905,16 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
-	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::unique_ptr<ShaderProgram> shader, XMVECTOR& position)
+	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
 	{
+		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
-		model = std::make_shared<ModelVulkan>(modelRelativePath, std::move(shader), texture, device);
+		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, texture, device);
 		model->SetPosition(position);
+		models.push_back(model);
+
 		CreateVertexBuffer(model);
+		// damn, guess the PSO should be part of the game object, not a global variable in the renderer
 
 		CreateDescriptorPool();
 		std::shared_ptr<TextureVulkan> textureVulkan{ dynamic_pointer_cast<TextureVulkan>(model->texture) };
@@ -974,6 +982,7 @@ namespace gg
 
 	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, XMMATRIX const& mvpMatrix)
 	{
+		auto& model = models[0];
 		vkResetCommandBuffer(commandBuffer, 0);
 
 		VkCommandBufferBeginInfo beginInfo{};
