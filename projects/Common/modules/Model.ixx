@@ -34,7 +34,7 @@ export namespace gg
 
 	struct Model
 	{
-		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>);
+		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, XMVECTOR& position);
 		virtual ~Model() noexcept = default;
 		Model(Model const&) = delete;
 		Model& operator=(Model const&) = delete;

@@ -36,8 +36,9 @@ namespace gg
 		return *this;
 	}
 
-	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s)
+	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, XMVECTOR& position)
 		: shaderProgram{ s }
+		, translation{ XMMatrixTranslationFromVector(position) }
 	{
 		LoadData(modelRelativePath, *this);
 	}

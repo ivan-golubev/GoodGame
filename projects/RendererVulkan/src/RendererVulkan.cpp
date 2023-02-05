@@ -911,9 +911,7 @@ namespace gg
 	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
-		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, device);
-		model->SetPosition(position);
-		// TODO: load the texture here
+		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
 
 		models.push_back(model);
 

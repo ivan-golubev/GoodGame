@@ -352,8 +352,7 @@ namespace gg
 	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
-		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader);
-		model->SetPosition(position);
+		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
 		models.push_back(model);
 
 		CreateVertexBuffer(model);

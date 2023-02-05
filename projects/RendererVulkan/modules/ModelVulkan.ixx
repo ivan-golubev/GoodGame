@@ -2,16 +2,19 @@ module;
 #include <memory>
 #include <string>
 #include <vulkan/vulkan.h>
+#include <DirectXMath.h>
 export module ModelVulkan;
 
 import Model;
+
+using DirectX::XMVECTOR;
 
 namespace gg
 {
 	export struct ModelVulkan : public Model
 	{
 	public:
-		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, VkDevice);
+		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, XMVECTOR& position, VkDevice);
 		~ModelVulkan() noexcept;
 
 	private:
