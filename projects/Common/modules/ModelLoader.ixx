@@ -6,6 +6,6 @@ import Model;
 
 export namespace gg
 {
-	void LoadMeshes(std::string const& modelRelativePath, Model&);
+	void LoadData(std::string const& modelRelativePath, Model&);
 
 } // namespace gg

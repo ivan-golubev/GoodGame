@@ -29,4 +29,8 @@ export namespace gg
 #endif
 	}
 
+	constexpr char const* texturesLocation{ "assets/textures" };
+	constexpr char const* texturesExtension{ "tga" };
+	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
+
 } // namespace gg

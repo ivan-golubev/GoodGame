@@ -11,7 +11,7 @@ namespace gg
 	export struct ModelVulkan : public Model
 	{
 	public:
-		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, std::shared_ptr<Texture>, VkDevice);
+		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, VkDevice);
 		~ModelVulkan() noexcept;
 
 	private:

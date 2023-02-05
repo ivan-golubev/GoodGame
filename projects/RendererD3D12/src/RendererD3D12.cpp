@@ -38,7 +38,6 @@ namespace
 {
 	std::string const shaderExtensionD3D12{ "cso" };
 	std::string const shadersLocation{ "shaders/dxil" };
-	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
 
 	HWND getWindowHandle(SDL_Window* windowHandle)
 	{
@@ -277,9 +276,10 @@ namespace gg
 		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
-	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& textureRelativePath)
+	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name)
 	{
-		TextureD3D12* texture = new TextureD3D12(textureRelativePath);
+		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
+		TextureD3D12* texture = new TextureD3D12(textureAbsolutePath);
 
 		/* uploading the texture  */
 		ThrowIfFailed(commandAllocator->Reset());
@@ -352,8 +352,7 @@ namespace gg
 	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
-		std::shared_ptr<Texture> texture{ LoadTexture("assets/textures/CubeColor.tga") };
-		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, texture);
+		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader);
 		model->SetPosition(position);
 		models.push_back(model);
 

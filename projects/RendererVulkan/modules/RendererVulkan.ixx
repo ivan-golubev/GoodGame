@@ -45,6 +45,7 @@ namespace gg
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
+		std::shared_ptr<Texture> LoadTexture(std::string const& name) override;
 
 		VkDevice GetDevice() const;
 

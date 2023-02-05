@@ -47,7 +47,6 @@ namespace
 {
 	std::string const shaderExtensionVulkan{ "spv" };
 	std::string const shadersLocation{ "shaders/spirv" };
-	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
 
 	constexpr std::array<char const*, 1> deviceExtensions
 	{
@@ -899,19 +898,26 @@ namespace gg
 		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
-	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
+	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& name)
 	{
-		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
-		std::shared_ptr<TextureVulkan> texture{ std::make_shared<TextureVulkan>("assets/textures/CubeColor.tga", device) };
-		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, texture, device);
-		model->SetPosition(position);
-		models.push_back(model);
-
-		CreateVertexBuffer(model);
-
+		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
+		TextureVulkan* texture = new TextureVulkan(textureAbsolutePath, device);
 		CreateDescriptorPool();
 		CreateDescriptorSets(texture->textureImageView, texture->textureSampler);
 
+		return std::shared_ptr<Texture>(texture);
+	}
+
+	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
+	{
+		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
+		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, device);
+		model->SetPosition(position);
+		// TODO: load the texture here
+
+		models.push_back(model);
+
+		CreateVertexBuffer(model);
 		CreateGraphicsPipeline();
 	}
 

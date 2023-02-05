@@ -14,6 +14,8 @@ import Logging;
 import Model;
 import ShaderProgram;
 import ErrorHandling;
+import Application;
+import Renderer;
 
 using DirectX::XMFLOAT2;
 using gg::Mesh;
@@ -53,9 +55,13 @@ namespace
 		readVertices(assimpMesh, mesh, 0);
 		return mesh;
 	}
+}
 
-	bool LoadMeshesAssimp(std::string const& modelAbsolutePath, Model& outModel)
+namespace gg
+{
+	void LoadData(std::string const& modelRelativePath, Model& model)
 	{
+		std::string modelAbsolutePath{ std::filesystem::absolute(modelRelativePath).generic_string() };
 		Assimp::Importer importer;
 		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
 		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
@@ -66,19 +72,15 @@ namespace
 		);
 		if (!scene)
 			throw AssetLoadException(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
+		/* Load meshes */
 		for (unsigned int i{ 0 }; i < scene->mNumMeshes; ++i)
-			outModel.meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
-		return true;
-	}
-}
-
-namespace gg
-{
-	void LoadMeshes(std::string const& modelRelativePath, Model& model)
-	{
-		std::string modelFileAbsPath{ std::filesystem::absolute(modelRelativePath).generic_string() };
-		if (!LoadMeshesAssimp(modelFileAbsPath, model))
-			throw AssetLoadException(std::format("Failed to read the input model: {}", modelFileAbsPath));
+			model.meshes.emplace_back(readMesh(scene->mMeshes[i], scene));
+		/* Load textures */
+		std::shared_ptr<Renderer> renderer{ Application::Get()->GetRenderer() };
+		for (uint32_t i = 0; i < scene->mNumTextures; ++i)
+			model.textures.emplace_back(
+				renderer->LoadTexture(scene->mTextures[i]->mFilename.C_Str())
+			);
 	}
 
 } // namespace gg

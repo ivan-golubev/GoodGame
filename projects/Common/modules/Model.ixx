@@ -30,16 +30,11 @@ export namespace gg
 
 		std::vector<Vertex> vertices{};
 		std::vector<uint32_t> indices{};
-
-		uint32_t textureColorFormat{ 0 }; /* GL_RGB or GL_RGBA */
-		uint32_t textureWidth{ 0 };
-		uint32_t textureHeight{ 0 };
-		uint8_t* texture{ nullptr };
 	};
 
 	struct Model
 	{
-		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, std::shared_ptr<Texture>);
+		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>);
 		virtual ~Model() noexcept = default;
 		Model(Model const&) = delete;
 		Model& operator=(Model const&) = delete;
@@ -51,7 +46,7 @@ export namespace gg
 		void SetPosition(XMVECTOR& position);
 
 		std::shared_ptr<ShaderProgram> shaderProgram;
-		std::shared_ptr<Texture> texture;
+		std::vector<std::shared_ptr<Texture>> textures;
 		std::vector<Mesh> meshes;
 	};
 

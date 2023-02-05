@@ -36,17 +36,16 @@ namespace gg
 		return *this;
 	}
 
-	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, std::shared_ptr<Texture> t)
+	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s)
 		: shaderProgram{ s }
-		, texture{ t }
 	{
-		LoadMeshes(modelRelativePath, *this);
+		LoadData(modelRelativePath, *this);
 	}
 
 	Model::Model(Model&& other) noexcept
 		: shaderProgram{ std::move(other.shaderProgram) }
 		, meshes{ std::move(other.meshes) }
-		, texture{ std::move(other.texture) }
+		, textures{ std::move(other.textures) }
 	{
 	}
 
@@ -58,7 +57,7 @@ namespace gg
 
 			shaderProgram = std::move(other.shaderProgram);
 			meshes = std::move(other.meshes);
-			texture = std::move(other.texture);
+			textures = std::move(other.textures);
 		}
 		return *this;
 	}

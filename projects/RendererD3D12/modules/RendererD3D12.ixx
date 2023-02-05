@@ -46,6 +46,7 @@ namespace gg
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
+		std::shared_ptr<Texture> LoadTexture(std::string const& name) override;
 
 	private:
 		void PopulateCommandList(XMMATRIX const& mvpMatrix);
@@ -55,8 +56,6 @@ namespace gg
 		void ResizeWindow();
 		void CreateGraphicsPipeline();
 		void CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
-
-		std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath);
 
 		void CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,

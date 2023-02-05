@@ -14,7 +14,7 @@ namespace gg
 	export struct ModelD3D12 : public Model
 	{
 	public:
-		ModelD3D12(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, std::shared_ptr<Texture>);
+		ModelD3D12(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>);
 
 	private:
 		ComPtr<ID3D12Resource> VB_GPU_Resource;
