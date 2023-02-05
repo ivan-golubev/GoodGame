@@ -90,7 +90,6 @@ namespace gg
 		void CreateCommandPool();
 
 		void CreateImageViews();
-		std::shared_ptr<Texture> LoadTexture(std::string const& textureRelativePath);
 
 		void CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
 

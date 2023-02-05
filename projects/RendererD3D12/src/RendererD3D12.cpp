@@ -352,7 +352,7 @@ namespace gg
 	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
-		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
+		std::shared_ptr<Texture> texture{ LoadTexture("assets/textures/CubeColor.tga") };
 		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, texture);
 		model->SetPosition(position);
 		models.push_back(model);

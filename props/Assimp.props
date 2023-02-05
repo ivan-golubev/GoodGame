@@ -21,7 +21,7 @@
   </ItemDefinitionGroup>
   
   <ItemGroup Condition="'$(ConfigurationType)'=='Application'">
-      <ContentWithTargetPath Include="$(AssimpBinDir)\**">
+      <ContentWithTargetPath Include="$(AssimpBinDir)\**" Exclude="$(AssimpBinDir)\unit*">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
           <TargetPath>%(Filename)%(Extension)</TargetPath>
       </ContentWithTargetPath>

@@ -67,6 +67,7 @@
   <Import Project="$(SolutionDir)\props\D3D12.props" />
   <Import Project="$(SolutionDir)\props\Assimp.props" />
   <Import Project="$(SolutionDir)\props\WinPix.props" />
+  <Import Project="$(SolutionDir)\props\Assets.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -157,8 +158,9 @@ pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
     <None Include="packages.config" />
   </ItemGroup>
   <Target Name="DeleteShaders" AfterTargets="Clean">
-    <Message Text="Deleting compiled shaders"/>
+    <Message Text="Deleting compiled shaders and assets"/>
     <RemoveDir Directories="$(TargetDir)\shaders" />
+    <RemoveDir Directories="$(TargetDir)\assets" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

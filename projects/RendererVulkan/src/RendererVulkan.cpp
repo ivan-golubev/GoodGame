@@ -899,26 +899,18 @@ namespace gg
 		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
-	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& textureRelativePath)
-	{
-		Texture* texture = new TextureVulkan(textureRelativePath, device);
-		return std::shared_ptr<Texture>{ texture };
-	}
-
 	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
-		std::shared_ptr<Texture> texture{ LoadTexture("../../../assets/src/textures/CubeColor.tga") };
+		std::shared_ptr<TextureVulkan> texture{ std::make_shared<TextureVulkan>("assets/textures/CubeColor.tga", device) };
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, texture, device);
 		model->SetPosition(position);
 		models.push_back(model);
 
 		CreateVertexBuffer(model);
-		// damn, guess the PSO should be part of the game object, not a global variable in the renderer
 
 		CreateDescriptorPool();
-		std::shared_ptr<TextureVulkan> textureVulkan{ dynamic_pointer_cast<TextureVulkan>(model->texture) };
-		CreateDescriptorSets(textureVulkan->textureImageView, textureVulkan->textureSampler);
+		CreateDescriptorSets(texture->textureImageView, texture->textureSampler);
 
 		CreateGraphicsPipeline();
 	}

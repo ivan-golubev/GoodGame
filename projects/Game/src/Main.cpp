@@ -100,13 +100,13 @@ int main()
 		std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
 		{
 			XMVECTOR position{ 0.f, 0.f, 0.f };
-			renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", "textured_surface", position);
+			renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
 		}
 		// TODO: need to handle multiple models, each with it's own shader, textures and positions.
 		// should be multiple draw calls. Guess everything is hard-coded right now.
 		{
 			//XMVECTOR position{ 1.f, 1.f, 1.f };
-			//renderer->LoadModel("../../../assets/runtime/models/textured_cube.glb", "textured_surface", position);
+			//renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
 		}
 
 		MainLoop(app);
