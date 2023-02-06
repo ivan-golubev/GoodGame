@@ -59,7 +59,7 @@ namespace gg
 		void CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
 		void LoadTextures(std::shared_ptr<ModelD3D12>);
 
-		std::shared_ptr<Texture> LoadTexture(std::string const& name);
+		std::shared_ptr<Texture> LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap);
 
 		void CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,
@@ -99,9 +99,6 @@ namespace gg
 		ComPtr<ID3D12DescriptorHeap> depthStencilHeap;
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		uint32_t dsvDescriptorSize;
-
-		/* Shader resources */
-		ComPtr<ID3D12DescriptorHeap> srvHeap;
 
 		std::vector<std::shared_ptr<ModelD3D12>> models;
 		std::shared_ptr<TimeManager> timeManager;

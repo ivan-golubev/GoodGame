@@ -132,15 +132,6 @@ namespace gg
 			rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		}
 
-		{ /* Create  a shader resource view (SRV) heap for textures */
-			D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-			srvHeapDesc.NumDescriptors = 1;
-			srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-			ThrowIfFailed(device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap)));
-			SetName(srvHeap.Get(), L"SRV_DescriptorHeap");
-		}
-
 		/* Create render targets */
 		ResizeRenderTargets();
 
@@ -280,10 +271,10 @@ namespace gg
 	void RendererD3D12::LoadTextures(std::shared_ptr<ModelD3D12> model)
 	{
 		for (std::string const& textureName : model->textureNames)
-			model->textures.emplace_back(LoadTexture(textureName));
+			model->textures.emplace_back(LoadTexture(textureName, model->srvHeap));
 	}
 
-	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name)
+	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
 	{
 		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
 		TextureD3D12* texture = new TextureD3D12(textureAbsolutePath);
@@ -363,6 +354,17 @@ namespace gg
 
 		CreateGraphicsPipeline(model);
 		CreateVertexBuffer(model);
+
+		{ /* Create  a shader resource view (SRV) heap for textures */
+			D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+			srvHeapDesc.NumDescriptors = 1;
+			srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+			srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+			ThrowIfFailed(device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&model->srvHeap)));
+
+			std::wstring const resourceName{ model->name.begin(), model->name.end() };
+			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_{}", resourceName));
+		}
 		LoadTextures(model);
 
 		models.push_back(model);
@@ -579,8 +581,6 @@ namespace gg
 			commandList->RSSetViewports(1, &mViewport);
 			commandList->RSSetScissorRects(1, &mScissorRect);
 
-			ID3D12DescriptorHeap* ppHeaps[]{ srvHeap.Get() };
-			commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 			commandList->OMSetRenderTargets(1, &rtvHandles[frameIndex], true, &dsvHandle);
 		}
 
@@ -606,9 +606,12 @@ namespace gg
 				commandList->SetPipelineState(model->pipelineState.Get());
 				commandList->SetGraphicsRootSignature(rootSignature.Get());
 
+				ID3D12DescriptorHeap* ppHeaps[]{ model->srvHeap.Get() };
+				commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
 				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
-				commandList->SetGraphicsRootDescriptorTable(1, srvHeap->GetGPUDescriptorHandleForHeapStart());
+				commandList->SetGraphicsRootDescriptorTable(1, model->srvHeap->GetGPUDescriptorHandleForHeapStart());
 				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
 
 				/* Record commands */

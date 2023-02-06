@@ -23,6 +23,7 @@ namespace gg
 		ComPtr<ID3D12Resource> VB_CPU_Resource;
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 
+		ComPtr<ID3D12DescriptorHeap> srvHeap;
 		ComPtr<ID3D12PipelineState> pipelineState;
 
 		friend class RendererD3D12;

@@ -93,7 +93,7 @@ int main()
 
 	try
 	{
-		ApplicationSettings const appSettings{ width, height, window, RendererType::Vulkan };
+		ApplicationSettings const appSettings{ width, height, window, RendererType::D3D12 };
 		std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 		DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
@@ -104,7 +104,7 @@ int main()
 		}
 		{
 			XMVECTOR position{ 2.f, 0.f, 1.f };
-			renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
+			renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position);
 		}
 
 		MainLoop(app);
