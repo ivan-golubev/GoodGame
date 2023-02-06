@@ -24,5 +24,12 @@ namespace gg
 	{
 		vkDestroyBuffer(device, VB, nullptr);
 		vkFreeMemory(device, vertexBufferMemory, nullptr);
+
+		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
+		{
+			vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+			vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+		}
+
 	}
 } //namespace gg

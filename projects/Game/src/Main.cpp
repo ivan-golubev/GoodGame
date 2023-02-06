@@ -99,11 +99,11 @@ int main()
 
 		std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
 		{
-			XMVECTOR position{ 0.f, 0.f, 0.f };
+			XMVECTOR position{ -2.f, 0.f, 1.f };
 			renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
 		}
 		{
-			XMVECTOR position{ 1.f, 1.f, 1.f };
+			XMVECTOR position{ 2.f, 0.f, 1.f };
 			renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
 		}
 

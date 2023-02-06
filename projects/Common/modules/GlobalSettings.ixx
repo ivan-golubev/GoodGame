@@ -1,3 +1,5 @@
+module;
+#include <cstdint>
 export module GlobalSettings;
 
 export namespace gg
@@ -32,5 +34,6 @@ export namespace gg
 	constexpr char const* texturesLocation{ "assets/textures" };
 	constexpr char const* texturesExtension{ "tga" };
 	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
+	constexpr int32_t maxFramesInFlight{ 2 };
 
 } // namespace gg

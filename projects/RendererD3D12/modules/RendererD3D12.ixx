@@ -19,6 +19,7 @@ import Model;
 import Renderer;
 import Texture;
 import ModelD3D12;
+import GlobalSettings;
 
 using DirectX::XMMATRIX;
 using DirectX::XMVECTOR;
@@ -74,7 +75,6 @@ namespace gg
 		HWND windowHandle{ nullptr };
 		SDL_Window* windowHandleSDL{ nullptr };
 
-		static constexpr int8_t maxFramesInFlight{ 2 };
 		bool isWindowResized{ true };
 
 		D3D12_VIEWPORT mViewport;

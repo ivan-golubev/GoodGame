@@ -18,6 +18,7 @@ import TimeManager;
 import Model;
 import Renderer;
 import Texture;
+import GlobalSettings;
 
 using DirectX::XMMATRIX;
 using DirectX::XMVECTOR;
@@ -92,6 +93,8 @@ namespace gg
 		void CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
 		void CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
 		void LoadTextures(std::shared_ptr<ModelVulkan>);
+		void CreateUniformBuffers(std::shared_ptr<ModelVulkan>);
+		void CreateDescriptorSets(std::shared_ptr<ModelVulkan>);
 
 		std::shared_ptr<Texture> LoadTexture(std::string const& name);
 
@@ -100,9 +103,7 @@ namespace gg
 		void CreateCommandBuffers();
 		void CreateSyncObjects();
 		void CreateIndexBuffer(Mesh const&);
-		void CreateUniformBuffers();
 		void CreateDescriptorPool();
-		void CreateDescriptorSets(VkImageView, VkSampler);
 
 		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex);
 		void SubmitCommands();
@@ -121,7 +122,6 @@ namespace gg
 
 		VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR const&) const;
 
-		static constexpr int32_t maxFramesInFlight{ 2 };
 		bool isWindowResized{ true };
 
 		uint32_t width{};
@@ -132,7 +132,6 @@ namespace gg
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers;
 		VkRenderPass renderPass{};
 		VkDescriptorSetLayout descriptorSetLayout{};
-		VkPipelineLayout pipelineLayout{};
 
 		/* Render Targets */
 		std::vector<VkImage> swapChainImages;
@@ -143,10 +142,7 @@ namespace gg
 
 		uint32_t currentFrame{ 0 };
 
-		std::array<VkBuffer, maxFramesInFlight> uniformBuffers;
-		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemory;
 		VkDescriptorPool descriptorPool;
-		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets;
 
 		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager> timeManager;

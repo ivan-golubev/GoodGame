@@ -47,6 +47,8 @@ namespace
 	std::string const shaderExtensionVulkan{ "spv" };
 	std::string const shadersLocation{ "shaders/spirv" };
 
+	constexpr uint32_t maxDescriptorSets = 1000;
+
 	constexpr std::array<char const*, 1> deviceExtensions
 	{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -121,7 +123,7 @@ namespace gg
 		CreateImageViews();
 		CreateRenderPass();
 
-		CreateUniformBuffers();
+		CreateDescriptorPool();
 		CreateDescriptorSetLayout();
 
 		CreateFrameBuffers();
@@ -390,7 +392,7 @@ namespace gg
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
-		if (VK_SUCCESS != vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout))
+		if (VK_SUCCESS != vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &model->pipelineLayout))
 			throw VulkanInitException("failed to create pipeline layout!");
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -403,7 +405,7 @@ namespace gg
 		pipelineInfo.pRasterizationState = &rasterizer;
 		pipelineInfo.pMultisampleState = &multisampling;
 		pipelineInfo.pColorBlendState = &colorBlending;
-		pipelineInfo.layout = pipelineLayout;
+		pipelineInfo.layout = model->pipelineLayout;
 		pipelineInfo.renderPass = renderPass;
 		pipelineInfo.subpass = 0;
 
@@ -643,12 +645,12 @@ namespace gg
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
 
-	void RendererVulkan::CreateUniformBuffers()
+	void RendererVulkan::CreateUniformBuffers(std::shared_ptr<ModelVulkan> model)
 	{
 		VkDeviceSize const bufferSize = sizeof(XMMATRIX);
 
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
-			CreateBuffer(uniformBuffers[i], uniformBuffersMemory[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			CreateBuffer(model->uniformBuffers[i], model->uniformBuffersMemory[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	}
 
 	void RendererVulkan::CreateDescriptorPool()
@@ -663,13 +665,13 @@ namespace gg
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
-		poolInfo.maxSets = maxFramesInFlight;
+		poolInfo.maxSets = maxFramesInFlight * maxDescriptorSets;
 
 		if (VK_SUCCESS != vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool))
 			throw VulkanInitException("failed to create descriptor pool!");
 	}
 
-	void RendererVulkan::CreateDescriptorSets(VkImageView textureImageView, VkSampler textureSampler)
+	void RendererVulkan::CreateDescriptorSets(std::shared_ptr<ModelVulkan> model)
 	{
 		std::array<VkDescriptorSetLayout, maxFramesInFlight> const layouts{ descriptorSetLayout, descriptorSetLayout };
 		VkDescriptorSetAllocateInfo allocInfo{};
@@ -678,24 +680,27 @@ namespace gg
 		allocInfo.descriptorSetCount = maxFramesInFlight;
 		allocInfo.pSetLayouts = layouts.data();
 
-		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()))
+		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, model->descriptorSets.data()))
 			throw VulkanInitException("failed to allocate descriptor sets!");
+
+		BreakIfFalse(model->textures.size() > 0);
+		std::shared_ptr<TextureVulkan> texture{ dynamic_pointer_cast<TextureVulkan>(model->textures[0]) };
 
 		for (size_t i = 0; i < maxFramesInFlight; ++i)
 		{
 			VkDescriptorBufferInfo bufferInfo{};
-			bufferInfo.buffer = uniformBuffers[i];
+			bufferInfo.buffer = model->uniformBuffers[i];
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(XMMATRIX);
 
 			VkDescriptorImageInfo imageInfo{};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = textureImageView;
-			imageInfo.sampler = textureSampler;
+			imageInfo.imageView = texture->textureImageView;
+			imageInfo.sampler = texture->textureSampler;
 
 			std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[0].dstSet = descriptorSets[i];
+			descriptorWrites[0].dstSet = model->descriptorSets[i];
 			descriptorWrites[0].dstBinding = 0;
 			descriptorWrites[0].dstArrayElement = 0;
 			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -703,7 +708,7 @@ namespace gg
 			descriptorWrites[0].pBufferInfo = &bufferInfo;
 
 			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[1].dstSet = descriptorSets[i];
+			descriptorWrites[1].dstSet = model->descriptorSets[i];
 			descriptorWrites[1].dstBinding = 1;
 			descriptorWrites[1].dstArrayElement = 0;
 			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -729,8 +734,10 @@ namespace gg
 		for (auto imageView : swapChainImageViews)
 			vkDestroyImageView(device, imageView, nullptr);
 		for (auto model : models)
+		{
 			vkDestroyPipeline(device, model->graphicsPipeline, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+			vkDestroyPipelineLayout(device, model->pipelineLayout, nullptr);
+		}
 		vkDestroyRenderPass(device, renderPass, nullptr);
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 	}
@@ -808,17 +815,11 @@ namespace gg
 		}
 		vkDestroyCommandPool(device, commandPool, nullptr);
 
-		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
-		{
-			vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-			vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
-		}
+		/* destroys the associated shaders and textures */
+		models.clear();
 
 		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-
-		/* destroys the associated shaders and textures */
-		models.clear();
 
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 		vkDestroyDevice(device, nullptr);
@@ -888,9 +889,6 @@ namespace gg
 	{
 		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
 		TextureVulkan* texture = new TextureVulkan(textureAbsolutePath, device);
-		CreateDescriptorPool();
-		CreateDescriptorSets(texture->textureImageView, texture->textureSampler);
-
 		return std::shared_ptr<Texture>(texture);
 	}
 
@@ -902,6 +900,9 @@ namespace gg
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline(model);
 		LoadTextures(model);
+
+		CreateUniformBuffers(model);
+		CreateDescriptorSets(model);
 
 		models.push_back(model);
 	}
@@ -984,20 +985,20 @@ namespace gg
 		renderPassInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		// ^^ should this be in a loop?
+
 		for (std::shared_ptr<ModelVulkan> model : models)
-		{ // TODO: hmmm, the same UBO is reused between two draw calls, I don't think the order is sequential ?
+		{
 			{ /* submit the UBO data */
 				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
 				void* data;
-				vkMapMemory(device, uniformBuffersMemory[currentFrame], 0, sizeof(XMMATRIX), 0, &data);
+				vkMapMemory(device, model->uniformBuffersMemory[currentFrame], 0, sizeof(XMMATRIX), 0, &data);
 				memcpy(data, &mvpMatrix, sizeof(XMMATRIX));
-				vkUnmapMemory(device, uniformBuffersMemory[currentFrame]);
+				vkUnmapMemory(device, model->uniformBuffersMemory[currentFrame]);
 			}
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline);
 			/* bind a desciptor for the UBO */
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->pipelineLayout, 0, 1, &model->descriptorSets[currentFrame], 0, nullptr);
 
 			VkBuffer vertexBuffers[]{ model->VB };
 			VkDeviceSize offsets[]{ 0 };
