@@ -104,7 +104,7 @@ namespace gg
 		void CreateDescriptorPool();
 		void CreateDescriptorSets(VkImageView, VkSampler);
 
-		void RecordCommandBuffer(VkCommandBuffer, VkPipeline graphicsPipeline, uint32_t imageIndex);
+		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex);
 		void SubmitCommands();
 
 		VkResult Present(uint32_t imageIndex);

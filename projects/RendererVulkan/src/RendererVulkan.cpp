@@ -854,21 +854,10 @@ namespace gg
 
 		camera->UpdateCamera(deltaTime);
 
-		// just rendering the first model for now. TODO: render the entire list
-		std::shared_ptr<ModelVulkan> model = models[0];
-		XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
-
-		/* submit the UBO data */
-		void* data;
-		vkMapMemory(device, uniformBuffersMemory[currentFrame], 0, sizeof(XMMATRIX), 0, &data);
-		memcpy(data, &mvpMatrix, sizeof(XMMATRIX));
-		vkUnmapMemory(device, uniformBuffersMemory[currentFrame]);
-		/***********************/
-
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 		/* Record all the commands we need to render the scene into the command list. */
-		RecordCommandBuffer(commandBuffers[currentFrame], model->graphicsPipeline, imageIndex);
+		RecordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 		/* Execute the commands */
 		SubmitCommands();
 		/* Present the frame and inefficiently wait for the frame to render. */
@@ -974,9 +963,8 @@ namespace gg
 			throw VulkanRenderException("failed to submit a command buffer!");
 	}
 
-	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline graphicsPipeline, uint32_t imageIndex)
+	void RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 	{
-		auto& model = models[0];
 		vkResetCommandBuffer(commandBuffer, 0);
 
 		VkCommandBufferBeginInfo beginInfo{};
@@ -996,16 +984,28 @@ namespace gg
 		renderPassInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+		// ^^ should this be in a loop?
+		for (std::shared_ptr<ModelVulkan> model : models)
+		{ // TODO: hmmm, the same UBO is reused between two draw calls, I don't think the order is sequential ?
+			{ /* submit the UBO data */
+				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
+				void* data;
+				vkMapMemory(device, uniformBuffersMemory[currentFrame], 0, sizeof(XMMATRIX), 0, &data);
+				memcpy(data, &mvpMatrix, sizeof(XMMATRIX));
+				vkUnmapMemory(device, uniformBuffersMemory[currentFrame]);
+			}
 
-		VkBuffer vertexBuffers[]{ model->VB };
-		VkDeviceSize offsets[]{ 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline);
+			/* bind a desciptor for the UBO */
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-		/* bind a desciptor for the UBO */
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-		for (auto& m : model->meshes)
-			vkCmdDraw(commandBuffer, m.GetVertexCount(), 1, 0, 0);
+			VkBuffer vertexBuffers[]{ model->VB };
+			VkDeviceSize offsets[]{ 0 };
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+			for (auto& m : model->meshes)
+				vkCmdDraw(commandBuffer, m.GetVertexCount(), 1, 0, 0);
+		}
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))

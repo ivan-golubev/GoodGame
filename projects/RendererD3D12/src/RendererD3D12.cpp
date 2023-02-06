@@ -612,7 +612,8 @@ namespace gg
 				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
 
 				/* Record commands */
-				commandList->DrawInstanced(model->meshes[0].GetVertexCount(), 1, 0, 0);
+				for (auto& m : model->meshes)
+					commandList->DrawInstanced(m.GetVertexCount(), 1, 0, 0);
 			}
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(
