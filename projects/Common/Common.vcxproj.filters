@@ -79,5 +79,8 @@
     <ClCompile Include="src\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\Lighting.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

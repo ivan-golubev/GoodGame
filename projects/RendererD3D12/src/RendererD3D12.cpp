@@ -29,6 +29,7 @@ import ShaderProgram;
 import ShaderProgramD3D12;
 import ModelD3D12;
 import TextureD3D12;
+import Lighting;
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -86,6 +87,17 @@ namespace gg
 				IID_PPV_ARGS(&device)
 			));
 			SetName(device.Get(), L"DefaultDevice");
+		}
+
+		if constexpr (IsDebug())
+		{ /* enabled debug breakpoints */
+			ComPtr<ID3D12InfoQueue> infoQueue;
+			if (SUCCEEDED(device.As(&infoQueue)))
+			{
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+			}
 		}
 
 		{ /* Create a command queue */
@@ -184,11 +196,12 @@ namespace gg
 				D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
 			CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-			CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+			CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 			rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / sizeof(float), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-			rootParameters[1].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+			rootParameters[1].InitAsConstants(sizeof(DirectionalLight) / sizeof(float), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+			rootParameters[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 			D3D12_STATIC_SAMPLER_DESC sampler{};
 			sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -201,7 +214,7 @@ namespace gg
 			sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 			sampler.MinLOD = 0.0f;
 			sampler.MaxLOD = D3D12_FLOAT32_MAX;
-			sampler.ShaderRegister = 1;
+			sampler.ShaderRegister = 2;
 			sampler.RegisterSpace = 0;
 			sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
@@ -230,7 +243,8 @@ namespace gg
 		/* Specify the input layout */
 		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
 
 		D3D12_RT_FORMAT_ARRAY rtvFormats{};
@@ -411,7 +425,7 @@ namespace gg
 
 		ThrowIfFailed(swapChain->ResizeBuffers(maxFramesInFlight, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
 
-		for (uint8_t n = 0; n < maxFramesInFlight; n++)
+		for (uint8_t n{ 0 }; n < maxFramesInFlight; n++)
 		{
 			ThrowIfFailed(swapChain->GetBuffer(n, IID_PPV_ARGS(&renderTargets[n])));
 			rtvHandles[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), n, rtvDescriptorSize);
@@ -570,7 +584,6 @@ namespace gg
 
 	void RendererD3D12::PopulateCommandList()
 	{
-		//ThrowIfFailed(mCommandAllocator->Reset());
 		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
 		uint8_t const frameIndex{ static_cast<uint8_t>(swapChain->GetCurrentBackBufferIndex()) };
@@ -611,7 +624,8 @@ namespace gg
 
 				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
-				commandList->SetGraphicsRootDescriptorTable(1, model->srvHeap->GetGPUDescriptorHandleForHeapStart());
+				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);
+				commandList->SetGraphicsRootDescriptorTable(2, model->srvHeap->GetGPUDescriptorHandleForHeapStart());
 				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
 
 				/* Record commands */

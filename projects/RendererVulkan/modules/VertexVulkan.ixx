@@ -6,6 +6,6 @@ export module VertexVulkan;
 export namespace gg
 {
 	VkVertexInputBindingDescription GetVertexBindingDescription();
-	std::array<VkVertexInputAttributeDescription, 2> GetVertexAttributeDescriptions();
+	std::array<VkVertexInputAttributeDescription, 3> GetVertexAttributeDescriptions();
 
 } // namespace gg

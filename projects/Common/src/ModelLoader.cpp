@@ -19,11 +19,16 @@ using DirectX::XMFLOAT2;
 using gg::Mesh;
 using gg::Model;
 using gg::AssetLoadException;
+using gg::BreakIfFalse;
 
 namespace
 {
 	void readVertices(aiMesh const* assimpMesh, Mesh& outMesh, uint32_t UVsetNumber)
 	{
+		BreakIfFalse(assimpMesh->HasPositions());
+		BreakIfFalse(assimpMesh->HasTextureCoords(UVsetNumber));
+		BreakIfFalse(assimpMesh->HasNormals());
+
 		for (unsigned int faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
 		{
 			aiFace* face{ &assimpMesh->mFaces[faceIndex] };
@@ -36,12 +41,15 @@ namespace
 					? assimpMesh->mTextureCoords[UVsetNumber][vertexIndex]
 					: aiVector3D{ 0, 0, 0 };
 
+				aiVector3D normal = assimpMesh->mNormals[vertexIndex];
+
 				outMesh.vertices.emplace_back(
 					static_cast<float>(assimpVertex.x),
 					static_cast<float>(assimpVertex.y),
 					static_cast<float>(assimpVertex.z),
 					1.0f, // w
-					UV.x, UV.y
+					UV.x, UV.y,
+					normal.x, normal.y, normal.z
 				);
 			}
 		}

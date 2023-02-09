@@ -24,8 +24,11 @@ namespace gg
 		VkBuffer VB{};
 		VkDeviceMemory vertexBufferMemory{};
 
-		std::array<VkBuffer, maxFramesInFlight> uniformBuffers;
-		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemory;
+		std::array<VkBuffer, maxFramesInFlight> uniformBuffersMVP;
+		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryMVP;
+
+		std::array<VkBuffer, maxFramesInFlight> uniformBuffersDirLight;
+		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryDirLight;
 
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets;
 

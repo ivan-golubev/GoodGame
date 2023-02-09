@@ -124,6 +124,7 @@
     <ClCompile Include="modules\ErrorHandling.ixx" />
     <ClCompile Include="modules\GlobalSettings.ixx" />
     <ClCompile Include="modules\Input.ixx" />
+    <ClCompile Include="modules\Lighting.ixx" />
     <ClCompile Include="modules\Logging.ixx" />
     <ClCompile Include="modules\Model.ixx" />
     <ClCompile Include="modules\ModelLoader.ixx" />

@@ -34,6 +34,7 @@ import Texture;
 import TextureVulkan;
 import ModelLoader;
 import ModelVulkan;
+import Lighting;
 
 using DirectX::XMMATRIX;
 using DirectX::XMVECTOR;
@@ -280,19 +281,25 @@ namespace gg
 
 	void RendererVulkan::CreateDescriptorSetLayout()
 	{
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorCount = 1;
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		VkDescriptorSetLayoutBinding uboLayoutBindingMVP{};
+		uboLayoutBindingMVP.binding = 0;
+		uboLayoutBindingMVP.descriptorCount = 1;
+		uboLayoutBindingMVP.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBindingMVP.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		VkDescriptorSetLayoutBinding uboLayoutBindingDirLight{};
+		uboLayoutBindingDirLight.binding = 1;
+		uboLayoutBindingDirLight.descriptorCount = 1;
+		uboLayoutBindingDirLight.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBindingDirLight.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.binding = 2;
 		samplerLayoutBinding.descriptorCount = 1;
 		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings{ uboLayoutBinding, samplerLayoutBinding };
+		std::array<VkDescriptorSetLayoutBinding, 3> bindings{ uboLayoutBindingMVP, uboLayoutBindingDirLight, samplerLayoutBinding };
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -650,16 +657,21 @@ namespace gg
 		VkDeviceSize const bufferSize = sizeof(XMMATRIX);
 
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
-			CreateBuffer(model->uniformBuffers[i], model->uniformBuffersMemory[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		{
+			CreateBuffer(model->uniformBuffersMVP[i], model->uniformBuffersMemoryMVP[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			CreateBuffer(model->uniformBuffersDirLight[i], model->uniformBuffersMemoryDirLight[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		}
 	}
 
 	void RendererVulkan::CreateDescriptorPool()
 	{
-		std::array<VkDescriptorPoolSize, 2> poolSizes{};
+		std::array<VkDescriptorPoolSize, 3> poolSizes{};
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[0].descriptorCount = maxFramesInFlight;
-		poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[1].descriptorCount = maxFramesInFlight;
+		poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes[2].descriptorCount = maxFramesInFlight;
 
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -688,32 +700,45 @@ namespace gg
 
 		for (size_t i = 0; i < maxFramesInFlight; ++i)
 		{
-			VkDescriptorBufferInfo bufferInfo{};
-			bufferInfo.buffer = model->uniformBuffers[i];
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(XMMATRIX);
+			VkDescriptorBufferInfo bufferInfoMVP{};
+			bufferInfoMVP.buffer = model->uniformBuffersMVP[i];
+			bufferInfoMVP.offset = 0;
+			bufferInfoMVP.range = sizeof(XMMATRIX);
+
+			VkDescriptorBufferInfo bufferInfoDirLight{};
+			bufferInfoDirLight.buffer = model->uniformBuffersDirLight[i];
+			bufferInfoDirLight.offset = 0;
+			bufferInfoDirLight.range = sizeof(DirectionalLight);
 
 			VkDescriptorImageInfo imageInfo{};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			imageInfo.imageView = texture->textureImageView;
 			imageInfo.sampler = texture->textureSampler;
 
-			std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+			std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites[0].dstSet = model->descriptorSets[i];
 			descriptorWrites[0].dstBinding = 0;
 			descriptorWrites[0].dstArrayElement = 0;
 			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descriptorWrites[0].descriptorCount = 1;
-			descriptorWrites[0].pBufferInfo = &bufferInfo;
+			descriptorWrites[0].pBufferInfo = &bufferInfoMVP;
 
 			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites[1].dstSet = model->descriptorSets[i];
 			descriptorWrites[1].dstBinding = 1;
 			descriptorWrites[1].dstArrayElement = 0;
-			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descriptorWrites[1].descriptorCount = 1;
-			descriptorWrites[1].pImageInfo = &imageInfo;
+			descriptorWrites[1].pBufferInfo = &bufferInfoDirLight;
+
+			descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[2].dstSet = model->descriptorSets[i];
+			descriptorWrites[2].dstBinding = 2;
+			descriptorWrites[2].dstArrayElement = 0;
+			descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[2].descriptorCount = 1;
+			descriptorWrites[2].pImageInfo = &imageInfo;
 
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
@@ -988,12 +1013,18 @@ namespace gg
 
 		for (std::shared_ptr<ModelVulkan> model : models)
 		{
-			{ /* submit the UBO data */
+			{  /* submit the UBO data - MVP matrix */
 				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
 				void* data;
-				vkMapMemory(device, model->uniformBuffersMemory[currentFrame], 0, sizeof(XMMATRIX), 0, &data);
+				vkMapMemory(device, model->uniformBuffersMemoryMVP[currentFrame], 0, sizeof(XMMATRIX), 0, &data);
 				memcpy(data, &mvpMatrix, sizeof(XMMATRIX));
-				vkUnmapMemory(device, model->uniformBuffersMemory[currentFrame]);
+				vkUnmapMemory(device, model->uniformBuffersMemoryMVP[currentFrame]);
+			}
+			{  /* submit the UBO data - Directional Light */
+				void* data;
+				vkMapMemory(device, model->uniformBuffersMemoryDirLight[currentFrame], 0, sizeof(DirectionalLight), 0, &data);
+				memcpy(data, &globalDirectionalLight, sizeof(DirectionalLight));
+				vkUnmapMemory(device, model->uniformBuffersMemoryDirLight[currentFrame]);
 			}
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline);
