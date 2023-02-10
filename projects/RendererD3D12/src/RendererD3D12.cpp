@@ -199,7 +199,7 @@ namespace gg
 			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 			CD3DX12_ROOT_PARAMETER1 rootParameters[3];
-			rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / sizeof(float), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+			rootParameters[0].InitAsConstants(sizeof(ModelViewProjectionCB) / sizeof(float), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 			rootParameters[1].InitAsConstants(sizeof(DirectionalLight) / sizeof(float), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 			rootParameters[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
@@ -622,8 +622,11 @@ namespace gg
 				ID3D12DescriptorHeap* ppHeaps[]{ model->srvHeap.Get() };
 				commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
-				commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(float), &mvpMatrix, 0);
+				ModelViewProjectionCB mvpMatrices{
+					UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
+					model->translation
+				};
+				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjectionCB) / sizeof(float), &mvpMatrices, 0);
 				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);
 				commandList->SetGraphicsRootDescriptorTable(2, model->srvHeap->GetGPUDescriptorHandleForHeapStart());
 				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);

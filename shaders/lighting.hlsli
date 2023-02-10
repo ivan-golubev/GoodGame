@@ -10,9 +10,16 @@ struct DirectionalLight
 /* N - vertex normal */
 float4 GetLightColor(float3 N, DirectionalLight dirLight)
 {
-	float lightIntensity = saturate(dot(N, -dirLight.lightDirection));
+	float3 L = normalize(-dirLight.lightDirection);
+	float lightIntensity = saturate(dot(N, L));
 	float4 lightColor = saturate(dirLight.diffuseColor * lightIntensity);
-	return lightColor;
+
+	/* add ambient light */
+	float ambientStrength = 0.1;
+	float4 ambientColor = float4(1.0, 1.0, 1.0, 1.0);
+	float4 ambient = ambientStrength * ambientColor;
+
+	return lightColor + ambient;
 }
 
 #endif // !LIGHTING_HLSLI

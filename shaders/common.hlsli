@@ -15,6 +15,7 @@
 struct ModelViewProjection
 {
 	matrix MVP;
+	matrix M;
 };
 
 #endif // !COMMON_HLSLI

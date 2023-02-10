@@ -1,6 +1,9 @@
 module;
 #include <string>
+#include <DirectXMath.h>
 export module ShaderProgram;
+
+using DirectX::XMMATRIX;
 
 export namespace gg
 {
@@ -12,4 +15,11 @@ export namespace gg
 	public:
 		virtual ~ShaderProgram() = default;
 	};
+
+	struct ModelViewProjectionCB
+	{
+		XMMATRIX MVP;
+		XMMATRIX M;
+	};
+
 } // namespace gg

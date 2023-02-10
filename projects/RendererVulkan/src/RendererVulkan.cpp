@@ -654,12 +654,13 @@ namespace gg
 
 	void RendererVulkan::CreateUniformBuffers(std::shared_ptr<ModelVulkan> model)
 	{
-		VkDeviceSize const bufferSize = sizeof(XMMATRIX);
+		VkDeviceSize const bufferSizeMVP = sizeof(ModelViewProjectionCB);
+		VkDeviceSize const bufferSizeDirLight = sizeof(DirectionalLight);
 
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			CreateBuffer(model->uniformBuffersMVP[i], model->uniformBuffersMemoryMVP[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			CreateBuffer(model->uniformBuffersDirLight[i], model->uniformBuffersMemoryDirLight[i], bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			CreateBuffer(model->uniformBuffersMVP[i], model->uniformBuffersMemoryMVP[i], bufferSizeMVP, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			CreateBuffer(model->uniformBuffersDirLight[i], model->uniformBuffersMemoryDirLight[i], bufferSizeDirLight, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 	}
 
@@ -703,7 +704,7 @@ namespace gg
 			VkDescriptorBufferInfo bufferInfoMVP{};
 			bufferInfoMVP.buffer = model->uniformBuffersMVP[i];
 			bufferInfoMVP.offset = 0;
-			bufferInfoMVP.range = sizeof(XMMATRIX);
+			bufferInfoMVP.range = sizeof(ModelViewProjectionCB);
 
 			VkDescriptorBufferInfo bufferInfoDirLight{};
 			bufferInfoDirLight.buffer = model->uniformBuffersDirLight[i];
@@ -1014,10 +1015,13 @@ namespace gg
 		for (std::shared_ptr<ModelVulkan> model : models)
 		{
 			{  /* submit the UBO data - MVP matrix */
-				XMMATRIX mvpMatrix{ UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera) };
+				ModelViewProjectionCB mvpMatrices{
+					UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
+					model->translation
+				};
 				void* data;
-				vkMapMemory(device, model->uniformBuffersMemoryMVP[currentFrame], 0, sizeof(XMMATRIX), 0, &data);
-				memcpy(data, &mvpMatrix, sizeof(XMMATRIX));
+				vkMapMemory(device, model->uniformBuffersMemoryMVP[currentFrame], 0, sizeof(ModelViewProjectionCB), 0, &data);
+				memcpy(data, &mvpMatrices, sizeof(ModelViewProjectionCB));
 				vkUnmapMemory(device, model->uniformBuffersMemoryMVP[currentFrame]);
 			}
 			{  /* submit the UBO data - Directional Light */
