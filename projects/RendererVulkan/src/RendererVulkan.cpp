@@ -1016,8 +1016,8 @@ namespace gg
 		{
 			{  /* submit the UBO data - MVP matrix */
 				ModelViewProjectionCB mvpMatrices{
-					UpdateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					model->translation
+					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
+					CalculateNormalMatrix(model->translation)
 				};
 				void* data;
 				vkMapMemory(device, model->uniformBuffersMemoryMVP[currentFrame], 0, sizeof(ModelViewProjectionCB), 0, &data);

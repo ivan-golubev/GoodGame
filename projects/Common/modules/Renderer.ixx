@@ -46,6 +46,7 @@ namespace gg
 		std::shared_ptr<InputManager> inputManager;
 	};
 
-	export XMMATRIX UpdateMVP(XMMATRIX modelTranslation, double currentTimeSec, Camera const&);
+	export XMMATRIX CalculateMVP(XMMATRIX modelTranslation, double currentTimeSec, Camera const&);
+	export XMMATRIX CalculateNormalMatrix(XMMATRIX modelTranslation);
 
 } // namespace gg
