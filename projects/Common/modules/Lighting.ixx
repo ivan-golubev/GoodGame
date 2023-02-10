@@ -9,11 +9,11 @@ export namespace gg
 {
 	struct DirectionalLight
 	{
-		XMVECTOR diffuseColor;
+		XMFLOAT3 diffuseColor;
 		XMFLOAT3 lightDirection;
 
-		constexpr DirectionalLight(float r, float g, float b, float a, float x, float y, float z)
-			: diffuseColor{ r, g, b, a }
+		constexpr DirectionalLight(float r, float g, float b, float x, float y, float z)
+			: diffuseColor{ r, g, b }
 			, lightDirection{ x, y, z }
 		{
 		}

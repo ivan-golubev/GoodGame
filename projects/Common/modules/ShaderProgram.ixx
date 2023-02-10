@@ -4,6 +4,7 @@ module;
 export module ShaderProgram;
 
 using DirectX::XMMATRIX;
+using DirectX::XMVECTOR;
 
 export namespace gg
 {
@@ -20,6 +21,7 @@ export namespace gg
 	{
 		XMMATRIX MVP;
 		XMMATRIX M;
+		XMVECTOR ViewPosition;
 	};
 
 } // namespace gg

@@ -20,6 +20,7 @@ export namespace gg
 		void UpdateProjectionMatrix(float windowAspectRatio);
 		XMMATRIX const& GetViewMatrix() const;
 		XMMATRIX const& GetProjectionMatrix() const;
+		XMVECTOR const& GetCameraPosition() const;
 	private:
 		XMMATRIX projectionMatrix{};
 		XMMATRIX viewMatrix{};

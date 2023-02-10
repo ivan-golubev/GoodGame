@@ -16,6 +16,7 @@ struct ModelViewProjection
 {
 	matrix<float, 4, 4> MVP;
 	matrix<float, 4, 4> NormalMatrix;
+	float4 ViewPosition;
 };
 
 #endif // !COMMON_HLSLI

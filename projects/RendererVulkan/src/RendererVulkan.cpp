@@ -285,7 +285,7 @@ namespace gg
 		uboLayoutBindingMVP.binding = 0;
 		uboLayoutBindingMVP.descriptorCount = 1;
 		uboLayoutBindingMVP.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBindingMVP.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		uboLayoutBindingMVP.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
 		VkDescriptorSetLayoutBinding uboLayoutBindingDirLight{};
 		uboLayoutBindingDirLight.binding = 1;
@@ -1017,7 +1017,8 @@ namespace gg
 			{  /* submit the UBO data - MVP matrix */
 				ModelViewProjectionCB mvpMatrices{
 					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					CalculateNormalMatrix(model->translation)
+					CalculateNormalMatrix(model->translation),
+					camera->GetCameraPosition()
 				};
 				void* data;
 				vkMapMemory(device, model->uniformBuffersMemoryMVP[currentFrame], 0, sizeof(ModelViewProjectionCB), 0, &data);

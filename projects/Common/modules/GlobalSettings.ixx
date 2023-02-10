@@ -39,7 +39,7 @@ export namespace gg
 	constexpr int32_t maxFramesInFlight{ 2 };
 
 	constexpr DirectionalLight globalDirectionalLight{
-		1.0f, 1.0f, 1.0f, 1.0f,  // rgba
+		1.0f, 1.0f, 1.0f,   // rgb
 		-1.0f, -1.0f, 1.0f // xyz
 	};
 

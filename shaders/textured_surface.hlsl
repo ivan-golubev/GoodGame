@@ -15,9 +15,9 @@ struct VSInput
 
 struct VSOutput
 {
-	float2 texCoord : TEXCOORD;
-	float3 normal : NORMAL;
 	float4 position : SV_Position;
+	float3 normal : NORMAL;
+	float2 texCoord : TEXCOORD;
 };
 
 VSOutput vs_main(VSInput input)
@@ -31,13 +31,17 @@ VSOutput vs_main(VSInput input)
 
 struct PSInput
 {
-	float2 texCoord : TEXCOORD;
+	float4 position : SV_Position;
 	float3 normal : NORMAL;
+	float2 texCoord : TEXCOORD;
 };
 
 float4 ps_main(PSInput input) : SV_Target
 {
 	float4 textureColor = texture0.Sample(sampler0, input.texCoord);
-	float4 lightColor = GetLightColor(input.normal, DirectionalLightCB);
+
+	float3 viewDir = (float3) normalize(ModelViewProjectionCB.ViewPosition - input.position);
+	float4 lightColor = BlinnPhong(input.normal, viewDir, DirectionalLightCB);
+
 	return lightColor * textureColor;
 }

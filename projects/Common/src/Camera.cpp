@@ -86,5 +86,6 @@ namespace gg
 
 	XMMATRIX const& Camera::GetViewMatrix() const { return viewMatrix; }
 	XMMATRIX const& Camera::GetProjectionMatrix() const { return projectionMatrix; }
+	XMVECTOR const& Camera::GetCameraPosition() const { return cameraPosition; }
 
 } // namespace gg
