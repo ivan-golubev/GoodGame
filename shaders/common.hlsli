@@ -1,5 +1,5 @@
-#ifndef COMMON_HLSL
-#define COMMON_HLSL
+#ifndef COMMON_HLSLI
+#define COMMON_HLSLI
 
 
 #ifdef VULKAN
@@ -12,5 +12,9 @@
 
 #endif // !VULKAN
 
+struct ModelViewProjection
+{
+	matrix MVP;
+};
 
-#endif // !COMMON_HLSL
+#endif // !COMMON_HLSLI

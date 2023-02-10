@@ -1,15 +1,5 @@
 #include "common.hlsli"
-
-struct ModelViewProjection
-{
-	matrix MVP;
-};
-
-struct DirectionalLight
-{
-	float4 diffuseColor;
-	float3 lightDirection;
-};
+#include "lighting.hlsli"
 
 VK_BINDING(0) ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
 VK_BINDING(1) ConstantBuffer<DirectionalLight> DirectionalLightCB : register(b1);
@@ -49,9 +39,7 @@ struct PSInput
 
 float4 ps_main(PSInput input) : SV_Target
 {
-	float lightIntensity = saturate(dot(input.normal, -DirectionalLightCB.lightDirection));
-	float4 lightColor = saturate(DirectionalLightCB.diffuseColor * lightIntensity);
-
 	float4 textureColor = texture1.Sample(sampler1, input.texCoord);
+	float4 lightColor = GetLightColor(input.normal, DirectionalLightCB);
 	return lightColor * textureColor;
 }
