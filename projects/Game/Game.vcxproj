@@ -150,6 +150,9 @@ pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
     <FxCompile Include="$(SolutionDir)shaders\textured_surface.hlsl">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </FxCompile>
+    <FxCompile Include="$(SolutionDir)shaders\common.hlsli">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)shaders\compile_shaders.ps1">
@@ -158,7 +161,7 @@ pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
     <None Include="packages.config" />
   </ItemGroup>
   <Target Name="DeleteShaders" AfterTargets="Clean">
-    <Message Text="Deleting compiled shaders and assets"/>
+    <Message Text="Deleting compiled shaders and assets" />
     <RemoveDir Directories="$(TargetDir)\shaders" />
     <RemoveDir Directories="$(TargetDir)\assets" />
   </Target>

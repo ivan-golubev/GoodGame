@@ -1,3 +1,5 @@
+#include "common.hlsli"
+
 struct ModelViewProjection
 {
 	matrix MVP;
@@ -9,10 +11,10 @@ struct DirectionalLight
 	float3 lightDirection;
 };
 
-ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
-ConstantBuffer<DirectionalLight> DirectionalLightCB : register(b1);
-Texture2D    texture1 : register(t2);
-SamplerState sampler1 : register(s2);
+VK_BINDING(0) ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
+VK_BINDING(1) ConstantBuffer<DirectionalLight> DirectionalLightCB : register(b1);
+VK_BINDING(2) Texture2D    texture1 : register(t0);
+VK_BINDING(2) SamplerState sampler1 : register(s0);
 
 struct VSInput
 {

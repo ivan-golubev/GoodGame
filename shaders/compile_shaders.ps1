@@ -32,8 +32,8 @@ foreach($file in Get-ChildItem -Path $PSScriptRoot -Filter *.hlsl) {
 
 	if ($RendererType -eq "vulkan") 
 	{
-		$global:AdditionalParamsVS = "-fspv-target-env=vulkan1.3", "-spirv"
-		$global:AdditionalParamsPS = "-fspv-target-env=vulkan1.3", "-spirv"
+		$global:AdditionalParamsVS = "-fspv-target-env=vulkan1.3", "-spirv", "-D VULKAN"
+		$global:AdditionalParamsPS = "-fspv-target-env=vulkan1.3", "-spirv", "-D VULKAN"
 	} else
 	{ # D3D12
 		$global:AdditionalParamsVS = "-Fd", "${OutputDir}\${Entry}_VS.pdb"

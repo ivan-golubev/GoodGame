@@ -196,7 +196,7 @@ namespace gg
 				D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
 			CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 			CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 			rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / sizeof(float), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -214,7 +214,7 @@ namespace gg
 			sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 			sampler.MinLOD = 0.0f;
 			sampler.MaxLOD = D3D12_FLOAT32_MAX;
-			sampler.ShaderRegister = 2;
+			sampler.ShaderRegister = 0;
 			sampler.RegisterSpace = 0;
 			sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
