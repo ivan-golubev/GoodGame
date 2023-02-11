@@ -1,10 +1,9 @@
 module;
 #include <string>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 export module ShaderProgram;
 
-using DirectX::XMMATRIX;
-using DirectX::XMVECTOR;
 
 export namespace gg
 {
@@ -19,9 +18,9 @@ export namespace gg
 
 	struct ModelViewProjectionCB
 	{
-		XMMATRIX MVP;
-		XMMATRIX M;
-		XMVECTOR ViewPosition;
+		glm::mat4x4 MVP;
+		glm::mat4x4 MV;
+		glm::vec4 ViewPosition;
 	};
 
 } // namespace gg

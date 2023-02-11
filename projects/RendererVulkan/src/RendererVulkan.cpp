@@ -3,7 +3,8 @@ module;
 #include <array>
 #include <cstdint>
 #include <chrono>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <format>
 #include <glm/glm.hpp>
 #include <limits>
@@ -36,11 +37,6 @@ import ModelLoader;
 import ModelVulkan;
 import Lighting;
 
-using DirectX::XMMATRIX;
-using DirectX::XMVECTOR;
-using DirectX::XMMatrixRotationY;
-using DirectX::XMMatrixRotationZ;
-using DirectX::XMMatrixMultiply;
 using std::chrono::nanoseconds;
 
 namespace
@@ -757,8 +753,7 @@ namespace gg
 	void RendererVulkan::ResizeWindow()
 	{
 		RecreateSwapChain();
-		float windowAspectRatio{ width / static_cast<float>(height) };
-		camera->UpdateProjectionMatrix(windowAspectRatio);
+		camera->UpdateProjectionMatrix(width, height);
 		isWindowResized = false;
 	}
 
@@ -927,7 +922,7 @@ namespace gg
 		return std::shared_ptr<Texture>(texture);
 	}
 
-	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
+	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
@@ -1026,7 +1021,7 @@ namespace gg
 			{  /* submit the UBO data - MVP matrix */
 				ModelViewProjectionCB mvpMatrices{
 					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					CalculateNormalMatrix(model->translation),
+					CalculateMV(model->translation, *camera),
 					camera->GetCameraPosition()
 				};
 				void* data;

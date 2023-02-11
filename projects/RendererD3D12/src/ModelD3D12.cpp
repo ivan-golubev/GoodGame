@@ -1,16 +1,16 @@
 module;
 #include <string>
 #include <memory>
-#include <DirectXMath.h>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 module ModelD3D12;
 
 import Model;
 
-using DirectX::XMVECTOR;
 
 namespace gg
 {
-	ModelD3D12::ModelD3D12(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, XMVECTOR& position)
+	ModelD3D12::ModelD3D12(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, glm::vec3& position)
 		: Model{ modelRelativePath, s, position }
 	{
 	}

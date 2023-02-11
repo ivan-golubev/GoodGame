@@ -3,7 +3,8 @@ module;
 #include <chrono>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <dxgi1_6.h>
 #include <memory>
 #include <string>
@@ -21,8 +22,6 @@ import Texture;
 import ModelD3D12;
 import GlobalSettings;
 
-using DirectX::XMMATRIX;
-using DirectX::XMVECTOR;
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
 
@@ -46,7 +45,7 @@ namespace gg
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
-		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
+		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 	private:
 		void PopulateCommandList();

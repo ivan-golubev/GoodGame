@@ -6,7 +6,8 @@
 #include <cassert>
 #include <format>
 #include <memory>
-#include <DirectXMath.h>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 import Application;
 import ApplicationSettings;
@@ -18,7 +19,6 @@ import ShaderProgram;
 import ShaderProgramVulkan;
 import Texture;
 
-using DirectX::XMVECTOR;
 
 namespace
 {
@@ -97,11 +97,11 @@ namespace
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
 			{
-				XMVECTOR position{ -2.f, 0.f, 0.f };
+				glm::vec3 position{ -2.f, 0.f, 0.f };
 				renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
 			}
 			{
-				XMVECTOR position{ 2.f, 0.f, 0.f };
+				glm::vec3 position{ 2.f, 0.f, 0.f };
 				renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position);
 			}
 

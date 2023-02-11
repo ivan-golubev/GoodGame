@@ -25,7 +25,7 @@ VSOutput vs_main(VSInput input)
 	VSOutput output;
 	output.position = mul(ModelViewProjectionCB.MVP, input.position);
 	output.texCoord = input.texCoord;
-	output.normal = normalize(mul((float3x3)ModelViewProjectionCB.NormalMatrix, input.normal));
+	output.normal = normalize(mul((float3x3)ModelViewProjectionCB.MV, input.normal));
 	return output;
 }
 

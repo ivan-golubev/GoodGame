@@ -3,7 +3,8 @@ module;
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <cassert>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <filesystem>
 #include <format>
 #include <string>
@@ -15,7 +16,6 @@ import Model;
 import ShaderProgram;
 import ErrorHandling;
 
-using DirectX::XMFLOAT2;
 using gg::Mesh;
 using gg::Model;
 using gg::AssetLoadException;

@@ -1,26 +1,27 @@
 module;
-#include <DirectXMath.h>
 #include <chrono>
 #include <numbers>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/trigonometric.hpp"
 module Camera;
 
 import Input;
 import Application;
-
-using DirectX::XMVECTOR;
-using DirectX::XMMATRIX;
 
 namespace gg
 {
 	constexpr double cameraMoveSpeed{ 5.0 }; // in metres per second
 	constexpr double cameraTurnSpeed{ std::numbers::pi_v<double> }; // in radians per second
 	constexpr float fieldOfView{ 90.f };
-	constexpr float near{ 0.1f };
-	constexpr float far{ 100.f };
+	constexpr float nearPlane{ 0.1f };
+	constexpr float farPlane{ 100.f };
 
-	constexpr XMVECTOR forward{ 0.f, 0.f, 1.f };
-	constexpr XMVECTOR up{ 0.f, 1.f, 0.f, 0.f };
-	constexpr XMVECTOR right{ 1.f, 0.f, 0.f };
+	constexpr glm::vec3 forward{ 0.f, 0.f, 1.f };
+	constexpr glm::vec3 up{ 0.f, 1.f, 0.f };
+	constexpr glm::vec3 right{ 1.f, 0.f, 0.f };
 
 	Camera::Camera(std::shared_ptr<InputManager> inputManager)
 		: inputManager{ inputManager }
@@ -29,63 +30,62 @@ namespace gg
 
 	void Camera::UpdateCamera(std::chrono::nanoseconds deltaTime)
 	{
-		using namespace DirectX;
 		using namespace std::chrono_literals;
 
 		double const deltaTimeSeconds{ deltaTime / 1.0s };
 		float const cameraMoveAmount = static_cast<float>(cameraMoveSpeed * deltaTimeSeconds);
 		{
-			XMVECTOR const moveFB{ XMVectorScale(forward, cameraMoveAmount) };
+			glm::vec3 const moveFB{ forward * cameraMoveAmount };
 			if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
-				cameraPosition = XMVectorAdd(cameraPosition, moveFB);
+				cameraPosition += moveFB;
 			if (inputManager->IsKeyDown(InputAction::MoveCameraBack))
-				cameraPosition = XMVectorSubtract(cameraPosition, moveFB);
+				cameraPosition -= moveFB;
 		}
 		{
-			XMVECTOR const moveLR{ XMVectorScale(right, cameraMoveAmount) };
+			glm::vec3 const moveLR{ right * cameraMoveAmount };
 			if (inputManager->IsKeyDown(InputAction::MoveCameraRight))
-				focusPoint = XMVectorAdd(focusPoint, moveLR);
+				focusPoint += moveLR;
 			if (inputManager->IsKeyDown(InputAction::MoveCameraLeft))
-				focusPoint = XMVectorSubtract(focusPoint, moveLR);
+				focusPoint -= moveLR;
 		}
 		{
-			XMVECTOR const moveUD{ XMVectorScale(up, cameraMoveAmount) };
+			glm::vec3 const moveUD{ up * cameraMoveAmount };
 			if (inputManager->IsKeyDown(InputAction::RaiseCamera))
 			{
-				cameraPosition = XMVectorAdd(cameraPosition, moveUD);
-				focusPoint = XMVectorAdd(focusPoint, moveUD);
+				cameraPosition += moveUD;
+				focusPoint += moveUD;
 			}
 			if (inputManager->IsKeyDown(InputAction::LowerCamera))
 			{
-				cameraPosition = XMVectorSubtract(cameraPosition, moveUD);
-				focusPoint = XMVectorSubtract(focusPoint, moveUD);
+				cameraPosition -= moveUD;
+				focusPoint -= moveUD;
 			}
 		}
 		{
-			float const CAM_TURN_AMOUNT = static_cast<float>(cameraTurnSpeed * deltaTimeSeconds);
-			XMVECTOR const moveLR{ XMVectorScale(right, CAM_TURN_AMOUNT) };
+			float const cameraTurnAmount = static_cast<float>(cameraTurnSpeed * deltaTimeSeconds);
+			glm::vec3 const moveLR{ right * cameraTurnAmount };
 			if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
-				focusPoint = XMVectorAdd(focusPoint, moveLR);
+				focusPoint += moveLR;
 			if (inputManager->IsKeyDown(InputAction::TurnCameraLeft))
-				focusPoint = XMVectorSubtract(focusPoint, moveLR);
+				focusPoint -= moveLR;
 
-			XMVECTOR const moveUP{ XMVectorScale(up, CAM_TURN_AMOUNT) };
+			glm::vec3 const moveUP{ up * cameraTurnAmount };
 			if (inputManager->IsKeyDown(InputAction::LookCameraUp))
-				focusPoint = XMVectorAdd(focusPoint, moveUP);
+				focusPoint += moveUP;
 			if (inputManager->IsKeyDown(InputAction::LookCameraDown))
-				focusPoint = XMVectorSubtract(focusPoint, moveUP);
+				focusPoint -= moveUP;
 		}
-		viewMatrix = XMMatrixLookAtLH(cameraPosition, focusPoint, up);
+		viewMatrix = glm::lookAtLH(cameraPosition, focusPoint, up);
 	}
 
-	void Camera::UpdateProjectionMatrix(float windowAspectRatio)
+	void Camera::UpdateProjectionMatrix(uint32_t width, uint32_t height)
 	{
-		using namespace DirectX;
-		projectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(fieldOfView), windowAspectRatio, near, far);
+
+		projectionMatrix = glm::perspectiveFovLH(glm::radians(fieldOfView), static_cast<float>(width), static_cast<float>(height), nearPlane, farPlane);
 	}
 
-	XMMATRIX const& Camera::GetViewMatrix() const { return viewMatrix; }
-	XMMATRIX const& Camera::GetProjectionMatrix() const { return projectionMatrix; }
-	XMVECTOR const& Camera::GetCameraPosition() const { return cameraPosition; }
+	glm::mat4x4 const& Camera::GetViewMatrix() const { return viewMatrix; }
+	glm::mat4x4 const& Camera::GetProjectionMatrix() const { return projectionMatrix; }
+	glm::vec4 Camera::GetCameraPosition() const { return glm::vec4(cameraPosition, 1.0f); }
 
 } // namespace gg

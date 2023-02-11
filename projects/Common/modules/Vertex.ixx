@@ -1,18 +1,15 @@
 module;
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 export module Vertex;
-
-using DirectX::XMVECTOR;
-using DirectX::XMFLOAT2;
-using DirectX::XMFLOAT3;
 
 namespace gg
 {
 	export struct Vertex
 	{
-		XMVECTOR position{};
-		XMFLOAT2 textureCoords0{};
-		XMFLOAT3 normals{};
+		glm::vec4 position{};
+		glm::vec2 textureCoords0{};
+		glm::vec3 normals{};
 
 		Vertex() = default;
 

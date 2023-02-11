@@ -1,7 +1,8 @@
 module;
 #include <string>
 #include <memory>
-#include <DirectXMath.h>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 #include <vulkan/vulkan.h>
 module ModelVulkan;
 
@@ -10,11 +11,10 @@ import ShaderProgram;
 import RendererVulkan;
 import ErrorHandling;
 
-using DirectX::XMVECTOR;
 
 namespace gg
 {
-	ModelVulkan::ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, XMVECTOR& position, VkDevice d)
+	ModelVulkan::ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, glm::vec3& position, VkDevice d)
 		: Model{ modelRelativePath, s, position }
 		, device{ d }
 	{

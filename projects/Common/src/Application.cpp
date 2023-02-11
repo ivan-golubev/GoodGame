@@ -1,6 +1,7 @@
 module;
 #include <cstdint>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <memory>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_video.h>
@@ -46,9 +47,6 @@ namespace gg
 		, inputManager{ inputManager }
 		, timeManager{ timeManager }
 	{
-		/* Check for DirectX Math library support. */
-		if (!DirectX::XMVerifyCPUSupport())
-			throw ApplicationInitException("Failed to verify DirectX Math library support");
 	}
 
 	Application::~Application()

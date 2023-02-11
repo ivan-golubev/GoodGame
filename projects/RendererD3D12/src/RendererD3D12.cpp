@@ -5,7 +5,8 @@ module;
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
 #include <d3dcompiler.h>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <dxgi1_6.h>
 #include <format>
 #include <wrl.h>
@@ -31,7 +32,6 @@ import ModelD3D12;
 import TextureD3D12;
 import Lighting;
 
-using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
 
@@ -361,7 +361,7 @@ namespace gg
 		return std::shared_ptr<Texture>{ texture };
 	}
 
-	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position)
+	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
@@ -551,8 +551,7 @@ namespace gg
 		if (isWindowResized)
 		{
 			ResizeWindow();
-			float windowAspectRatio{ width / static_cast<float>(height) };
-			camera->UpdateProjectionMatrix(windowAspectRatio);
+			camera->UpdateProjectionMatrix(width, height);
 		}
 
 		camera->UpdateCamera(deltaTime);
@@ -624,7 +623,7 @@ namespace gg
 
 				ModelViewProjectionCB mvpMatrices{
 					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					CalculateNormalMatrix(model->translation),
+					CalculateMV(model->translation, *camera),
 					camera->GetCameraPosition()
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjectionCB) / sizeof(float), &mvpMatrices, 0);

@@ -3,20 +3,20 @@ module;
 #include <string>
 #include <array>
 #include <vulkan/vulkan.h>
-#include <DirectXMath.h>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 export module ModelVulkan;
 
 import Model;
 import Renderer;
 
-using DirectX::XMVECTOR;
 
 namespace gg
 {
 	export struct ModelVulkan : public Model
 	{
 	public:
-		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, XMVECTOR& position, VkDevice);
+		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, glm::vec3& position, VkDevice);
 		~ModelVulkan() noexcept;
 
 	private:

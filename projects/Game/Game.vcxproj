@@ -68,6 +68,7 @@
   <Import Project="$(SolutionDir)\props\Assimp.props" />
   <Import Project="$(SolutionDir)\props\WinPix.props" />
   <Import Project="$(SolutionDir)\props\Assets.props" />
+  <Import Project="$(SolutionDir)\props\GLM.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>

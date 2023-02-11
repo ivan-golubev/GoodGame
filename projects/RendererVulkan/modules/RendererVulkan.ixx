@@ -2,7 +2,8 @@ module;
 #include <array>
 #include <cstdint>
 #include <chrono>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <memory>
 #include <optional>
 #include <string>
@@ -20,8 +21,6 @@ import Renderer;
 import Texture;
 import GlobalSettings;
 
-using DirectX::XMMATRIX;
-using DirectX::XMVECTOR;
 using std::chrono::nanoseconds;
 
 namespace gg
@@ -45,7 +44,7 @@ namespace gg
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
-		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) override;
+		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 		VkDevice GetDevice() const;
 

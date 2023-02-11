@@ -2,14 +2,12 @@ module;
 #include <string>
 #include <cstdint>
 #include <memory>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include "glm/ext/matrix_transform.hpp"
 module Model;
 
 import ModelLoader;
-
-using DirectX::XMMATRIX;
-using DirectX::XMVECTOR;
-using DirectX::XMMatrixTranslationFromVector;
 
 namespace gg
 {
@@ -36,9 +34,9 @@ namespace gg
 		return *this;
 	}
 
-	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, XMVECTOR& position)
+	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, glm::vec3& position)
 		: shaderProgram{ s }
-		, translation{ XMMatrixTranslationFromVector(position) }
+		, translation{ glm::translate(glm::identity<glm::mat4x4>(), position) }
 	{
 		LoadData(modelRelativePath, *this);
 	}
@@ -63,9 +61,9 @@ namespace gg
 		return *this;
 	}
 
-	void Model::SetPosition(XMVECTOR& position)
+	void Model::SetPosition(glm::vec3& position)
 	{
-		translation = XMMatrixTranslationFromVector(position);
+		translation = glm::translate(glm::identity<glm::mat4x4>(), position);
 	}
 
 } // namespace gg

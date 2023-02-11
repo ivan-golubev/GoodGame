@@ -2,15 +2,14 @@ module;
 #include <string>
 #include <memory>
 #include <vector>
-#include <DirectXMath.h>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 export module Model;
 
 import Vertex;
 import ShaderProgram;
 import Texture;
 
-using DirectX::XMVECTOR;
-using DirectX::XMMATRIX;
 
 export namespace gg
 {
@@ -34,16 +33,16 @@ export namespace gg
 
 	struct Model
 	{
-		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, XMVECTOR& position);
+		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, glm::vec3& position);
 		virtual ~Model() noexcept = default;
 		Model(Model const&) = delete;
 		Model& operator=(Model const&) = delete;
 		Model(Model&&) noexcept;
 		Model& operator=(Model&&) noexcept;
 
-		XMMATRIX translation{};
+		glm::mat4x4 translation{};
 
-		void SetPosition(XMVECTOR& position);
+		void SetPosition(glm::vec3& position);
 
 		std::shared_ptr<ShaderProgram> shaderProgram;
 		std::vector<std::string> textureNames;
