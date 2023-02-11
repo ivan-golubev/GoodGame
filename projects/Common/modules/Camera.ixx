@@ -25,7 +25,7 @@ export namespace gg
 		XMMATRIX projectionMatrix{};
 		XMMATRIX viewMatrix{};
 
-		XMVECTOR cameraPosition{ 0.f, 0.f, -3.f, 1.f };
+		XMVECTOR cameraPosition{ 0.f, 0.f, -4.f, 1.f };
 		XMVECTOR focusPoint{ 0.f, 0.f, 0.f, 1.f };
 
 		std::shared_ptr<InputManager> inputManager;

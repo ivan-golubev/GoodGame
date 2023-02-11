@@ -12,14 +12,15 @@ import Input;
 import ShaderProgram;
 import Texture;
 import Camera;
+import Lighting;
 
 using std::chrono::nanoseconds;
 using DirectX::XMVECTOR;
 using DirectX::XMMATRIX;
 
-namespace gg
+export namespace gg
 {
-	export class Renderer
+	class Renderer
 	{
 	public:
 		Renderer() = default;
@@ -37,7 +38,7 @@ namespace gg
 		virtual void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, XMVECTOR& position) = 0;
 	};
 
-	export struct RendererSettings
+	struct RendererSettings
 	{
 		uint32_t width;
 		uint32_t height;
@@ -46,7 +47,20 @@ namespace gg
 		std::shared_ptr<InputManager> inputManager;
 	};
 
-	export XMMATRIX CalculateMVP(XMMATRIX modelTranslation, double currentTimeSec, Camera const&);
-	export XMMATRIX CalculateNormalMatrix(XMMATRIX modelTranslation);
+	XMMATRIX CalculateMVP(XMMATRIX modelTranslation, double currentTimeSec, Camera const&);
+	XMMATRIX CalculateNormalMatrix(XMMATRIX modelTranslation);
+
+	constexpr char const* texturesLocation{ "assets/textures" };
+	constexpr char const* texturesExtension{ "tga" };
+	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
+	constexpr int32_t maxFramesInFlight{ 2 };
+
+	/* Flip the sign of the viewport's height, Y goes up, just in D3D12 */
+	constexpr bool flipVulkanViewport{ true };
+
+	constexpr DirectionalLight globalDirectionalLight{
+		1.0f, 1.0f, 1.0f,   // rgb
+		-1.0f, 0.0f, 0.0f // xyz
+	};
 
 } // namespace gg

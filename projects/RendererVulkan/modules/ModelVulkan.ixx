@@ -7,7 +7,7 @@ module;
 export module ModelVulkan;
 
 import Model;
-import GlobalSettings;
+import Renderer;
 
 using DirectX::XMVECTOR;
 
