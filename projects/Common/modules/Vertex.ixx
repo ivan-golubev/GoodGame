@@ -8,8 +8,8 @@ namespace gg
 	export struct Vertex
 	{
 		glm::vec4 position{};
+		glm::vec4 normal{};
 		glm::vec2 textureCoords0{};
-		glm::vec3 normals{};
 
 		Vertex() = default;
 
@@ -24,10 +24,10 @@ namespace gg
 		{
 		}
 
-		Vertex(float x, float y, float z, float w, float u, float v, float nx, float ny, float nz)
+		Vertex(float x, float y, float z, float w, float u, float v, float nx, float ny, float nz, float nw)
 			: position{ x, y, z, w }
+			, normal{ nx, ny, nz, nw }
 			, textureCoords0{ u, v }
-			, normals{ nx, ny, nz }
 		{
 		}
 	};

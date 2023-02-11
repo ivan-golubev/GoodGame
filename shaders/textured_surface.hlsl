@@ -9,14 +9,14 @@ VK_BINDING(2) SamplerState sampler0 : register(s0);
 struct VSInput
 {
 	float4 position : POSITION;
+	float4 normal : NORMAL;
 	float2 texCoord : TEXCOORD;
-	float3 normal : NORMAL;
 };
 
 struct VSOutput
 {
 	float4 position : SV_Position;
-	float3 normal : NORMAL;
+	float4 normal : NORMAL;
 	float2 texCoord : TEXCOORD;
 };
 
@@ -24,15 +24,18 @@ VSOutput vs_main(VSInput input)
 {
 	VSOutput output;
 	output.position = mul(ModelViewProjectionCB.MVP, input.position);
+	// WTF the input.normal value is "unavailable" in PIX ?
+	output.normal = normalize(mul(ModelViewProjectionCB.MV, input.normal));
+	//output.normal = normalize(float3(1.0, 0.0, 0)); // this corresponds to the light dir, max luminosity ?
 	output.texCoord = input.texCoord;
-	output.normal = normalize(mul((float3x3)ModelViewProjectionCB.MV, input.normal));
+
 	return output;
 }
 
 struct PSInput
 {
 	float4 position : SV_Position;
-	float3 normal : NORMAL;
+	float4 normal : NORMAL;
 	float2 texCoord : TEXCOORD;
 };
 
@@ -41,7 +44,7 @@ float4 ps_main(PSInput input) : SV_Target
 	float4 textureColor = texture0.Sample(sampler0, input.texCoord);
 
 	float3 viewDir = (float3) normalize(ModelViewProjectionCB.ViewPosition - input.position);
-	float4 lightColor = BlinnPhong(input.normal, viewDir, DirectionalLightCB);
+	float4 lightColor = BlinnPhong((float3)input.normal, viewDir, DirectionalLightCB);
 
 	return lightColor * textureColor;
 }

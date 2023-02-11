@@ -49,7 +49,7 @@ namespace
 					static_cast<float>(assimpVertex.z),
 					1.0f, // w
 					UV.x, UV.y,
-					normal.x, normal.y, normal.z
+					normal.x, normal.y, normal.z, 0.0f
 				);
 			}
 		}
