@@ -38,9 +38,12 @@ export namespace gg
 	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
 	constexpr int32_t maxFramesInFlight{ 2 };
 
+	/* Flip the sign of the viewport's height, Y goes up, just in D3D12 */
+	constexpr bool flipVulkanViewport{ true };
+
 	constexpr DirectionalLight globalDirectionalLight{
 		1.0f, 1.0f, 1.0f,   // rgb
-		-1.0f, -1.0f, 1.0f // xyz
+		-1.0f, -1.0f, -1.0f // xyz
 	};
 
 } // namespace gg

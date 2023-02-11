@@ -50,9 +50,10 @@ namespace
 
 	constexpr uint32_t maxDescriptorSets = 1000;
 
-	constexpr std::array<char const*, 1> deviceExtensions
+	constexpr std::array<char const*, 2> deviceExtensions
 	{
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		VK_KHR_MAINTENANCE1_EXTENSION_NAME // required for using negative viewport heights
 	};
 
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
@@ -345,9 +346,17 @@ namespace gg
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = 0.0f;
 		viewport.width = static_cast<float>(swapChainExtent.width);
-		viewport.height = static_cast<float>(swapChainExtent.height);
+		if constexpr (flipVulkanViewport)
+		{
+			viewport.y = static_cast<float>(swapChainExtent.height);
+			viewport.height = -static_cast<float>(swapChainExtent.height);
+		}
+		else
+		{
+			viewport.y = 0;
+			viewport.height = static_cast<float>(swapChainExtent.height);
+		}
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
@@ -369,7 +378,7 @@ namespace gg
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
 
 		VkPipelineMultisampleStateCreateInfo multisampling{};
