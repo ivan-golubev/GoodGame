@@ -1,5 +1,6 @@
 module;
 #include <SDL2/SDL_video.h>
+#include <string>
 #include <memory>
 export module ApplicationSettings;
 
@@ -12,6 +13,11 @@ export namespace gg
 		Vulkan,
 		D3D12
 	};
+
+	std::string ToString(RendererType r)
+	{
+		return r == RendererType::D3D12 ? "D3D12" : "Vulkan";
+	}
 
 	struct ApplicationSettings
 	{
