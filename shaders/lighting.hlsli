@@ -3,8 +3,16 @@
 
 struct DirectionalLight
 {
-	float3 diffuseColor;
+	float3 specularColor;
+	float specularStrength;
+
+	float3 ambientColor;
+	float ambientStrength;
+
 	float3 lightDirection;
+	float specularShininess;
+
+	float3 diffuseColor;
 };
 
 /* N - normalized vertex normal
@@ -18,16 +26,12 @@ float4 BlinnPhong(float3 N, float3 V, DirectionalLight dirLight)
 	float3 diffuse = saturate(dirLight.diffuseColor * lightIntensity);
 
 	/* ambient light */
-	float ambientStrength = 0.1;
-	float3 ambientColor = float3(1.0, 1.0, 1.0);
-	float3 ambient = ambientStrength * ambientColor;
+	float3 ambient = dirLight.ambientStrength * dirLight.ambientColor;
 
 	/* specular light */
-	float specularStrength = 0.5;
-	float3 specularColor = float3(1.0, 1.0, 1.0);
-	float shininness = 32;
 	float3 reflectDir = reflect(L, N);
-	float3 specular = pow(max(dot(V, reflectDir), 0.0), shininness);
+	float specularIntensity = pow(max(dot(V, reflectDir), 0.0), dirLight.specularShininess);
+	float3 specular = dirLight.specularStrength * specularIntensity * dirLight.specularColor;
 
 	return float4(diffuse + ambient + specular, 1.0);
 }

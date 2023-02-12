@@ -8,14 +8,16 @@ export namespace gg
 {
 	struct DirectionalLight
 	{
-		glm::vec3 diffuseColor;
-		glm::vec3 lightDirection;
+		glm::vec3 specularColor;
+		float specularStrength;
 
-		constexpr DirectionalLight(float r, float g, float b, float x, float y, float z)
-			: diffuseColor{ r, g, b }
-			, lightDirection{ x, y, z }
-		{
-		}
+		glm::vec3 ambientColor;
+		float ambientStrength;
+
+		glm::vec3 lightDirection;
+		float specularShininess;
+
+		glm::vec3 diffuseColor;
 	};
 
 } // namespace gg
