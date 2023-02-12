@@ -62,9 +62,9 @@
     <IntDir>$(SolutionDir)intermediate\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\props\Global.props" />
+  <Import Project="$(SolutionDir)\props\GLM.props" />
   <Import Project="$(SolutionDir)\props\D3D12.props" />
   <Import Project="$(SolutionDir)\props\WinPix.props" />
-  <Import Project="$(SolutionDir)\props\GLM.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
