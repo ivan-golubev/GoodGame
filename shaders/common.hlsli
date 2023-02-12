@@ -15,7 +15,6 @@
 struct ModelViewProjection
 {
 	matrix<float, 4, 4> MVP;
-	matrix<float, 4, 4> MV;
 	float4 ViewPosition;
 };
 

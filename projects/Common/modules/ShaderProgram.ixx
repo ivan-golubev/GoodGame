@@ -19,7 +19,6 @@ export namespace gg
 	struct ModelViewProjectionCB
 	{
 		glm::mat4x4 MVP;
-		glm::mat4x4 MV;
 		glm::vec4 ViewPosition;
 	};
 

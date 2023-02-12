@@ -1021,7 +1021,6 @@ namespace gg
 			{  /* submit the UBO data - MVP matrix */
 				ModelViewProjectionCB mvpMatrices{
 					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					CalculateMV(model->translation, *camera),
 					camera->GetCameraPosition()
 				};
 				void* data;

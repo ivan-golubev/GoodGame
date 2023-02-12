@@ -47,7 +47,6 @@ export namespace gg
 	};
 
 	glm::mat4x4 CalculateMVP(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);
-	glm::mat4x4 CalculateMV(glm::mat4x4 modelTranslation, Camera const&);
 
 	constexpr char const* texturesLocation{ "assets/textures" };
 	constexpr char const* texturesExtension{ "tga" };

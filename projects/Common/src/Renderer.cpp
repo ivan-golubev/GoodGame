@@ -18,9 +18,4 @@ namespace gg
 		glm::mat4x4 const modelMatrix{ glm::rotate(modelTranslation, rotation, glm::vec3(1.f, 0.f, 1.f)) };
 		return camera.GetProjectionMatrix() * camera.GetViewMatrix() * modelMatrix;
 	}
-
-	glm::mat4x4 CalculateMV(glm::mat4x4 modelTranslation, Camera const& camera)
-	{
-		return camera.GetViewMatrix() * modelTranslation;
-	}
 } // namespace gg

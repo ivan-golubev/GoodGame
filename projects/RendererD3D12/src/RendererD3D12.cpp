@@ -623,7 +623,6 @@ namespace gg
 
 				ModelViewProjectionCB mvpMatrices{
 					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					CalculateMV(model->translation, *camera),
 					camera->GetCameraPosition()
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjectionCB) / sizeof(float), &mvpMatrices, 0);
