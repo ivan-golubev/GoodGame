@@ -59,7 +59,7 @@ export namespace gg
 
 	constexpr DirectionalLight globalDirectionalLight{
 		1.0f, 1.0f, 1.0f,   // rgb
-		-1.0f, 0.0f, 0.0f // xyz
+		-1.0f, -1.0f, 1.0f // xyz
 	};
 
 } // namespace gg

@@ -24,9 +24,7 @@ VSOutput vs_main(VSInput input)
 {
 	VSOutput output;
 	output.position = mul(ModelViewProjectionCB.MVP, input.position);
-	// WTF the input.normal value is "unavailable" in PIX ?
 	output.normal = normalize(mul(ModelViewProjectionCB.MV, input.normal));
-	//output.normal = normalize(float3(1.0, 0.0, 0)); // this corresponds to the light dir, max luminosity ?
 	output.texCoord = input.texCoord;
 
 	return output;
