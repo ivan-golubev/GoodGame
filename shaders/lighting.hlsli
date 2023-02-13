@@ -29,8 +29,8 @@ float4 BlinnPhong(float3 N, float3 V, DirectionalLight dirLight)
 	float3 ambient = dirLight.ambientStrength * dirLight.ambientColor;
 
 	/* specular light */
-	float3 reflectDir = reflect(L, N);
-	float specularIntensity = pow(max(dot(V, reflectDir), 0.0), dirLight.specularShininess);
+	float3 halfwayDir = normalize(L + V);
+	float specularIntensity = pow(max(dot(N, halfwayDir), 0.0), dirLight.specularShininess);
 	float3 specular = dirLight.specularStrength * specularIntensity * dirLight.specularColor;
 
 	return float4(diffuse + ambient + specular, 1.0);
