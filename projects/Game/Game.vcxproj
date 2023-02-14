@@ -69,6 +69,7 @@
   <Import Project="$(SolutionDir)\props\Assimp.props" />
   <Import Project="$(SolutionDir)\props\WinPix.props" />
   <Import Project="$(SolutionDir)\props\Assets.props" />
+  <Import Project="$(SolutionDir)\props\ImGUI.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -172,6 +173,9 @@ pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{1e183599-3c64-448b-b0a2-ab14ab71285b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ImGUI\ImGUI.vcxproj">
+      <Project>{409a8602-55fb-46a5-8a46-a184202f1cee}</Project>
     </ProjectReference>
     <ProjectReference Include="..\RendererD3D12\RendererD3D12.vcxproj">
       <Project>{51be0df1-0109-4edd-a21f-fcbf8ae01d92}</Project>

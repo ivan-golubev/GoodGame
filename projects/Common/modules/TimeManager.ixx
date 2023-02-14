@@ -1,6 +1,6 @@
 module;
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 export module TimeManager;
 
 using std::chrono::milliseconds;

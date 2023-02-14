@@ -1,10 +1,10 @@
 module;
+#include <array>
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <memory>
 #include <string>
-#include <array>
 #include <vulkan/vulkan.h>
-#include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp>
 export module ModelVulkan;
 
 import Model;

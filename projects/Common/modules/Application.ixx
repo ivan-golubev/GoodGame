@@ -1,9 +1,9 @@
 module;
 #include <cstdint>
 #include <memory>
-#include <windows.h>
-#include <SDL2/SDL_video.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_video.h>
+#include <windows.h>
 export module Application;
 
 import Renderer;

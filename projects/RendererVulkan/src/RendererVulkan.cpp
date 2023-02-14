@@ -1,12 +1,14 @@
 module;
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <chrono>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
+#include <cstdint>
 #include <format>
 #include <glm/glm.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+#include <imgui/backends/imgui_impl_sdl2.h>
+#include <imgui/backends/imgui_impl_vulkan.h>
 #include <limits>
 #include <optional>
 #include <SDL2/SDL.h>
@@ -16,10 +18,8 @@ module;
 #include <set>
 #include <vector>
 #include <vulkan/vulkan.h>
-
 #include <windows.h>
-#include <WinPixEventRuntime/pix3.h> // has to be the last - depends on types in windows.h
-
+#include <WinPixEventRuntime/pix3.h> 
 module RendererVulkan;
 
 import Application;
@@ -129,6 +129,73 @@ namespace gg
 
 		CreateCommandBuffers();
 		CreateSyncObjects();
+
+		InitImGUI();
+	}
+
+	void RendererVulkan::InitImGUI()
+	{
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+
+		{ /* create a descriptor pool for ImGUI data */
+			VkDescriptorPoolSize pool_sizes[] =
+			{
+				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+			};
+
+			VkDescriptorPoolCreateInfo poolInfo = {};
+			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+			poolInfo.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
+			poolInfo.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+			poolInfo.pPoolSizes = pool_sizes;
+
+			if (VK_SUCCESS != vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPoolImGUI))
+				throw VulkanInitException("failed to create descriptor pool!");
+		}
+
+		ImGui_ImplSDL2_InitForVulkan(windowHandleSDL);
+		{
+			QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
+
+			ImGui_ImplVulkan_InitInfo init_info = {};
+			init_info.Instance = instance;
+			init_info.PhysicalDevice = physicalDevice;
+			init_info.Device = device;
+			init_info.QueueFamily = indices.graphicsFamily.value();
+			init_info.Queue = graphicsQueue;
+			init_info.PipelineCache = VK_NULL_HANDLE;
+			init_info.DescriptorPool = descriptorPoolImGUI;
+			init_info.Subpass = 0;
+			init_info.MinImageCount = maxFramesInFlight;
+			init_info.ImageCount = maxFramesInFlight;
+			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+			init_info.Allocator = VK_NULL_HANDLE;
+			init_info.CheckVkResultFn = [](VkResult err) {
+				if (VK_SUCCESS != err)
+					throw VulkanInitException("failed to initialize imGUI!");
+			};
+
+			ImGui_ImplVulkan_Init(&init_info, renderPass);
+		}
+
+		{ /* upload fonts for ImGUI */
+			VkCommandBuffer commandBuffer{ BeginSingleTimeCommands() };
+			ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+			EndSingleTimeCommands(commandBuffer);
+		}
 	}
 
 	std::shared_ptr<RendererVulkan> RendererVulkan::Get()
@@ -848,6 +915,11 @@ namespace gg
 		/* destroys the associated shaders and textures */
 		models.clear();
 
+		/* ImGUI */
+		vkDestroyDescriptorPool(device, descriptorPoolImGUI, nullptr);
+		ImGui_ImplVulkan_Shutdown();
+		ImGui_ImplSDL2_Shutdown();
+
 		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
@@ -1047,9 +1119,26 @@ namespace gg
 				vkCmdDraw(commandBuffer, m.GetVertexCount(), 1, 0, 0);
 		}
 
+		RenderImGUI(commandBuffer);
+
 		vkCmdEndRenderPass(commandBuffer);
 		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))
 			throw VulkanRenderException("failed to record command buffer!");
+	}
+
+	void RendererVulkan::RenderImGUI(VkCommandBuffer commandBuffer)
+	{
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::Begin("Test");
+		ImGui::Text("Hello, world %d", 123);
+
+		ImGui::End();
+		ImGui::Render();
+
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 	}
 
 	VkCommandBuffer RendererVulkan::BeginSingleTimeCommands()

@@ -1,7 +1,7 @@
 module;
+#include <memory>
 #include <SDL2/SDL_video.h>
 #include <string>
-#include <memory>
 export module ApplicationSettings;
 
 import Application;

@@ -18,6 +18,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "projects\Common\C
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RendererD3D12", "projects\RendererD3D12\RendererD3D12.vcxproj", "{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGUI", "projects\ImGUI\ImGUI.vcxproj", "{409A8602-55FB-46A5-8A46-A184202F1CEE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -49,6 +51,12 @@ Global
 		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Final|x64.Build.0 = Final|x64
 		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Release|x64.ActiveCfg = Release|x64
 		{51BE0DF1-0109-4EDD-A21F-FCBF8AE01D92}.Release|x64.Build.0 = Release|x64
+		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Debug|x64.ActiveCfg = Debug|x64
+		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Debug|x64.Build.0 = Debug|x64
+		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Final|x64.ActiveCfg = Debug|x64
+		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Final|x64.Build.0 = Debug|x64
+		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Release|x64.ActiveCfg = Release|x64
+		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

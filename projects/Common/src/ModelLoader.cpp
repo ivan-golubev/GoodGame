@@ -3,10 +3,10 @@ module;
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <cassert>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <filesystem>
 #include <format>
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
 #include <string>
 #include <vector>
 module ModelLoader;

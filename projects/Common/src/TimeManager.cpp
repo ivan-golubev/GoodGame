@@ -1,7 +1,7 @@
 module;
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
-#include <chrono>
 #include <windows.h>
 module TimeManager;
 

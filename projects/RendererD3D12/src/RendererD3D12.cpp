@@ -1,21 +1,21 @@
 module;
 #include <algorithm>
 #include <cstdint>
-#include <numbers>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
-#include <d3dcompiler.h>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <dxgi1_6.h>
 #include <format>
-#include <wrl.h>
-#include <vector>
-#include <SDL2/SDL_syswm.h>
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+#include <imgui/backends/imgui_impl_dx12.h>
+#include <imgui/backends/imgui_impl_sdl2.h>
+#include <numbers>
 #include <SDL2/SDL.h>
-
+#include <SDL2/SDL_syswm.h>
+#include <vector>
 #include <windows.h>
-#include <WinPixEventRuntime/pix3.h> // has to be the last - depends on types in windows.h
+#include <WinPixEventRuntime/pix3.h>
+#include <wrl.h>
 module RendererD3D12;
 
 import Application;
@@ -40,6 +40,8 @@ namespace
 	std::string const shaderExtensionD3D12{ "cso" };
 	std::string const shadersLocation{ "shaders/dxil" };
 
+	constexpr DXGI_FORMAT rtvFormat{ DXGI_FORMAT_R8G8B8A8_UNORM };
+
 	HWND getWindowHandle(SDL_Window* windowHandle)
 	{
 		SDL_SysWMinfo wmInfo;
@@ -58,8 +60,8 @@ namespace gg
 		, windowHandleSDL{ rs.windowHandle }
 		, timeManager{ rs.timeManager }
 		, camera{ std::make_unique<Camera>(rs.inputManager) }
-		, mScissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
-		, mViewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
+		, scissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
+		, viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
 	{
 		uint8_t dxgiFactoryFlags{ 0 };
 
@@ -233,6 +235,30 @@ namespace gg
 			);
 			SetName(rootSignature.Get(), L"RootSignature");
 		}
+		InitImGUI();
+	}
+
+	void RendererD3D12::InitImGUI()
+	{
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+
+		{ /* Memory for Imgui's fonts */
+			D3D12_DESCRIPTOR_HEAP_DESC desc{};
+			desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+			desc.NumDescriptors = 1;
+			desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+			ThrowIfFailed(
+				device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap))
+			);
+		}
+
+		ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
+		ImGui_ImplDX12_Init(device.Get(), maxFramesInFlight, rtvFormat,
+			imguiSrvDescHeap.Get(),
+			imguiSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
+			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
 	void RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
@@ -249,7 +275,7 @@ namespace gg
 
 		D3D12_RT_FORMAT_ARRAY rtvFormats{};
 		rtvFormats.NumRenderTargets = 1;
-		rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		rtvFormats.RTFormats[0] = rtvFormat;
 
 		CD3DX12_BLEND_DESC blendDesc{ D3D12_DEFAULT };
 		CD3DX12_RASTERIZER_DESC rasterizerDesc{ D3D12_DEFAULT };
@@ -412,7 +438,7 @@ namespace gg
 
 	void RendererD3D12::ResizeWindow()
 	{
-		mViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+		viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		ResizeRenderTargets();
 		ResizeDepthBuffer();
 		isWindowResized = false;
@@ -528,6 +554,9 @@ namespace gg
 		/* destroys the associated shaders and textures */
 		models.clear();
 
+		ImGui_ImplDX12_Shutdown();
+		ImGui_ImplSDL2_Shutdown();
+
 		SDL_DestroyWindow(windowHandleSDL);
 		SDL_Quit();
 	}
@@ -590,8 +619,8 @@ namespace gg
 		{
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			commandList->RSSetViewports(1, &mViewport);
-			commandList->RSSetScissorRects(1, &mScissorRect);
+			commandList->RSSetViewports(1, &viewport);
+			commandList->RSSetScissorRects(1, &scissorRect);
 
 			commandList->OMSetRenderTargets(1, &rtvHandles[frameIndex], true, &dsvHandle);
 		}
@@ -604,8 +633,6 @@ namespace gg
 				renderTargets[frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
 			) };
 			commandList->ResourceBarrier(1, &barrier);
-
-			PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"SampleMarker");
 
 			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize };
 			float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
@@ -634,6 +661,9 @@ namespace gg
 				for (auto& m : model->meshes)
 					commandList->DrawInstanced(m.GetVertexCount(), 1, 0, 0);
 			}
+
+			RenderImGUI();
+
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				renderTargets[frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
@@ -641,6 +671,26 @@ namespace gg
 			commandList->ResourceBarrier(1, &barrier);
 		}
 		ThrowIfFailed(commandList->Close());
+	}
+
+	void RendererD3D12::RenderImGUI()
+	{
+		PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"ImGUIRendering");
+
+		ID3D12DescriptorHeap* ppHeaps[]{ imguiSrvDescHeap.Get() };
+		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::Begin("Test");
+		ImGui::Text("Hello, world %d", 123);
+
+		ImGui::End();
+		ImGui::Render();
+
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 	}
 
 } // namespace gg

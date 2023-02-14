@@ -1,14 +1,14 @@
 module;
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <dxgi1_6.h>
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
 #include <memory>
-#include <string>
 #include <SDL2/SDL_video.h>
+#include <string>
 #include <wrl.h>
 export module RendererD3D12;
 
@@ -48,6 +48,10 @@ namespace gg
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 	private:
+		/* ImGUI logic */
+		void InitImGUI();
+		void RenderImGUI();
+
 		void PopulateCommandList();
 		void WaitForPreviousFrame();
 		void ResizeRenderTargets();
@@ -76,8 +80,8 @@ namespace gg
 
 		bool isWindowResized{ true };
 
-		D3D12_VIEWPORT mViewport;
-		D3D12_RECT mScissorRect;
+		D3D12_VIEWPORT viewport;
+		D3D12_RECT scissorRect;
 
 		ComPtr<ID3D12Device4> device;
 		ComPtr<ID3D12CommandQueue> commandQueue;
@@ -98,6 +102,9 @@ namespace gg
 		ComPtr<ID3D12DescriptorHeap> depthStencilHeap;
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		uint32_t dsvDescriptorSize;
+
+		/* ImGUI state */
+		ComPtr<ID3D12DescriptorHeap> imguiSrvDescHeap;
 
 		std::vector<std::shared_ptr<ModelD3D12>> models;
 		std::shared_ptr<TimeManager> timeManager;

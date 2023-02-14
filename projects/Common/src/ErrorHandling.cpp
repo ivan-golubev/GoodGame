@@ -1,8 +1,8 @@
 module;
 #include <cstdint>
 #include <format>
-#include <string>
 #include <format>
+#include <string>
 #include <windows.h>
 module ErrorHandling;
 

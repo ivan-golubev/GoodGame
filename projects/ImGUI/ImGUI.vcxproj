@@ -17,8 +17,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{86e825a1-a3c0-4760-8f52-8a88b93a0add}</ProjectGuid>
-    <RootNamespace>VulkanRenderer</RootNamespace>
+    <ProjectGuid>{409a8602-55fb-46a5-8a46-a184202f1cee}</ProjectGuid>
+    <RootNamespace>ImGUI</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -62,9 +62,7 @@
     <IntDir>$(SolutionDir)intermediate\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\props\Global.props" />
-  <Import Project="$(SolutionDir)\props\GLM.props" />
   <Import Project="$(SolutionDir)\props\Vulkan.props" />
-  <Import Project="$(SolutionDir)\props\WinPix.props" />
   <Import Project="$(SolutionDir)\props\ImGUI.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -120,23 +118,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
-    <ClCompile Include="modules\ModelVulkan.ixx" />
-    <ClCompile Include="modules\ShaderProgramVulkan.ixx" />
-    <ClCompile Include="modules\RendererVulkan.ixx" />
-    <ClCompile Include="modules\TextureVulkan.ixx" />
-    <ClCompile Include="modules\VertexVulkan.ixx" />
-    <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
-    <ClCompile Include="src\ModelVulkan.cpp" />
-    <ClCompile Include="src\RendererVulkan.cpp" />
-    <ClCompile Include="src\ShaderProgramVulkan.cpp" />
-    <ClCompile Include="src\TextureVulkan.cpp" />
-    <ClCompile Include="src\VertexVulkan.cpp" />
+    <ClInclude Include="..\..\lib\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\..\lib\imgui\backends\imgui_impl_sdl2.h" />
+    <ClInclude Include="..\..\lib\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="..\..\lib\imgui\imconfig.h" />
+    <ClInclude Include="..\..\lib\imgui\imgui.h" />
+    <ClInclude Include="..\..\lib\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\lib\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\..\lib\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\..\lib\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.vcxproj">
-      <Project>{1e183599-3c64-448b-b0a2-ab14ab71285b}</Project>
-    </ProjectReference>
+    <ClCompile Include="..\..\lib\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\..\lib\imgui\backends\imgui_impl_sdl2.cpp" />
+    <ClCompile Include="..\..\lib\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="..\..\lib\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\lib\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\lib\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\lib\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

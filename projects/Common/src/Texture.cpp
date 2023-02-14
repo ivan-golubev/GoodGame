@@ -1,7 +1,7 @@
 module;
-#include <string>
 #include <filesystem>
 #include <stb_image.h>
+#include <string>
 module Texture;
 
 namespace gg

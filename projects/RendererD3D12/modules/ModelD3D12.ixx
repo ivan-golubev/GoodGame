@@ -1,9 +1,9 @@
 module;
 #include <directx/d3d12.h>
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <memory>
 #include <string>
-#include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp>
 #include <wrl.h>
 export module ModelD3D12;
 

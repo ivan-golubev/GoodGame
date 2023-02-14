@@ -1,6 +1,6 @@
 module;
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <SDL2/SDL_keycode.h>
 export module Input;
 

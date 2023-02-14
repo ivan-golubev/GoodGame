@@ -1,8 +1,8 @@
 module;
-#include <cstdint>
 #include <chrono>
-#include <SDL2/SDL_keycode.h>
+#include <cstdint>
 #include <cstring> // memset
+#include <SDL2/SDL_keycode.h>
 module Input;
 
 using std::chrono::milliseconds;

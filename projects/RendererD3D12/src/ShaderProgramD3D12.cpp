@@ -1,7 +1,7 @@
 module;
-#include <string>
-#include <filesystem>
 #include <d3dcompiler.h>
+#include <filesystem>
+#include <string>
 module ShaderProgramD3D12;
 
 import ShaderProgram;

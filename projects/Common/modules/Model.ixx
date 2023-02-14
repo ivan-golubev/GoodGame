@@ -1,9 +1,9 @@
 module;
-#include <string>
-#include <memory>
-#include <vector>
-#include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 export module Model;
 
 import Vertex;

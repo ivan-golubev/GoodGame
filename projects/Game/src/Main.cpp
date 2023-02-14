@@ -1,13 +1,14 @@
-#include <SDL2/SDL.h>
-#include <exception>
-#include <cstdlib>
-#include <chrono>
-#include <thread>
 #include <cassert>
+#include <chrono>
+#include <cstdlib>
+#include <exception>
 #include <format>
-#include <memory>
-#include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+#include <imgui/backends/imgui_impl_sdl2.h>
+#include <memory>
+#include <SDL2/SDL.h>
+#include <thread>
 
 import Application;
 import ApplicationSettings;
@@ -18,7 +19,6 @@ import ModelLoader;
 import ShaderProgram;
 import ShaderProgramVulkan;
 import Texture;
-
 
 namespace
 {
@@ -36,6 +36,7 @@ namespace
 			// Poll for user input.
 			while (SDL_PollEvent(&event))
 			{
+				ImGui_ImplSDL2_ProcessEvent(&event);
 				switch (event.type)
 				{
 				case SDL_QUIT:
@@ -135,7 +136,7 @@ int main()
 
 	constexpr uint32_t width{ 1920 };
 	constexpr uint32_t height{ 1080 };
-	RendererType rendererType{ RendererType::D3D12 };
+	RendererType rendererType{ RendererType::Vulkan };
 	uint32_t status{ 0 };
 	while (status = RunApplication(width, height, rendererType) == rendererChangeRequested) {}
 	return status;

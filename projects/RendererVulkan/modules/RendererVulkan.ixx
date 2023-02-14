@@ -1,14 +1,14 @@
 module;
 #include <array>
-#include <cstdint>
 #include <chrono>
-#include <glm/vec4.hpp>
+#include <cstdint>
 #include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
 #include <memory>
 #include <optional>
+#include <SDL2/SDL_video.h>
 #include <string>
 #include <vector>
-#include <SDL2/SDL_video.h>
 #include <vulkan/vulkan.h>
 export module RendererVulkan;
 
@@ -79,6 +79,10 @@ namespace gg
 			std::vector<VkPresentModeKHR> presentModes;
 		};
 
+		/* ImGUI logic */
+		void InitImGUI();
+		void RenderImGUI(VkCommandBuffer);
+
 		void CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions);
 		void SelectPhysicalDevice();
 		void CreateLogicalDevice();
@@ -142,6 +146,9 @@ namespace gg
 		uint32_t currentFrame{ 0 };
 
 		VkDescriptorPool descriptorPool;
+
+		/* ImGUI data */
+		VkDescriptorPool descriptorPoolImGUI;
 
 		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager> timeManager;
