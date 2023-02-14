@@ -13,13 +13,15 @@ module;
 export module RendererVulkan;
 
 import Camera;
+import DebugUI_Vulkan;
+import GlobalSettings;
 import Input;
-import Vertex;
-import TimeManager;
 import Model;
 import Renderer;
+import SettingsRenderer;
 import Texture;
-import GlobalSettings;
+import TimeManager;
+import Vertex;
 
 using std::chrono::nanoseconds;
 
@@ -78,10 +80,6 @@ namespace gg
 			std::vector<VkSurfaceFormatKHR> formats;
 			std::vector<VkPresentModeKHR> presentModes;
 		};
-
-		/* ImGUI logic */
-		void InitImGUI();
-		void RenderImGUI(VkCommandBuffer);
 
 		void CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions);
 		void SelectPhysicalDevice();
@@ -147,12 +145,10 @@ namespace gg
 
 		VkDescriptorPool descriptorPool;
 
-		/* ImGUI data */
-		VkDescriptorPool descriptorPoolImGUI;
-
 		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;
+		std::unique_ptr<DebugUI_Vulkan> debugUI;
 
 		VkDevice device{};
 		VkInstance instance{};

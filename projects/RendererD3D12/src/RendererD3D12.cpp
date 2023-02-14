@@ -7,8 +7,6 @@ module;
 #include <format>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
-#include <imgui/backends/imgui_impl_dx12.h>
-#include <imgui/backends/imgui_impl_sdl2.h>
 #include <numbers>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -21,27 +19,24 @@ module RendererD3D12;
 import Application;
 import Camera;
 import D3DHelpers;
+import DebugUI_D3D12;
 import ErrorHandling;
 import GlobalSettings;
 import Input;
+import Lighting;
+import ModelD3D12;
 import PipelineStateStream;
-import Vertex;
+import SettingsD3D12;
 import ShaderProgram;
 import ShaderProgramD3D12;
-import ModelD3D12;
 import TextureD3D12;
-import Lighting;
+import Vertex;
 
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
 
 namespace
 {
-	std::string const shaderExtensionD3D12{ "cso" };
-	std::string const shadersLocation{ "shaders/dxil" };
-
-	constexpr DXGI_FORMAT rtvFormat{ DXGI_FORMAT_R8G8B8A8_UNORM };
-
 	HWND getWindowHandle(SDL_Window* windowHandle)
 	{
 		SDL_SysWMinfo wmInfo;
@@ -235,30 +230,7 @@ namespace gg
 			);
 			SetName(rootSignature.Get(), L"RootSignature");
 		}
-		InitImGUI();
-	}
-
-	void RendererD3D12::InitImGUI()
-	{
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
-		ImGui::StyleColorsDark();
-
-		{ /* Memory for Imgui's fonts */
-			D3D12_DESCRIPTOR_HEAP_DESC desc{};
-			desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			desc.NumDescriptors = 1;
-			desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-			ThrowIfFailed(
-				device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap))
-			);
-		}
-
-		ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
-		ImGui_ImplDX12_Init(device.Get(), maxFramesInFlight, rtvFormat,
-			imguiSrvDescHeap.Get(),
-			imguiSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+		debugUI = std::make_unique<DebugUI_D3D12>(device, windowHandleSDL);
 	}
 
 	void RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
@@ -554,8 +526,7 @@ namespace gg
 		/* destroys the associated shaders and textures */
 		models.clear();
 
-		ImGui_ImplDX12_Shutdown();
-		ImGui_ImplSDL2_Shutdown();
+		debugUI.reset();
 
 		SDL_DestroyWindow(windowHandleSDL);
 		SDL_Quit();
@@ -662,7 +633,7 @@ namespace gg
 					commandList->DrawInstanced(m.GetVertexCount(), 1, 0, 0);
 			}
 
-			RenderImGUI();
+			debugUI->Render(commandList);
 
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -671,26 +642,6 @@ namespace gg
 			commandList->ResourceBarrier(1, &barrier);
 		}
 		ThrowIfFailed(commandList->Close());
-	}
-
-	void RendererD3D12::RenderImGUI()
-	{
-		PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"ImGUIRendering");
-
-		ID3D12DescriptorHeap* ppHeaps[]{ imguiSrvDescHeap.Get() };
-		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
-
-		ImGui::Begin("Test");
-		ImGui::Text("Hello, world %d", 123);
-
-		ImGui::End();
-		ImGui::Render();
-
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 	}
 
 } // namespace gg

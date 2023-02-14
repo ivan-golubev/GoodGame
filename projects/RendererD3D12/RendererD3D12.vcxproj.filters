@@ -42,5 +42,14 @@
     <ClCompile Include="src\TextureD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\DebugUI_D3D12.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugUI_D3D12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\SettingsD3D12.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

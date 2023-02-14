@@ -82,5 +82,8 @@
     <ClCompile Include="modules\Lighting.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\SettingsRenderer.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

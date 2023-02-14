@@ -130,6 +130,7 @@
     <ClCompile Include="modules\Model.ixx" />
     <ClCompile Include="modules\ModelLoader.ixx" />
     <ClCompile Include="modules\Renderer.ixx" />
+    <ClCompile Include="modules\SettingsRenderer.ixx" />
     <ClCompile Include="modules\ShaderProgram.ixx" />
     <ClCompile Include="modules\Texture.ixx" />
     <ClCompile Include="modules\TimeManager.ixx" />

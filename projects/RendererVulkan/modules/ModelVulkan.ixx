@@ -8,8 +8,7 @@ module;
 export module ModelVulkan;
 
 import Model;
-import Renderer;
-
+import SettingsRenderer;
 
 namespace gg
 {

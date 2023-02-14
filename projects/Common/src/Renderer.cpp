@@ -6,8 +6,9 @@ module;
 #include <numbers>
 module Renderer;
 
-import GlobalSettings;
 import Camera;
+import GlobalSettings;
+import SettingsRenderer;
 
 namespace gg
 {

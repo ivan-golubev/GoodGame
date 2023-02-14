@@ -13,14 +13,16 @@ module;
 export module RendererD3D12;
 
 import Camera;
-import Input;
-import Vertex;
-import TimeManager;
-import Model;
-import Renderer;
-import Texture;
-import ModelD3D12;
+import DebugUI_D3D12;
 import GlobalSettings;
+import Input;
+import Model;
+import ModelD3D12;
+import Renderer;
+import SettingsRenderer;
+import Texture;
+import TimeManager;
+import Vertex;
 
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
@@ -48,10 +50,6 @@ namespace gg
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 	private:
-		/* ImGUI logic */
-		void InitImGUI();
-		void RenderImGUI();
-
 		void PopulateCommandList();
 		void WaitForPreviousFrame();
 		void ResizeRenderTargets();
@@ -103,12 +101,10 @@ namespace gg
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		uint32_t dsvDescriptorSize;
 
-		/* ImGUI state */
-		ComPtr<ID3D12DescriptorHeap> imguiSrvDescHeap;
-
 		std::vector<std::shared_ptr<ModelD3D12>> models;
 		std::shared_ptr<TimeManager> timeManager;
 		std::unique_ptr<Camera> camera;
+		std::unique_ptr<DebugUI_D3D12> debugUI;
 
 		/* Synchronization objects */
 		ComPtr<ID3D12Fence> fence;
