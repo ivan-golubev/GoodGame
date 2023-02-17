@@ -103,7 +103,7 @@ namespace gg
 
 		std::vector<std::shared_ptr<ModelD3D12>> models;
 		std::shared_ptr<TimeManager> timeManager;
-		std::unique_ptr<Camera> camera;
+		std::shared_ptr<Camera> camera;
 		std::unique_ptr<DebugUI_D3D12> debugUI;
 
 		/* Synchronization objects */

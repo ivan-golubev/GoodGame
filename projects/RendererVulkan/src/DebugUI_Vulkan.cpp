@@ -5,6 +5,8 @@ module;
 #include <vulkan/vulkan_core.h>
 module DebugUI_Vulkan;
 
+import Camera;
+import DebugUI;
 import ErrorHandling;
 import ErrorHandlingVulkan;
 import RendererVulkan;
@@ -47,8 +49,8 @@ namespace gg
 		}
 
 		ImGui_ImplSDL2_InitForVulkan(info.windowHandleSDL);
-		{
 
+		{
 			ImGui_ImplVulkan_InitInfo init_info = {};
 			init_info.Instance = info.instance;
 			init_info.PhysicalDevice = info.physicalDevice;
@@ -84,17 +86,12 @@ namespace gg
 		ImGui_ImplSDL2_Shutdown();
 	}
 
-	void DebugUI_Vulkan::Render(VkCommandBuffer commandBuffer)
+	void DebugUI_Vulkan::Render(VkCommandBuffer commandBuffer, std::shared_ptr<Camera> camera)
 	{
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
 
-		ImGui::Begin("Test");
-		ImGui::Text("Hello, world %d", 123);
-
-		ImGui::End();
-		ImGui::Render();
+		RenderDebugUI(camera);
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 	}

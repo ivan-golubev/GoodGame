@@ -147,7 +147,7 @@ namespace gg
 
 		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager> timeManager;
-		std::unique_ptr<Camera> camera;
+		std::shared_ptr<Camera> camera;
 		std::unique_ptr<DebugUI_Vulkan> debugUI;
 
 		VkDevice device{};

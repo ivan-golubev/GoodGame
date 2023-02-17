@@ -6,9 +6,11 @@ module;
 #include <wrl.h>
 module DebugUI_D3D12;
 
+import Camera;
+import DebugUI;
 import ErrorHandling;
-import SettingsRenderer;
 import SettingsD3D12;
+import SettingsRenderer;
 
 using Microsoft::WRL::ComPtr;
 
@@ -43,7 +45,7 @@ namespace gg
 		ImGui_ImplSDL2_Shutdown();
 	}
 
-	void DebugUI_D3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList)
+	void DebugUI_D3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList, std::shared_ptr<Camera> camera)
 	{
 		PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"ImGUI");
 
@@ -52,13 +54,8 @@ namespace gg
 
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
 
-		ImGui::Begin("Test");
-		ImGui::Text("Hello, world %d", 123);
-
-		ImGui::End();
-		ImGui::Render();
+		RenderDebugUI(camera);
 
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 	}

@@ -44,9 +44,15 @@ namespace gg
 		{
 			glm::vec3 const moveLR{ right * cameraMoveAmount };
 			if (inputManager->IsKeyDown(InputAction::MoveCameraRight))
+			{
 				focusPoint += moveLR;
+				cameraPosition += moveLR;
+			}
 			if (inputManager->IsKeyDown(InputAction::MoveCameraLeft))
+			{
 				focusPoint -= moveLR;
+				cameraPosition -= moveLR;
+			}
 		}
 		{
 			glm::vec3 const moveUD{ up * cameraMoveAmount };
@@ -86,6 +92,10 @@ namespace gg
 
 	glm::mat4x4 const& Camera::GetViewMatrix() const { return viewMatrix; }
 	glm::mat4x4 const& Camera::GetProjectionMatrix() const { return projectionMatrix; }
-	glm::vec4 Camera::GetCameraPosition() const { return glm::vec4(cameraPosition, 1.0f); }
+
+	glm::vec4 Camera::GetPositionVec4() const { return glm::vec4(cameraPosition, 1.0f); }
+
+	glm::vec3* Camera::GetPosition() { return &cameraPosition; }
+	glm::vec3* Camera::GetFocusPoint() { return &focusPoint; }
 
 } // namespace gg

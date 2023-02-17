@@ -15,7 +15,7 @@ export namespace gg
 	/* Flip the sign of the viewport's height, Y goes up, just in D3D12 */
 	constexpr bool flipVulkanViewport{ true };
 
-	constexpr DirectionalLight globalDirectionalLight{
+	DirectionalLight globalDirectionalLight{
 		glm::vec3(1.0f, 1.0f, 1.0f), // specular color
 		0.5f, // specular strength
 
@@ -23,7 +23,7 @@ export namespace gg
 		0.1f, // ambient strength
 
 		glm::vec3(-1.0f, -1.0f, 1.0f), // light direction xyz
-		32.0f, // specular shininess
+		1.0f, // specular shininess // TODO: WTF, this value does not work as expected ?
 
 		glm::vec3(1.0f, 1.0f, 1.0f)   // diffuse color, rgb
 	};

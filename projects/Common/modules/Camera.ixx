@@ -18,7 +18,11 @@ export namespace gg
 		void UpdateProjectionMatrix(uint32_t width, uint32_t height);
 		glm::mat4x4 const& GetViewMatrix() const;
 		glm::mat4x4 const& GetProjectionMatrix() const;
-		glm::vec4 GetCameraPosition() const;
+		glm::vec4 GetPositionVec4() const; /* returns a copy */
+
+		/* direct accessors */
+		glm::vec3* GetPosition();
+		glm::vec3* GetFocusPoint();
 	private:
 		glm::mat4x4 projectionMatrix{};
 		glm::mat4x4 viewMatrix{};

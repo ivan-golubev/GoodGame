@@ -85,5 +85,11 @@
     <ClCompile Include="modules\SettingsRenderer.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\DebugUI.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

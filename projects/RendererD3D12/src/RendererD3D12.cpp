@@ -54,7 +54,7 @@ namespace gg
 		, windowHandle{ getWindowHandle(rs.windowHandle) }
 		, windowHandleSDL{ rs.windowHandle }
 		, timeManager{ rs.timeManager }
-		, camera{ std::make_unique<Camera>(rs.inputManager) }
+		, camera{ std::make_shared<Camera>(rs.inputManager) }
 		, scissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
 		, viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
 	{
@@ -621,7 +621,7 @@ namespace gg
 
 				ModelViewProjectionCB mvpMatrices{
 					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					camera->GetCameraPosition()
+					camera->GetPositionVec4()
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjectionCB) / sizeof(float), &mvpMatrices, 0);
 				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);
@@ -633,7 +633,7 @@ namespace gg
 					commandList->DrawInstanced(m.GetVertexCount(), 1, 0, 0);
 			}
 
-			debugUI->Render(commandList);
+			debugUI->Render(commandList, camera);
 
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(

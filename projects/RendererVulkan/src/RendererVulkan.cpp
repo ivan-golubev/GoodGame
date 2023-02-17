@@ -93,7 +93,7 @@ namespace gg
 		, height{ rs.height }
 		, windowHandleSDL{ rs.windowHandle }
 		, timeManager{ rs.timeManager }
-		, camera{ std::make_unique<Camera>(rs.inputManager) }
+		, camera{ std::make_shared<Camera>(rs.inputManager) }
 	{
 		uint32_t extension_count;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extension_count, nullptr))
@@ -1037,7 +1037,7 @@ namespace gg
 			{  /* submit the UBO data - MVP matrix */
 				ModelViewProjectionCB mvpMatrices{
 					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					camera->GetCameraPosition()
+					camera->GetPositionVec4()
 				};
 				void* data;
 				vkMapMemory(device, model->uniformBuffersMemoryMVP[currentFrame], 0, sizeof(ModelViewProjectionCB), 0, &data);
@@ -1063,7 +1063,7 @@ namespace gg
 				vkCmdDraw(commandBuffer, m.GetVertexCount(), 1, 0, 0);
 		}
 
-		debugUI->Render(commandBuffer);
+		debugUI->Render(commandBuffer, camera);
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))
