@@ -18,6 +18,7 @@ import Logging;
 import ModelLoader;
 import ShaderProgram;
 import ShaderProgramVulkan;
+import SettingsRenderer;
 import Texture;
 
 namespace

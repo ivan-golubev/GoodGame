@@ -145,9 +145,9 @@ namespace gg
 		}
 	}
 
-	std::string RendererVulkan::Name() const
+	RendererType RendererVulkan::GetType() const
 	{
-		return "Vulkan";
+		return RendererType::Vulkan;
 	}
 
 	std::shared_ptr<Camera> RendererVulkan::GetCamera()

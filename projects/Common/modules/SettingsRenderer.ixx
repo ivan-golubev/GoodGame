@@ -1,9 +1,19 @@
 module;
 #include <cstdint>
+#include <string>
 #include <glm/fwd.hpp>
 export module SettingsRenderer;
 
 import Lighting;
+
+namespace
+{
+	std::string const rendererName[2]
+	{
+		"Vulkan",
+		"D3D12"
+	};
+} // namespace
 
 export namespace gg
 {
@@ -27,4 +37,15 @@ export namespace gg
 
 		glm::vec3(1.0f, 1.0f, 1.0f)   // diffuse color, rgb
 	};
+
+	enum RendererType
+	{
+		Vulkan,
+		D3D12
+	};
+
+	std::string ToString(RendererType r)
+	{
+		return rendererName[r];
+	}
 } // namespace gg

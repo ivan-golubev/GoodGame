@@ -44,8 +44,8 @@ namespace gg
 		RendererD3D12(RendererD3D12&&) noexcept = default;
 		RendererD3D12& operator=(RendererD3D12&&) noexcept = default;
 
-		std::string Name() const override;
 		std::shared_ptr<Camera> GetCamera() override;
+		RendererType GetType() const override;
 
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;

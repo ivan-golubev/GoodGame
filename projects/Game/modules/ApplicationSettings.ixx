@@ -5,20 +5,10 @@ module;
 export module ApplicationSettings;
 
 import Application;
+import SettingsRenderer;
 
 export namespace gg
 {
-	enum class RendererType
-	{
-		Vulkan,
-		D3D12
-	};
-
-	std::string ToString(RendererType r)
-	{
-		return r == RendererType::D3D12 ? "D3D12" : "Vulkan";
-	}
-
 	struct ApplicationSettings
 	{
 		uint32_t width;

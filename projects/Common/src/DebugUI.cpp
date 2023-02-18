@@ -22,6 +22,12 @@ namespace
 		if (ImGui::ColorEdit3(label, input))
 			*outData = glm::vec3{ input[0], input[1], input[2] };
 	}
+
+	constexpr ImVec4 rendererNameColor[2]
+	{
+		ImVec4(1.f, 0.f, 0.f, 1.f),
+		ImVec4(0.f, 1.f, 0.f, 1.f)
+	};
 } // namespace
 
 namespace gg
@@ -32,10 +38,11 @@ namespace gg
 		ImGui::Begin("Renderer settings");
 
 		std::shared_ptr<Application> app{ Application::Get() };
-		std::shared_ptr<Renderer> renderer = app->GetRenderer();
-		std::shared_ptr<Camera> camera = renderer->GetCamera();
+		std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
+		std::shared_ptr<Camera> camera{ renderer->GetCamera() };
 
-		ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), "Renderer: %s", renderer->Name().c_str());
+		RendererType const rendererType{ renderer->GetType() };
+		ImGui::TextColored(rendererNameColor[rendererType], "Renderer: %s", ToString(rendererType).c_str());
 
 		if (ImGui::CollapsingHeader("Light settings", ImGuiTreeNodeFlags_CollapsingHeader | ImGuiTreeNodeFlags_DefaultOpen))
 		{

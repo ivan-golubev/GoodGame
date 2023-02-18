@@ -233,9 +233,9 @@ namespace gg
 		debugUI = std::make_unique<DebugUI_D3D12>(device, windowHandleSDL);
 	}
 
-	std::string RendererD3D12::Name() const
+	RendererType RendererD3D12::GetType() const
 	{
-		return "D3D12";
+		return RendererType::D3D12;
 	}
 
 	std::shared_ptr<Camera> RendererD3D12::GetCamera()

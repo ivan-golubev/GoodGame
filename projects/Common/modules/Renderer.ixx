@@ -14,6 +14,7 @@ import Input;
 import ShaderProgram;
 import Texture;
 import Camera;
+import SettingsRenderer;
 
 using std::chrono::nanoseconds;
 
@@ -31,8 +32,8 @@ export namespace gg
 		Renderer(Renderer&&) noexcept = default;
 		Renderer& operator=(Renderer&&) noexcept = default;
 
-		virtual std::string Name() const = 0;
 		virtual std::shared_ptr<Camera> GetCamera() = 0;
+		virtual RendererType GetType() const = 0;
 
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(nanoseconds deltaTime) = 0;
