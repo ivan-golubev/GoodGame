@@ -233,6 +233,16 @@ namespace gg
 		debugUI = std::make_unique<DebugUI_D3D12>(device, windowHandleSDL);
 	}
 
+	std::string RendererD3D12::Name() const
+	{
+		return "D3D12";
+	}
+
+	std::shared_ptr<Camera> RendererD3D12::GetCamera()
+	{
+		return camera;
+	}
+
 	void RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
 	{
 		BreakIfFalse(model->shaderProgram.get());
@@ -633,7 +643,7 @@ namespace gg
 					commandList->DrawInstanced(m.GetVertexCount(), 1, 0, 0);
 			}
 
-			debugUI->Render(commandList, camera);
+			debugUI->Render(commandList);
 
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(

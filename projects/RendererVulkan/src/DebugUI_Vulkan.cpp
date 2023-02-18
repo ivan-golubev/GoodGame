@@ -86,12 +86,12 @@ namespace gg
 		ImGui_ImplSDL2_Shutdown();
 	}
 
-	void DebugUI_Vulkan::Render(VkCommandBuffer commandBuffer, std::shared_ptr<Camera> camera)
+	void DebugUI_Vulkan::Render(VkCommandBuffer commandBuffer)
 	{
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 
-		RenderDebugUI(camera);
+		RenderDebugUI();
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 	}

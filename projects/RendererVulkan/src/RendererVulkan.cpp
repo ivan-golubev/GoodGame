@@ -145,6 +145,16 @@ namespace gg
 		}
 	}
 
+	std::string RendererVulkan::Name() const
+	{
+		return "Vulkan";
+	}
+
+	std::shared_ptr<Camera> RendererVulkan::GetCamera()
+	{
+		return camera;
+	}
+
 	std::shared_ptr<RendererVulkan> RendererVulkan::Get()
 	{
 		std::shared_ptr<Application> app{ Application::Get() };
@@ -1063,7 +1073,7 @@ namespace gg
 				vkCmdDraw(commandBuffer, m.GetVertexCount(), 1, 0, 0);
 		}
 
-		debugUI->Render(commandBuffer, camera);
+		debugUI->Render(commandBuffer);
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))

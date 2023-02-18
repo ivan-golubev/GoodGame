@@ -7,7 +7,6 @@ export module DebugUI_Vulkan;
 export namespace gg
 {
 	class RendererVulkan;
-	class Camera;
 
 	struct DebugUI_VulkanCreateInfo
 	{
@@ -26,7 +25,7 @@ export namespace gg
 	public:
 		DebugUI_Vulkan(DebugUI_VulkanCreateInfo const&);
 		~DebugUI_Vulkan();
-		void Render(VkCommandBuffer, std::shared_ptr<Camera>);
+		void Render(VkCommandBuffer);
 
 	private:
 		VkDevice device;

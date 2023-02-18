@@ -7,6 +7,8 @@ module DebugUI;
 import SettingsRenderer;
 import Camera;
 import Lighting;
+import Renderer;
+import Application;
 
 namespace
 {
@@ -24,10 +26,16 @@ namespace
 
 namespace gg
 {
-	void RenderDebugUI(std::shared_ptr<Camera> camera)
+	void RenderDebugUI()
 	{
 		ImGui::NewFrame();
 		ImGui::Begin("Renderer settings");
+
+		std::shared_ptr<Application> app{ Application::Get() };
+		std::shared_ptr<Renderer> renderer = app->GetRenderer();
+		std::shared_ptr<Camera> camera = renderer->GetCamera();
+
+		ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), "Renderer: %s", renderer->Name().c_str());
 
 		if (ImGui::CollapsingHeader("Light settings", ImGuiTreeNodeFlags_CollapsingHeader | ImGuiTreeNodeFlags_DefaultOpen))
 		{

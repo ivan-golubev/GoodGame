@@ -43,6 +43,9 @@ namespace gg
 		RendererVulkan(RendererVulkan&&) noexcept = default;
 		RendererVulkan& operator=(RendererVulkan&&) noexcept = default;
 
+		std::string Name() const override;
+		std::shared_ptr<Camera> GetCamera() override;
+
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;

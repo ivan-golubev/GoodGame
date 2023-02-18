@@ -4,6 +4,7 @@ module;
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
+#include <string>
 #include <SDL2/SDL_video.h>
 export module Renderer;
 
@@ -29,6 +30,9 @@ export namespace gg
 
 		Renderer(Renderer&&) noexcept = default;
 		Renderer& operator=(Renderer&&) noexcept = default;
+
+		virtual std::string Name() const = 0;
+		virtual std::shared_ptr<Camera> GetCamera() = 0;
 
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(nanoseconds deltaTime) = 0;

@@ -45,7 +45,7 @@ namespace gg
 		ImGui_ImplSDL2_Shutdown();
 	}
 
-	void DebugUI_D3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList, std::shared_ptr<Camera> camera)
+	void DebugUI_D3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList)
 	{
 		PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"ImGUI");
 
@@ -55,7 +55,7 @@ namespace gg
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 
-		RenderDebugUI(camera);
+		RenderDebugUI();
 
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 	}
