@@ -294,6 +294,7 @@ namespace gg
 	{
 		for (std::string const& textureName : model->textureNames)
 			model->textures.emplace_back(LoadTexture(textureName, model->srvHeap));
+		model->textureNames.clear();
 	}
 
 	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
@@ -390,6 +391,10 @@ namespace gg
 		LoadTextures(model);
 
 		models.push_back(model);
+	}
+
+	void RendererD3D12::LoadSkybox(std::string const& name)
+	{
 	}
 
 	void RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> model)

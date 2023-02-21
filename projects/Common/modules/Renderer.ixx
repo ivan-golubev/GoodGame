@@ -39,6 +39,7 @@ export namespace gg
 		virtual void Render(nanoseconds deltaTime) = 0;
 		virtual std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) = 0;
 		virtual void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) = 0;
+		virtual void LoadSkybox(std::string const& name) = 0;
 	};
 
 	struct RendererSettings

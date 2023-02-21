@@ -16,10 +16,7 @@ import ErrorHandling;
 import ErrorHandlingVulkan;
 import Logging;
 import ModelLoader;
-import ShaderProgram;
-import ShaderProgramVulkan;
 import SettingsRenderer;
-import Texture;
 
 namespace
 {
@@ -98,6 +95,8 @@ namespace
 			DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
+
+			renderer->LoadSkybox("water");
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };
 				renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);

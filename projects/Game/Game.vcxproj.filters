@@ -22,6 +22,9 @@
     <FxCompile Include="$(SolutionDir)shaders\lighting.hlsli">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="$(SolutionDir)shaders\skybox.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)shaders\compile_shaders.ps1">

@@ -158,6 +158,9 @@ pwsh.exe $(SolutionDir)shaders\compile_shaders.ps1 $(Configuration) $(TargetDir)
     <FxCompile Include="$(SolutionDir)shaders\lighting.hlsli">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </FxCompile>
+    <FxCompile Include="$(SolutionDir)shaders\skybox.hlsl">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)shaders\compile_shaders.ps1">

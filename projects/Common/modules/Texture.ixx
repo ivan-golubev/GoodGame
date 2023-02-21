@@ -17,7 +17,6 @@ namespace gg
 		uint32_t width;
 		uint32_t height;
 		uint32_t channels;
-		unsigned char* pixels;
-
+		uint8_t* pixels;
 	};
 } // namespace gg

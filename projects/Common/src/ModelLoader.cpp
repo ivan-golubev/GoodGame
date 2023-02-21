@@ -2,7 +2,6 @@ module;
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <cassert>
 #include <filesystem>
 #include <format>
 #include <glm/mat4x4.hpp>

@@ -51,7 +51,7 @@ namespace gg
 		void Render(nanoseconds deltaTime) override;
 		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
 		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
-
+		void LoadSkybox(std::string const& name) override;
 	private:
 		void PopulateCommandList();
 		void WaitForPreviousFrame();

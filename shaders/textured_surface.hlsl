@@ -26,7 +26,6 @@ VSOutput vs_main(VSInput input)
 	output.position = mul(ModelViewProjectionCB.MVP, input.position);
 	output.normal = normalize(mul(ModelViewProjectionCB.MVP, input.normal));
 	output.texCoord = input.texCoord;
-
 	return output;
 }
 
@@ -40,9 +39,7 @@ struct PSInput
 float4 ps_main(PSInput input) : SV_Target
 {
 	float4 textureColor = texture0.Sample(sampler0, input.texCoord);
-
 	float3 viewDir = (float3) normalize(ModelViewProjectionCB.ViewPosition - input.position);
 	float4 lightColor = BlinnPhong((float3)input.normal, viewDir, DirectionalLightCB);
-
 	return lightColor * textureColor;
 }

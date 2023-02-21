@@ -939,6 +939,7 @@ namespace gg
 	{
 		for (std::string const& textureName : model->textureNames)
 			model->textures.emplace_back(LoadTexture(textureName));
+		model->textureNames.clear();
 	}
 
 	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& name)
@@ -961,6 +962,10 @@ namespace gg
 		CreateDescriptorSets(model);
 
 		models.push_back(model);
+	}
+
+	void RendererVulkan::LoadSkybox(std::string const& name)
+	{
 	}
 
 	void RendererVulkan::CreateVertexBuffer(std::shared_ptr<ModelVulkan> inputModel)
