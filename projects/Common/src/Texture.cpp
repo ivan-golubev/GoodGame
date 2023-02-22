@@ -16,19 +16,40 @@ namespace gg
 		this->channels = channels;
 	}
 
+	Texture::Texture(Texture&& other) noexcept
+	{
+		swap(std::forward<Texture>(other));
+	}
+
+	Texture& Texture::operator=(Texture&& other) noexcept
+	{
+		if (this != &other)
+			swap(std::forward<Texture>(other));
+		return *this;
+	}
+
+	void Texture::swap(Texture&& other) noexcept
+	{
+		std::swap(pixels, other.pixels);
+		std::swap(width, other.width);
+		std::swap(height, other.height);
+		std::swap(channels, other.channels);
+	}
+
+	Texture::~Texture()
+	{
+		if (pixels)
+			stbi_image_free(pixels);
+	}
+
 	std::wstring Texture::GetName()
 	{
 		std::wstring baseName{ std::filesystem::path(absPath).stem() };
 		return L"Texture_" + baseName;
 	}
 
-	Texture::~Texture()
-	{
-		stbi_image_free(pixels);
-	}
-
 	uint64_t Texture::SizeBytes() const
 	{
-		return static_cast<uint64_t>(width) * static_cast<uint64_t>(height) * 4;
+		return static_cast<uint64_t>(width) * static_cast<uint64_t>(height) * channels;
 	}
 } // namespace gg

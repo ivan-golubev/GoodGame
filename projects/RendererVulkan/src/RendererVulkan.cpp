@@ -31,6 +31,7 @@ import Lighting;
 import ModelLoader;
 import ModelVulkan;
 import ShaderProgramVulkan;
+import SkyboxVulkan;
 import Texture;
 import TextureVulkan;
 import Vertex;
@@ -966,6 +967,8 @@ namespace gg
 
 	void RendererVulkan::LoadSkybox(std::string const& name)
 	{
+		std::shared_ptr<SkyboxVulkan> skybox = std::make_shared<SkyboxVulkan>(name, device);
+		__debugbreak(); // not implemented
 	}
 
 	void RendererVulkan::CreateVertexBuffer(std::shared_ptr<ModelVulkan> inputModel)

@@ -22,9 +22,15 @@ export namespace gg
 	class Skybox
 	{
 	public:
-		Skybox(std::string name);
-	private:
+		Skybox(std::string const& name);
+		virtual ~Skybox() noexcept = default;
+	protected:
+		uint64_t GetDataSizeBytes() const;
+		uint64_t GetLayerSizeBytes() const;
+
 		std::vector<Texture> textures;
+	private:
+		uint64_t dataSize;
 	};
 
 	std::array<float, 36 * 3> constexpr skyboxVertices

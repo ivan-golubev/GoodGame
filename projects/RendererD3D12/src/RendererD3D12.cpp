@@ -395,6 +395,7 @@ namespace gg
 
 	void RendererD3D12::LoadSkybox(std::string const& name)
 	{
+		__debugbreak(); // not implemented
 	}
 
 	void RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> model)

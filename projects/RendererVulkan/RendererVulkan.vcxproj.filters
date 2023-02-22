@@ -52,5 +52,11 @@
     <ClCompile Include="src\DebugUI_Vulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\SkyboxVulkan.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkyboxVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

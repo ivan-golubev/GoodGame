@@ -11,23 +11,21 @@ export namespace gg
 	{
 	public:
 		TextureVulkan(std::string const& textureRelativePath, VkDevice);
-		~TextureVulkan();
+		~TextureVulkan() noexcept override;
 
 		VkImageView textureImageView;
 		VkSampler textureSampler;
 
 	private:
 		void CreateTextureImage();
-		void CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
-		void CreateTextureImageView();
-
-		void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
-		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
 		VkDevice device;
 		VkImage textureImage;
 		VkDeviceMemory textureImageMemory;
 	};
 
-	VkImageView CreateImageView(VkDevice, VkImage, VkFormat);
+	void CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&, uint32_t arrayLayers = 1, VkImageCreateFlags = 0);
+	void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout, uint32_t layerCount = 1);
+	void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height, uint32_t layerCount = 1);
+	VkImageView CreateImageView(VkDevice, VkImage, VkFormat, uint32_t layerCount = 1, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
 }
