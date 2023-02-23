@@ -1,13 +1,18 @@
 module;
+#include <array>
 #include <string>
+#include <vector>
 export module Texture;
 
-namespace gg
+export namespace gg
 {
-	export class Texture
+	using SkyboxTextures = std::array<std::string, 6>;
+
+	class Texture
 	{
 	public:
 		Texture(std::string const& relativePath);
+		Texture(SkyboxTextures const& relativePaths);
 		Texture(Texture const&) = delete;
 		Texture& operator=(Texture const&) = delete;
 
@@ -17,6 +22,7 @@ namespace gg
 		virtual ~Texture() noexcept;
 
 		uint64_t SizeBytes() const;
+		uint64_t LayerSizeBytes() const;
 
 		std::wstring GetName();
 
@@ -24,10 +30,12 @@ namespace gg
 		uint32_t width{};
 		uint32_t height{};
 		uint32_t channels{};
-		uint8_t* pixels{};
+		std::vector<uint8_t*> imageData{};
 
 	private:
 		void swap(Texture&&) noexcept;
 	};
+
+	SkyboxTextures GetSkyboxTexturePaths(std::string const& name);
 
 } // namespace gg

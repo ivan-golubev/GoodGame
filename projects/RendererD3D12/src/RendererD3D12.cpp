@@ -343,7 +343,8 @@ namespace gg
 		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the Texture2D. */
 		D3D12_SUBRESOURCE_DATA textureData{};
-		textureData.pData = texture->pixels;
+		textureData.pData = texture->imageData[0];
+		__debugbreak(); // TODO: figure out the correct size here
 		textureData.RowPitch = texture->width * texture->channels;
 		textureData.SlicePitch = textureData.RowPitch * texture->height;
 

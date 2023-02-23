@@ -10,13 +10,30 @@ import RendererVulkan;
 
 namespace gg
 {
+	void TextureVulkan::CreateResources()
+	{
+		uint32_t const layerCount{ static_cast<uint32_t>(imageData.size()) };
+		bool const isCubeMap{ layerCount == 6 };
+		VkImageViewType const viewType{ isCubeMap ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D };
+
+		CreateTextureImage();
+		textureImageView = CreateImageView(device, textureImage, VK_FORMAT_R8G8B8A8_SRGB, layerCount, viewType);
+		textureSampler = RendererVulkan::Get()->CreateTextureSampler();
+		imageData.clear();
+	}
+
 	TextureVulkan::TextureVulkan(std::string const& textureRelativePath, VkDevice device)
 		: Texture(textureRelativePath)
 		, device{ device }
 	{
-		CreateTextureImage();
-		textureImageView = CreateImageView(device, textureImage, VK_FORMAT_R8G8B8A8_SRGB);
-		textureSampler = RendererVulkan::Get()->CreateTextureSampler();
+		CreateResources();
+	}
+
+	TextureVulkan::TextureVulkan(SkyboxTextures const& relativePaths, VkDevice device)
+		: Texture(relativePaths)
+		, device{ device }
+	{
+		CreateResources();
 	}
 
 	TextureVulkan::~TextureVulkan() noexcept
@@ -29,13 +46,17 @@ namespace gg
 
 	void TextureVulkan::CreateTextureImage()
 	{
-		if (!pixels)
+		if (imageData.empty())
 			throw AssetLoadException("failed to load texture image!");
+
+		uint32_t const imageCount{ static_cast<uint32_t>(imageData.size()) };
+		VkDeviceSize const imageSizeBytes{ SizeBytes() };
+		VkDeviceSize const layerSize{ LayerSizeBytes() };
+		bool const isCubeMap{ imageCount == 6 };
 
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
-		VkDeviceSize imageSizeBytes = SizeBytes();
 		renderer->CreateBuffer(stagingBuffer
 			, stagingBufferMemory
 			, imageSizeBytes
@@ -45,7 +66,8 @@ namespace gg
 
 		void* mappedData;
 		vkMapMemory(device, stagingBufferMemory, 0, imageSizeBytes, 0, &mappedData);
-		memcpy(mappedData, pixels, static_cast<size_t>(imageSizeBytes));
+		for (uint32_t i = 0; i < imageCount; ++i)
+			memcpy(static_cast<uint8_t*>(mappedData) + layerSize * i, imageData[i], static_cast<size_t>(layerSize));
 		vkUnmapMemory(device, stagingBufferMemory);
 
 		CreateImage(width
@@ -55,11 +77,14 @@ namespace gg
 			, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
 			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			, textureImage
-			, textureImageMemory);
+			, textureImageMemory
+			, imageCount
+			, isCubeMap ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0
+		);
 
-		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		CopyBufferToImage(stagingBuffer, textureImage, width, height);
-		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageCount);
+		CopyBufferToImage(stagingBuffer, textureImage, width, height, imageCount);
+		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, imageCount);
 
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);

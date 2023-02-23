@@ -25,6 +25,9 @@ export namespace gg
 	/* Flip the sign of the viewport's height, Y goes up, just in D3D12 */
 	constexpr bool flipVulkanViewport{ true };
 
+	std::string const skyboxShaderName{ "skybox" };
+	std::string const skyboxModelName{ "assets/models/skybox.glb" };
+
 	DirectionalLight globalDirectionalLight{
 		glm::vec3(1.0f, 1.0f, 1.0f), // specular color
 		0.5f, // specular strength
