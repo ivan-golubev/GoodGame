@@ -344,7 +344,7 @@ namespace gg
 		   from the upload heap to the Texture2D. */
 		D3D12_SUBRESOURCE_DATA textureData{};
 		textureData.pData = texture->imageData[0];
-		__debugbreak(); // TODO: figure out the correct size here
+		// TODO: figure out the correct size here, this will not work for cube maps
 		textureData.RowPitch = texture->width * texture->channels;
 		textureData.SlicePitch = textureData.RowPitch * texture->height;
 

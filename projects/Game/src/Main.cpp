@@ -96,15 +96,17 @@ namespace
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
 
-			renderer->LoadSkybox("water");
-			//{
-			//	glm::vec3 position{ -2.f, 0.f, 0.f };
-			//	renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
-			//}
-			//{
-			//	glm::vec3 position{ 2.f, 0.f, 0.f };
-			//	renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position);
-			//}
+			// WIP: need to change the model loading to account for different vertex layouts
+			// looks like I have to switch off Assimp
+			//renderer->LoadSkybox("water");
+			{
+				glm::vec3 position{ -2.f, 0.f, 0.f };
+				renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
+			}
+			{
+				glm::vec3 position{ 2.f, 0.f, 0.f };
+				renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position);
+			}
 
 			uint32_t status = MainLoop(app, rendererType);
 			Application::Destroy();

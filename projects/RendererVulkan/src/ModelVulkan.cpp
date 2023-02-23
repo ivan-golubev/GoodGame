@@ -18,7 +18,6 @@ namespace gg
 		: Model{ modelRelativePath, s, position }
 		, device{ d }
 	{
-		__debugbreak();
 		// TODO: skybox only has positions, need to change the model reading code
 		// there are no directional lights either
 	}
