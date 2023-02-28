@@ -2,6 +2,7 @@ Param([Parameter(Mandatory=$true)][string]$Config, [Parameter(Mandatory=$true)][
 # Get PowerShell 7.2.1 or higher from the MS Store: https://aka.ms/Install-PowerShell
 
 $IsFinal=$($Config -eq "Final")
+$WINDOWS_SDK="C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0"
 
 if ($RendererType -eq "vulkan") 
 {
@@ -14,7 +15,7 @@ if ($RendererType -eq "vulkan")
 else 
 { # D3D12
 	# Windows 11 SDK (10.0.22000.0)
-	$global:Compiler = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\dxc.exe"
+	$global:Compiler = "${WINDOWS_SDK}\x64\dxc.exe"
 	$global:OutputDir = "${TargetDir}\shaders\dxil"
 	$global:ShaderModel = "6_0"
 	$global:Extention = "cso"

@@ -18,13 +18,7 @@ VSOutput vs_main(float3 position : POSITION)
 	return output;
 }
 
-struct PSInput
-{
-	float4 position : SV_Position;
-	float3 texCoord : TEXCOORD;
-};
-
-float4 ps_main(PSInput input) : SV_Target
+float4 ps_main(VSOutput input) : SV_Target
 {
 	return texture0.Sample(sampler0, input.texCoord);
 }

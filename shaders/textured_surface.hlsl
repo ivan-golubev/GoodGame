@@ -29,14 +29,7 @@ VSOutput vs_main(VSInput input)
 	return output;
 }
 
-struct PSInput
-{
-	float4 position : SV_Position;
-	float4 normal : NORMAL;
-	float2 texCoord : TEXCOORD;
-};
-
-float4 ps_main(PSInput input) : SV_Target
+float4 ps_main(VSOutput input) : SV_Target
 {
 	float4 textureColor = texture0.Sample(sampler0, input.texCoord);
 	float3 viewDir = (float3) normalize(ModelViewProjectionCB.ViewPosition - input.position);
