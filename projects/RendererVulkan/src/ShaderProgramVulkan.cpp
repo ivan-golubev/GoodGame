@@ -101,13 +101,17 @@ namespace gg
 		{ /* init vertex attributes */
 			vertexBindingDesc = GetVertexBindingDescription();
 			vertexAttributeDesc = GetVertexAttributeDescriptions();
-
-			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-			vertexInputInfo.vertexBindingDescriptionCount = 1;
-			vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributeDesc.size());
-			vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDesc;
-			vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDesc.data();
+			InitVertexInputInfo();
 		}
+	}
+
+	void ShaderProgramVulkan::InitVertexInputInfo()
+	{
+		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributeDesc.size());
+		vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDesc;
+		vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDesc.data();
 	}
 
 	ShaderProgramVulkan::~ShaderProgramVulkan()
@@ -124,6 +128,10 @@ namespace gg
 		fragmentShader = nullptr;
 		std::exchange(vertexShader, other.vertexShader);
 		std::exchange(fragmentShader, other.fragmentShader);
+
+		vertexBindingDesc = other.vertexBindingDesc;
+		std::exchange(vertexAttributeDesc, other.vertexAttributeDesc);
+		InitVertexInputInfo();
 	}
 
 	ShaderProgramVulkan& ShaderProgramVulkan::operator=(ShaderProgramVulkan&& other) noexcept
@@ -134,6 +142,10 @@ namespace gg
 			fragmentShader = nullptr;
 			std::exchange(vertexShader, other.vertexShader);
 			std::exchange(fragmentShader, other.fragmentShader);
+
+			vertexBindingDesc = other.vertexBindingDesc;
+			std::exchange(vertexAttributeDesc, other.vertexAttributeDesc);
+			InitVertexInputInfo();
 		}
 		return *this;
 	}

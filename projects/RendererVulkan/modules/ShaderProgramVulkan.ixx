@@ -31,6 +31,8 @@ export namespace gg
 		ShaderProgramVulkan() = default;
 		ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice);
 
+		void InitVertexInputInfo();
+
 		std::string vertexShaderBlob;
 		std::string fragmentShaderBlob;
 
