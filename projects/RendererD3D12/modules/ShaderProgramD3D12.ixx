@@ -35,9 +35,12 @@ export namespace gg
 		ShaderProgramD3D12() = default;
 		ShaderProgramD3D12(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
+		void ReflectInputLayout();
+
 		ComPtr<ID3DBlob> vertexShaderBlob;
 		ComPtr<ID3DBlob> fragmentShaderBlob;
 
+		std::vector<std::string> vertexInputSemantics;
 		std::vector<D3D12_INPUT_ELEMENT_DESC> vertexInputDesc;
 		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT vertexInputLayout;
 	};

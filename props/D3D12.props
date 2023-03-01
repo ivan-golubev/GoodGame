@@ -5,7 +5,18 @@
       <AdditionalIncludeDirectories>$(SolutionDir)lib\DirectX-Headers\include;$(VULKAN_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;User32.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;User32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <!-- Shader reflection -->
+      <AdditionalDependencies>dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  
+  <!-- Shader reflection -->
+  <ItemGroup Condition="'$(ConfigurationType)'=='Application'">
+      <ContentWithTargetPath Include="$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <TargetPath>%(Filename)%(Extension)</TargetPath>
+      </ContentWithTargetPath>
+  </ItemGroup>
+  
 </Project>

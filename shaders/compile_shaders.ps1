@@ -41,6 +41,10 @@ foreach($file in Get-ChildItem -Path $PSScriptRoot -Filter *.hlsl) {
 		$global:AdditionalParamsPS = "-Fd", "${OutputDir}\${Entry}_PS.pdb"
 	}
 
+	# column-major matrices
+	$AdditionalParamsPS += , "-Zpc"
+	$AdditionalParamsVS += , "-Zpc"
+
 	if($IsFinal) {
 		$FinalParams = "-Qstrip_debug"
 		$AdditionalParamsPS += , $FinalParams		
