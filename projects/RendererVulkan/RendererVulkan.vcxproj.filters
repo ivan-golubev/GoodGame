@@ -22,12 +22,6 @@
     <ClCompile Include="src\ErrorHandlingVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\VertexVulkan.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="src\VertexVulkan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\ShaderProgramVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>

@@ -34,7 +34,6 @@ import ShaderProgramVulkan;
 import Texture;
 import TextureVulkan;
 import Vertex;
-import VertexVulkan;
 
 using std::chrono::nanoseconds;
 
@@ -297,7 +296,6 @@ namespace gg
 		{
 			throw VulkanInitException("failed to create render pass!");
 		}
-
 	}
 
 	void RendererVulkan::CreateDescriptorSetLayout()
@@ -349,15 +347,7 @@ namespace gg
 
 		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };
 
-		auto bindingDescription = GetVertexBindingDescription();
-		auto attributeDescriptions = GetVertexAttributeDescriptions();
-
-		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+		VkPipelineVertexInputStateCreateInfo& vertexInputInfo{ shaderProgram->GetInputLayout() };
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

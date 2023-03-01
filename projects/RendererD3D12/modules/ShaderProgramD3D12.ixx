@@ -1,7 +1,9 @@
 module;
 #include <directx/d3dcommon.h>
+#include <directx/d3dx12_pipeline_state_stream.h>
 #include <string>
 #include <wrl.h>
+#include <vector>
 export module ShaderProgramD3D12;
 
 import ShaderProgram;
@@ -25,6 +27,8 @@ export namespace gg
 		ComPtr<ID3DBlob> GetVertexShader() const;
 		ComPtr<ID3DBlob> GetFragmentShader() const;
 
+		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT& GetInputLayout();
+
 	private:
 		/* Only D3D12 Renderer can create ShaderProgramD3D12 */
 		friend class RendererD3D12;
@@ -33,6 +37,9 @@ export namespace gg
 
 		ComPtr<ID3DBlob> vertexShaderBlob;
 		ComPtr<ID3DBlob> fragmentShaderBlob;
+
+		std::vector<D3D12_INPUT_ELEMENT_DESC> vertexInputDesc;
+		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT vertexInputLayout;
 	};
 
 } //namespace gg

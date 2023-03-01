@@ -1,5 +1,6 @@
 module;
 #include <string>
+#include <vector>
 #include <vulkan/vulkan.h>
 export module ShaderProgramVulkan;
 
@@ -22,6 +23,8 @@ export namespace gg
 		VkShaderModule GetVertexShader() const;
 		VkShaderModule GetFragmentShader() const;
 
+		VkPipelineVertexInputStateCreateInfo& GetInputLayout();
+
 	private:
 		/* Only Vulkan Renderer can create ShaderProgramVulkan */
 		friend class RendererVulkan;
@@ -34,5 +37,9 @@ export namespace gg
 		VkDevice device;
 		VkShaderModule vertexShader{ nullptr };
 		VkShaderModule fragmentShader{ nullptr };
+
+		VkVertexInputBindingDescription vertexBindingDesc{};
+		std::vector<VkVertexInputAttributeDescription> vertexAttributeDesc{};
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	};
 }

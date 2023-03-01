@@ -126,14 +126,12 @@
     <ClCompile Include="modules\ShaderProgramVulkan.ixx" />
     <ClCompile Include="modules\RendererVulkan.ixx" />
     <ClCompile Include="modules\TextureVulkan.ixx" />
-    <ClCompile Include="modules\VertexVulkan.ixx" />
     <ClCompile Include="src\DebugUI_Vulkan.cpp" />
     <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
     <ClCompile Include="src\ModelVulkan.cpp" />
     <ClCompile Include="src\RendererVulkan.cpp" />
     <ClCompile Include="src\ShaderProgramVulkan.cpp" />
     <ClCompile Include="src\TextureVulkan.cpp" />
-    <ClCompile Include="src\VertexVulkan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
