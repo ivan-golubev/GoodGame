@@ -21,7 +21,6 @@ import Renderer;
 import SettingsRenderer;
 import Texture;
 import TimeManager;
-import Vertex;
 
 using std::chrono::nanoseconds;
 

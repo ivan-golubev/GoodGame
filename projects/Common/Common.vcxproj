@@ -136,7 +136,6 @@
     <ClCompile Include="modules\ShaderProgram.ixx" />
     <ClCompile Include="modules\Texture.ixx" />
     <ClCompile Include="modules\TimeManager.ixx" />
-    <ClCompile Include="modules\Vertex.ixx" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\DebugUI.cpp" />

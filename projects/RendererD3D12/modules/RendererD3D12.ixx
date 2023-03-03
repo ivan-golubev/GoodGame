@@ -22,7 +22,6 @@ import Renderer;
 import SettingsRenderer;
 import Texture;
 import TimeManager;
-import Vertex;
 
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;

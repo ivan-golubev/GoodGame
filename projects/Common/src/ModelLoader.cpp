@@ -42,14 +42,24 @@ namespace
 
 				aiVector3D normal = assimpMesh->mNormals[vertexIndex];
 
-				outMesh.vertices.emplace_back(
-					static_cast<float>(assimpVertex.x),
-					static_cast<float>(assimpVertex.y),
-					static_cast<float>(assimpVertex.z),
-					1.0f, // w
-					UV.x, UV.y,
-					normal.x, normal.y, normal.z, 0.0f
-				);
+				//TODO: need to read this depending on the input layout in the shader !
+				float x = static_cast<float>(assimpVertex.x);
+				float y = static_cast<float>(assimpVertex.y);
+				float z = static_cast<float>(assimpVertex.z);
+				float w = 1.0f;
+
+				outMesh.vertices.push_back(x);
+				outMesh.vertices.push_back(y);
+				outMesh.vertices.push_back(z);
+				outMesh.vertices.push_back(w);
+
+				outMesh.vertices.push_back(normal.x);
+				outMesh.vertices.push_back(normal.y);
+				outMesh.vertices.push_back(normal.z);
+				outMesh.vertices.push_back(0.0f);
+
+				outMesh.vertices.push_back(UV.x);
+				outMesh.vertices.push_back(UV.y);
 			}
 		}
 	}

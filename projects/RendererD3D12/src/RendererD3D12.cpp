@@ -30,7 +30,6 @@ import SettingsD3D12;
 import ShaderProgram;
 import ShaderProgramD3D12;
 import TextureD3D12;
-import Vertex;
 
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
@@ -415,7 +414,7 @@ namespace gg
 		/* Init the Vertex buffer view */
 		model->vertexBufferView.BufferLocation = model->VB_GPU_Resource->GetGPUVirtualAddress();
 		model->vertexBufferView.SizeInBytes = static_cast<uint32_t>(VB_sizeBytes);
-		model->vertexBufferView.StrideInBytes = sizeof(Vertex);
+		model->vertexBufferView.StrideInBytes = model->meshes[0].stride;
 	}
 
 	void RendererD3D12::ResizeWindow()

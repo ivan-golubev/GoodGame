@@ -13,12 +13,10 @@ module ShaderProgramVulkan;
 import ErrorHandling;
 import ErrorHandlingVulkan;
 import RendererVulkan;
-import Vertex;
 
 namespace
 {
 	using gg::AssetLoadException;
-	using gg::Vertex;
 
 	VkShaderModule createShaderModule(VkDevice device, std::vector<uint32_t> const& shaderBlob)
 	{

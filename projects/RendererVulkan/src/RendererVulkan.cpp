@@ -33,7 +33,6 @@ import ModelVulkan;
 import ShaderProgramVulkan;
 import Texture;
 import TextureVulkan;
-import Vertex;
 
 using std::chrono::nanoseconds;
 

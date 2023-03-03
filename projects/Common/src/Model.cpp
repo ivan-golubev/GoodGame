@@ -11,9 +11,9 @@ import ModelLoader;
 
 namespace gg
 {
-	uint64_t Mesh::VerticesSizeBytes() const { return static_cast<uint64_t>(vertices.size()) * sizeof(Vertex); }
+	uint64_t Mesh::VerticesSizeBytes() const { return static_cast<uint64_t>(vertices.size() * sizeof(float)); }
 	uint64_t Mesh::IndicesSizeBytes() const { return static_cast<uint64_t>(indices.size()) * sizeof(uint32_t); }
-	uint32_t Mesh::GetVertexCount() const { return static_cast<uint32_t>(vertices.size()); }
+	uint32_t Mesh::GetVertexCount() const { return static_cast<uint32_t>(vertices.size() / (stride / sizeof(float))); }
 	uint32_t Mesh::GetIndexCount() const { return static_cast<uint32_t>(indices.size()); }
 
 	Mesh::Mesh(Mesh&& other) noexcept

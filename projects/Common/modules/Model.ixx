@@ -6,10 +6,8 @@ module;
 #include <vector>
 export module Model;
 
-import Vertex;
 import ShaderProgram;
 import Texture;
-
 
 export namespace gg
 {
@@ -27,7 +25,8 @@ export namespace gg
 		uint32_t GetVertexCount() const;
 		uint32_t GetIndexCount() const;
 
-		std::vector<Vertex> vertices{};
+		uint32_t stride{ 40 };
+		std::vector<float> vertices{};
 		std::vector<uint32_t> indices{};
 	};
 
