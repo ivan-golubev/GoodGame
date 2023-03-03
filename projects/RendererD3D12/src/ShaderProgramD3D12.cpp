@@ -6,6 +6,8 @@ module;
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <bit>
 module ShaderProgramD3D12;
 
 import ShaderProgram;
@@ -82,6 +84,12 @@ namespace gg
 
 			vertexInputSemantics.emplace_back(p.SemanticName);
 			vertexInputDesc.emplace_back(ToInputElementDesc(p, vertexInputSemantics[i].c_str()));
+
+			{ /* save the semantic and component count of each attribute */
+				Semantic semantic = semanticNameToSemantic.at(p.SemanticName);
+				uint8_t componentCount = std::countr_one(p.Mask);
+				inputAttributes.emplace_back(semantic, componentCount);
+			}
 		}
 		vertexInputLayout = { vertexInputDesc.data(), static_cast<uint32_t>(vertexInputDesc.size()) };
 	}

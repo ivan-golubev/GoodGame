@@ -48,6 +48,11 @@ namespace
 				float z = static_cast<float>(assimpVertex.z);
 				float w = 1.0f;
 
+				/* Need input layout here:
+					number of attributes, stride,
+					for each attribute: semantic, number of components
+				*/
+
 				outMesh.vertices.push_back(x);
 				outMesh.vertices.push_back(y);
 				outMesh.vertices.push_back(z);

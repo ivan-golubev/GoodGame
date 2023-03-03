@@ -10,6 +10,7 @@ module;
 #include <spirv_glsl.hpp>
 module ShaderProgramVulkan;
 
+import ShaderProgram;
 import ErrorHandling;
 import ErrorHandlingVulkan;
 import RendererVulkan;
@@ -83,6 +84,9 @@ namespace
 		gg::BreakIfFalse(false); /* encountered an unexpected input type */
 		return VK_FORMAT_UNDEFINED;
 	}
+
+	constexpr char const* inputVarPrefix{ "in.var" };
+	constexpr size_t inputVarPrefixLength{ sizeof(inputVarPrefix) - 1 };
 }
 
 namespace gg
@@ -127,6 +131,13 @@ namespace gg
 			offset += attributeSizeBytes;
 
 			vertexAttributeDesc.push_back(inputAttribute);
+
+			{ /* save the semantic and component count of each attribute */
+				std::string variableName = resource.name;
+				variableName = variableName.substr(inputVarPrefixLength, variableName.size() - inputVarPrefixLength);
+				Semantic semantic = semanticNameToSemantic.at(variableName);
+				inputAttributes.emplace_back(semantic, spirvType.vecsize * spirvType.columns);
+			}
 		}
 
 		vertexBindingDesc.binding = 0;
