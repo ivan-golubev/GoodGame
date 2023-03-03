@@ -32,9 +32,10 @@ export namespace gg
 		ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice);
 
 		void InitVertexInputInfo();
+		void ReflectInputLayout();
 
-		std::string vertexShaderBlob;
-		std::string fragmentShaderBlob;
+		std::vector<uint32_t> vertexShaderBlob;
+		std::vector<uint32_t> fragmentShaderBlob;
 
 		VkDevice device;
 		VkShaderModule vertexShader{ nullptr };

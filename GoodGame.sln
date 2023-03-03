@@ -20,6 +20,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RendererD3D12", "projects\R
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGUI", "projects\ImGUI\ImGUI.vcxproj", "{409A8602-55FB-46A5-8A46-A184202F1CEE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SPIRV-Cross", "projects\SPIRV-Cross\SPIRV-Cross.vcxproj", "{06A16D64-C6AE-4577-9A91-93AE4192D52B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -57,6 +59,12 @@ Global
 		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Final|x64.Build.0 = Debug|x64
 		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Release|x64.ActiveCfg = Release|x64
 		{409A8602-55FB-46A5-8A46-A184202F1CEE}.Release|x64.Build.0 = Release|x64
+		{06A16D64-C6AE-4577-9A91-93AE4192D52B}.Debug|x64.ActiveCfg = Debug|x64
+		{06A16D64-C6AE-4577-9A91-93AE4192D52B}.Debug|x64.Build.0 = Debug|x64
+		{06A16D64-C6AE-4577-9A91-93AE4192D52B}.Final|x64.ActiveCfg = Debug|x64
+		{06A16D64-C6AE-4577-9A91-93AE4192D52B}.Final|x64.Build.0 = Debug|x64
+		{06A16D64-C6AE-4577-9A91-93AE4192D52B}.Release|x64.ActiveCfg = Release|x64
+		{06A16D64-C6AE-4577-9A91-93AE4192D52B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

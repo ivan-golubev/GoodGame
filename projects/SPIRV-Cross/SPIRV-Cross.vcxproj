@@ -17,8 +17,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{86e825a1-a3c0-4760-8f52-8a88b93a0add}</ProjectGuid>
-    <RootNamespace>VulkanRenderer</RootNamespace>
+    <ProjectGuid>{06a16d64-c6ae-4577-9a91-93ae4192d52b}</ProjectGuid>
+    <RootNamespace>SPIRVCross</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -62,14 +62,10 @@
     <IntDir>$(SolutionDir)intermediate\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\props\Global.props" />
-  <Import Project="$(SolutionDir)\props\GLM.props" />
-  <Import Project="$(SolutionDir)\props\Vulkan.props" />
-  <Import Project="$(SolutionDir)\props\WinPix.props" />
-  <Import Project="$(SolutionDir)\props\ImGUI.props" />
   <Import Project="$(SolutionDir)\props\SPIRV-Cross.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -84,7 +80,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -103,7 +99,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Final|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -121,26 +117,36 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="modules\DebugUI_Vulkan.ixx" />
-    <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
-    <ClCompile Include="modules\ModelVulkan.ixx" />
-    <ClCompile Include="modules\ShaderProgramVulkan.ixx" />
-    <ClCompile Include="modules\RendererVulkan.ixx" />
-    <ClCompile Include="modules\TextureVulkan.ixx" />
-    <ClCompile Include="src\DebugUI_Vulkan.cpp" />
-    <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
-    <ClCompile Include="src\ModelVulkan.cpp" />
-    <ClCompile Include="src\RendererVulkan.cpp" />
-    <ClCompile Include="src\ShaderProgramVulkan.cpp" />
-    <ClCompile Include="src\TextureVulkan.cpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\GLSL.std.450.h" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv.h" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cfg.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_common.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cpp.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cross.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cross_c.h" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cross_containers.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cross_error_handling.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cross_parsed_ir.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_cross_util.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_glsl.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_hlsl.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_msl.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_parser.hpp" />
+    <ClInclude Include="..\..\lib\SPIRV-Cross\spirv_reflect.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.vcxproj">
-      <Project>{1e183599-3c64-448b-b0a2-ab14ab71285b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\SPIRV-Cross\SPIRV-Cross.vcxproj">
-      <Project>{06a16d64-c6ae-4577-9a91-93ae4192d52b}</Project>
-    </ProjectReference>
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_cfg.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_cpp.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_cross.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_cross_c.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_cross_parsed_ir.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_cross_util.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_glsl.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_hlsl.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_msl.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_parser.cpp" />
+    <ClCompile Include="..\..\lib\SPIRV-Cross\spirv_reflect.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

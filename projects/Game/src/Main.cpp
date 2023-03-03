@@ -138,7 +138,7 @@ int main()
 
 	constexpr uint32_t width{ 1920 };
 	constexpr uint32_t height{ 1080 };
-	RendererType rendererType{ RendererType::D3D12 };
+	RendererType rendererType{ RendererType::Vulkan };
 	uint32_t status{ 0 };
 	while (status = RunApplication(width, height, rendererType) == rendererChangeRequested) {}
 	return status;

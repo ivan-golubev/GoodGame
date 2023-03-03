@@ -7,3 +7,6 @@
 [submodule "lib/imgui"]
 	path = lib/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "lib/SPIRV-Cross"]
+	path = lib/SPIRV-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross

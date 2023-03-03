@@ -32,6 +32,7 @@ namespace
 			case ComponentMaskXYZW: return DXGI_FORMAT_R32G32B32A32_FLOAT;
 			}
 		}
+		gg::BreakIfFalse(false); /* the component type not implemented */
 		return DXGI_FORMAT_UNKNOWN;
 	}
 

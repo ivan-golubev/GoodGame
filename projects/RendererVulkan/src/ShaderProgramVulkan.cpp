@@ -5,10 +5,13 @@ module;
 #include <stddef.h>
 #include <string>
 #include <utility>
+#include <vector>
 #include <vulkan/vulkan.h>
+#include <spirv_glsl.hpp>
 module ShaderProgramVulkan;
 
 import ErrorHandling;
+import ErrorHandlingVulkan;
 import RendererVulkan;
 import Vertex;
 
@@ -17,12 +20,12 @@ namespace
 	using gg::AssetLoadException;
 	using gg::Vertex;
 
-	VkShaderModule createShaderModule(VkDevice device, std::string const& shaderBlob)
+	VkShaderModule createShaderModule(VkDevice device, std::vector<uint32_t> const& shaderBlob)
 	{
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = shaderBlob.size();
-		createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderBlob.data());
+		createInfo.codeSize = shaderBlob.size() * sizeof(uint32_t);
+		createInfo.pCode = shaderBlob.data();
 		VkShaderModule shaderModule;
 		if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 		{
@@ -31,7 +34,7 @@ namespace
 		return shaderModule;
 	}
 
-	std::string readFile(std::string const& filename)
+	std::vector<uint32_t> readFile(std::string const& filename)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -41,43 +44,46 @@ namespace
 		}
 
 		size_t fileSize = static_cast<size_t>(file.tellg());
-		std::string buffer{};
-		buffer.resize(fileSize);
+		std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
+
 		file.seekg(0);
-		file.read(buffer.data(), fileSize);
+		file.read((char*)buffer.data(), fileSize);
 		file.close();
 		return buffer;
 	}
 
-	// TODO: these input layout should be reflected from a shader, not hardcoded
-	VkVertexInputBindingDescription GetVertexBindingDescription()
+	VkFormat ToVkFormat(SPIRV_CROSS_NAMESPACE::SPIRType const& spirvType)
 	{
-		VkVertexInputBindingDescription bindingDescription{};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDescription;
-	}
+		using namespace SPIRV_CROSS_NAMESPACE;
 
-	std::vector<VkVertexInputAttributeDescription> GetVertexAttributeDescriptions()
-	{
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, position);
+		uint32_t const componentCount = spirvType.vecsize * spirvType.columns;
+		switch (componentCount)
+		{
+		case 1:
+			switch (spirvType.basetype)
+			{
+			case SPIRType::BaseType::Float: return VK_FORMAT_R32_SFLOAT;
+			}
+		case 2:
+			switch (spirvType.basetype)
+			{
+			case SPIRType::BaseType::Float: return VK_FORMAT_R32G32_SFLOAT;
+			}
+		case 3:
+			switch (spirvType.basetype)
+			{
+			case SPIRType::BaseType::Float: return VK_FORMAT_R32G32B32_SFLOAT;
+			}
+		case 4:
+			switch (spirvType.basetype)
+			{
+			case SPIRType::BaseType::Float: return VK_FORMAT_R32G32B32A32_SFLOAT;
+			}
+		default: throw gg::VulkanInitException("Unsupported vector size");
+		}
 
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, normal);
-
-		attributeDescriptions[2].binding = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, textureCoords0);
-
-		return attributeDescriptions;
+		gg::BreakIfFalse(false); /* encountered an unexpected input type */
+		return VK_FORMAT_UNDEFINED;
 	}
 }
 
@@ -88,21 +94,48 @@ namespace gg
 		, fragmentShaderBlob{ readFile(std::filesystem::absolute(fragmentShaderRelativePath).generic_string()) }
 		, device{ d }
 	{
-		BreakIfFalse(vertexShaderBlob.size() != 0);
-		BreakIfFalse(fragmentShaderBlob.size() != 0);
+		BreakIfFalse(!vertexShaderBlob.empty());
+		BreakIfFalse(!fragmentShaderBlob.empty());
 
 		VkDevice device{ RendererVulkan::Get()->GetDevice() };
 		vertexShader = createShaderModule(device, vertexShaderBlob);
 		fragmentShader = createShaderModule(device, fragmentShaderBlob);
 
+		ReflectInputLayout();
+
 		vertexShaderBlob.clear();
 		fragmentShaderBlob.clear();
+	}
 
-		{ /* init vertex attributes */
-			vertexBindingDesc = GetVertexBindingDescription();
-			vertexAttributeDesc = GetVertexAttributeDescriptions();
-			InitVertexInputInfo();
+	void ShaderProgramVulkan::ReflectInputLayout()
+	{
+		using namespace SPIRV_CROSS_NAMESPACE;
+		/* reflect the shaders using SPIRV-Cross */
+		CompilerGLSL compiler{ std::move(vertexShaderBlob) };
+		ShaderResources resources{ compiler.get_shader_resources() };
+
+		uint32_t offset{ 0 };
+		for (Resource const& resource : resources.stage_inputs)
+		{
+			SPIRType const spirvType{ compiler.get_type(resource.base_type_id) };
+
+			VkVertexInputAttributeDescription inputAttribute{};
+			inputAttribute.binding = 0;
+			inputAttribute.location = compiler.get_decoration(resource.id, spv::DecorationLocation);
+			inputAttribute.format = ToVkFormat(spirvType);
+			inputAttribute.offset = offset;
+
+			uint32_t attributeSizeBytes{ spirvType.width / 8 * spirvType.vecsize * spirvType.columns };
+			offset += attributeSizeBytes;
+
+			vertexAttributeDesc.push_back(inputAttribute);
 		}
+
+		vertexBindingDesc.binding = 0;
+		vertexBindingDesc.stride = offset;
+		vertexBindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		InitVertexInputInfo();
 	}
 
 	void ShaderProgramVulkan::InitVertexInputInfo()
