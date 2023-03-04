@@ -136,7 +136,7 @@ namespace gg
 				std::string variableName = resource.name;
 				variableName = variableName.substr(inputVarPrefixLength, variableName.size() - inputVarPrefixLength);
 				Semantic semantic = semanticNameToSemantic.at(variableName);
-				inputAttributes.emplace_back(semantic, spirvType.vecsize * spirvType.columns);
+				inputAttributes[semantic] = { semantic, spirvType.vecsize * spirvType.columns };
 			}
 		}
 

@@ -22,7 +22,7 @@ export namespace gg
 	struct InputAttribute
 	{
 		Semantic semantic;
-		uint8_t componentCount;
+		uint32_t componentCount;
 	};
 
 	std::unordered_map<std::string, Semantic> const semanticNameToSemantic{
@@ -36,7 +36,7 @@ export namespace gg
 	public:
 		virtual ~ShaderProgram() = default;
 
-		std::vector<InputAttribute> inputAttributes;
+		std::unordered_map<Semantic, InputAttribute> inputAttributes;
 	};
 
 	struct ModelViewProjectionCB

@@ -88,7 +88,7 @@ namespace gg
 			{ /* save the semantic and component count of each attribute */
 				Semantic semantic = semanticNameToSemantic.at(p.SemanticName);
 				uint8_t componentCount = std::countr_one(p.Mask);
-				inputAttributes.emplace_back(semantic, componentCount);
+				inputAttributes[semantic] = { semantic, componentCount };
 			}
 		}
 		vertexInputLayout = { vertexInputDesc.data(), static_cast<uint32_t>(vertexInputDesc.size()) };
