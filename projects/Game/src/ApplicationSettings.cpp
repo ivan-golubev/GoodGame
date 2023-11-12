@@ -7,6 +7,8 @@ import Application;
 import GlobalSettings;
 import RendererVulkan;
 import RendererD3D12;
+import TimeManager;
+import Input;
 
 using gg::RendererVulkan;
 
