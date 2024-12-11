@@ -99,7 +99,8 @@ namespace gg
 	{
 		std::string modelAbsolutePath{ std::filesystem::absolute(modelRelativePath).generic_string() };
 		Assimp::Importer importer;
-		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
+		// Assimp is throwing a DeadlyImportError when it tries to read glb with gltf 1 importer, then catches and swallows the exception. Does not affect anything.
+		// Then it properly reads it as gltf 2.
 		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
 			aiProcess_Triangulate
 			| aiProcess_JoinIdenticalVertices

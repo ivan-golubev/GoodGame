@@ -958,13 +958,13 @@ namespace gg
 		std::shared_ptr<ShaderProgram> shader = LoadShader(skyboxShaderName);
 		glm::vec3 position{};
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(skyboxModelName, shader, position, device);
-
+		// STOPPED HERE, so the skybox rendering does not work.
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline(model);
 
 		SkyboxTextures skyboxTextures{ GetSkyboxTexturePaths(name) };
-		std::shared_ptr<TextureVulkan> skybox = std::make_shared<TextureVulkan>(skyboxTextures, device);
-		model->textures.push_back(skybox);
+		std::shared_ptr<TextureVulkan> vulkanTexture = std::make_shared<TextureVulkan>(skyboxTextures, device);
+		model->textures.emplace_back(vulkanTexture);
 
 		CreateUniformBuffers(model);
 		CreateDescriptorSets(model);
