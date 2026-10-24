@@ -12,6 +12,9 @@ https://vulkan.lunarg.com/
 DirectX headers taken from https://github.com/microsoft/DirectX-Headers/tree/main/include/directx
 and are stored in Direct3D12Renderer/DirectX-Headers in the repository.
 
+Open assimp in Cmake and set the target folder to GoodGame\lib\assimp-out.
+Build the assimp project in Debug and Release configurations. This will generated the static libs.
+
 WinPixEventRuntime installed as a Nuget package
 see https://devblogs.microsoft.com/pix/winpixeventruntime/
 

@@ -1,13 +1,15 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <AssimpBinDir>$(SolutionDir)lib\assimp\bin\Debug</AssimpBinDir>
-    <AssimpLibDir>$(SolutionDir)lib\assimp\lib\Debug</AssimpLibDir>
-    <AssimLib>assimp-vc143-mtd</AssimLib>
+    <AssimpLibDir>$(SolutionDir)lib\assimp-out\Debug</AssimpLibDir>
+    <ZLibDir>$(SolutionDir)lib\assimp\contrib\zlib\Debug</ZLibDir>
+    <ZLib>$(ZLibDir)\zlibstaticd</ZLib>
+    <AssimLib>assimp-vc145-mtd</AssimLib>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release' Or '$(Configuration)'=='Final'">
-    <AssimpBinDir>$(SolutionDir)lib\assimp\bin\Release</AssimpBinDir>
-    <AssimpLibDir>$(SolutionDir)lib\assimp\lib\Release</AssimpLibDir>
-    <AssimLib>assimp-vc143-mt</AssimLib>
+    <AssimpLibDir>$(SolutionDir)lib\assimp-out\Release</AssimpLibDir>
+    <ZLibDir>$(SolutionDir)lib\assimp\contrib\zlib\Release</ZLibDir>
+    <ZLib>$(ZLibDir)\zlibstatic</ZLib>
+    <AssimLib>assimp-vc145-mt</AssimLib>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
@@ -16,14 +18,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(AssimpLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(AssimLib).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(AssimLib).lib;$(ZLib).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  
-  <ItemGroup Condition="'$(ConfigurationType)'=='Application'">
-      <ContentWithTargetPath Include="$(AssimpBinDir)\**" Exclude="$(AssimpBinDir)\unit*">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-          <TargetPath>%(Filename)%(Extension)</TargetPath>
-      </ContentWithTargetPath>
-  </ItemGroup>
 </Project>
