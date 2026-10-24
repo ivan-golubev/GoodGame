@@ -1,5 +1,16 @@
-Param([Parameter(Mandatory=$true)][string]$Config, [Parameter(Mandatory=$true)][string]$TargetDir, [Parameter(Mandatory=$true)][string]$RendererType)
 # Get PowerShell 7.2.1 or higher from the MS Store: https://aka.ms/Install-PowerShell
+Param(
+    [Parameter(Mandatory=$true)][string]$Config, 
+    [Parameter(Mandatory=$true)][string]$TargetDir, 
+    [Parameter(Mandatory=$true)][string]$RendererType,
+    [Parameter(Mandatory=$false)][string]$WinDxcPath
+)
+
+# Disable ANSI escape sequences so Visual Studio output window remains clean
+$PSStyle.OutputRendering = 'PlainText'
+$env:NO_COLOR = '1'
+
+$ErrorActionPreference = "Stop"
 
 $IsFinal=$($Config -eq "Final")
 
@@ -13,8 +24,8 @@ if ($RendererType -eq "vulkan")
 } 
 else 
 { # D3D12
-	# Windows 11 SDK (10.0.22000.0)
-	$global:Compiler = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\dxc.exe"
+	# Windows SDK
+	$global:Compiler = "${WinDxcPath}\dxc.exe"
 	$global:OutputDir = "${TargetDir}\shaders\dxil"
 	$global:ShaderModel = "6_0"
 	$global:Extention = "cso"
