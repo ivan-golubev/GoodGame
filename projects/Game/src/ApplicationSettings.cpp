@@ -5,8 +5,11 @@ module ApplicationSettings;
 
 import Application;
 import GlobalSettings;
+import Input;
+import Renderer;
 import RendererVulkan;
 import RendererD3D12;
+import TimeManager;
 
 using gg::RendererVulkan;
 

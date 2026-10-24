@@ -2,7 +2,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <!-- Vulkan Includes are needed for SDL2 -->
-      <AdditionalIncludeDirectories>$(SolutionDir)lib\DirectX-Headers\include;$(VULKAN_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\DirectX-Headers\include;$(SolutionDir)packages\WinPixEventRuntime.1.0.240308001\Include;$(VULKAN_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;User32.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>

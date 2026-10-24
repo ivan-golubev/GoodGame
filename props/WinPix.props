@@ -1,6 +1,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <WinPixVersion>1.0.220124001</WinPixVersion>
+    <WinPixVersion>1.0.240308001</WinPixVersion>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

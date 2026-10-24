@@ -6,8 +6,14 @@ Features implemented:
 - directional light and Blinn–Phong reflection
 - ImGUI to control the camera and lights
 
+Install the official Vulkan SDK:
+https://vulkan.lunarg.com/
+
 DirectX headers taken from https://github.com/microsoft/DirectX-Headers/tree/main/include/directx
 and are stored in Direct3D12Renderer/DirectX-Headers in the repository.
 
 WinPixEventRuntime installed as a Nuget package
 see https://devblogs.microsoft.com/pix/winpixeventruntime/
+
+Update the powershell:
+winget install --id Microsoft.PowerShell --source winget
