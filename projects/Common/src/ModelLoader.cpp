@@ -29,27 +29,35 @@ namespace
 		BreakIfFalse(assimpMesh->HasTextureCoords(UVsetNumber));
 		BreakIfFalse(assimpMesh->HasNormals());
 
+		bool const hasTextureCoords = assimpMesh->HasTextureCoords(UVsetNumber);
+
+		outMesh.vertices.reserve(assimpMesh->mNumVertices);
+		outMesh.indices.reserve(assimpMesh->mNumFaces * 3);
+
 		for (unsigned int faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
 		{
 			aiFace* face{ &assimpMesh->mFaces[faceIndex] };
 			for (unsigned int j{ 0 }; j < face->mNumIndices; ++j)
 			{
 				auto vertexIndex = face->mIndices[j];
-				auto assimpVertex = assimpMesh->mVertices[vertexIndex];
+				auto const& pos = assimpMesh->mVertices[vertexIndex];
+				auto const& normal = assimpMesh->mNormals[vertexIndex];
 
-				aiVector3D UV = assimpMesh->HasTextureCoords(UVsetNumber)
+				auto const textureCoords = hasTextureCoords
 					? assimpMesh->mTextureCoords[UVsetNumber][vertexIndex]
 					: aiVector3D{ 0, 0, 0 };
 
-				aiVector3D normal = assimpMesh->mNormals[vertexIndex];
-
 				outMesh.vertices.emplace_back(
-					static_cast<float>(assimpVertex.x),
-					static_cast<float>(assimpVertex.y),
-					static_cast<float>(assimpVertex.z),
+					static_cast<float>(pos.x),
+					static_cast<float>(pos.y),
+					static_cast<float>(pos.z),
 					1.0f, // w
-					UV.x, UV.y,
-					normal.x, normal.y, normal.z, 0.0f
+					static_cast<float>(textureCoords.x),
+					static_cast<float>(textureCoords.y),
+					static_cast<float>(normal.x),
+					static_cast<float>(normal.y),
+					static_cast<float>(normal.z),
+					0.0f
 				);
 			}
 		}
@@ -67,6 +75,9 @@ namespace gg
 {
 	void LoadData(std::string const& modelRelativePath, Model& model)
 	{
+		// Make sure assimp is compiled with single-precision
+		BreakIfFalse(sizeof(ai_real) == sizeof(float));
+
 		std::string modelAbsolutePath{ std::filesystem::absolute(modelRelativePath).generic_string() };
 		Assimp::Importer importer;
 		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
