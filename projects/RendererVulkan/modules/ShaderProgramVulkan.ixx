@@ -19,7 +19,7 @@ export namespace gg
 		ShaderProgramVulkan(ShaderProgramVulkan const&) = delete;
 		ShaderProgramVulkan& operator=(ShaderProgramVulkan const&) = delete;
 
-		~ShaderProgramVulkan();
+		~ShaderProgramVulkan() noexcept;
 
 		VkShaderModule GetVertexShader() const;
 		VkShaderModule GetFragmentShader() const;

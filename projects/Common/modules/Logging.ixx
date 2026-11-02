@@ -10,6 +10,6 @@ export namespace gg
 		Error
 	};
 
-	void DebugLog(DebugLevel level, std::string const&);
+	void DebugLog(DebugLevel level, std::string const&) noexcept;
 
 } // namespace gg

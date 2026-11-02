@@ -20,7 +20,7 @@ namespace gg
 		static bool IsInitialized();
 		static std::shared_ptr<Application> Get();
 
-		~Application();
+		~Application() noexcept;
 
 		Application(Application const&) = delete;
 		Application& operator=(Application const&) = delete;

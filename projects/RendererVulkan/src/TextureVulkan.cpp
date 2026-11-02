@@ -30,7 +30,7 @@ namespace gg
 		return {};
 	}
 
-	TextureVulkan::~TextureVulkan()
+	TextureVulkan::~TextureVulkan() noexcept
 	{
 		if (!device)
 			return;
@@ -61,7 +61,7 @@ namespace gg
 			VkBuffer buffer{};
 			VkDeviceMemory memory{};
 
-			~StagingResources()
+			~StagingResources() noexcept
 			{
 				if (buffer)
 					vkDestroyBuffer(device, buffer, nullptr);

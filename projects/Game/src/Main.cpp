@@ -83,7 +83,7 @@ namespace
 	uint32_t RunApplication(uint32_t width, uint32_t height, gg::RendererType& rendererType)
 	{
 		using namespace gg;
-		auto destroyWindow = [](SDL_Window* window)
+		auto destroyWindow = [](SDL_Window* window) noexcept
 		{
 			if (window)
 				SDL_DestroyWindow(window);

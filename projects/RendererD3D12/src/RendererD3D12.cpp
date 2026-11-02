@@ -599,7 +599,7 @@ namespace gg
 		);
 	}
 
-	RendererD3D12::~RendererD3D12()
+	RendererD3D12::~RendererD3D12() noexcept
 	{
 		/* Ensure that the GPU is no longer referencing resources that are about to be
 		 cleaned up by the destructor. */

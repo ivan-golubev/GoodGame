@@ -34,7 +34,7 @@ namespace gg
 	{
 	public:
 		RendererVulkan() = default;
-		~RendererVulkan();
+		~RendererVulkan() noexcept;
 		void Initialize(RendererSettings const&) override;
 
 		static std::shared_ptr<RendererVulkan> Get();

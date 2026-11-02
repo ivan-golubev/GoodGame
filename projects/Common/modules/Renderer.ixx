@@ -35,7 +35,7 @@ export namespace gg
 	{
 	public:
 		Renderer() = default;
-		virtual ~Renderer() = default;
+		virtual ~Renderer() noexcept = default;
 
 		Renderer(Renderer const&) = delete;
 		Renderer& operator=(Renderer const&) = delete;

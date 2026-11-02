@@ -82,7 +82,7 @@ namespace gg
 		}
 	}
 
-	DebugUI_Vulkan::~DebugUI_Vulkan()
+	DebugUI_Vulkan::~DebugUI_Vulkan() noexcept
 	{
 		if (vulkanBackendInitialized)
 			ImGui_ImplVulkan_Shutdown();

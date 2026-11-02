@@ -13,7 +13,7 @@ export namespace gg
 	class ShaderProgram
 	{
 	public:
-		virtual ~ShaderProgram() = default;
+		virtual ~ShaderProgram() noexcept = default;
 	};
 
 	struct ModelViewProjectionCB

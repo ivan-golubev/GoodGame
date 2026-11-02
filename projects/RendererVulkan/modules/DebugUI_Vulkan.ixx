@@ -23,7 +23,7 @@ export namespace gg
 	class DebugUI_Vulkan
 	{
 	public:
-		~DebugUI_Vulkan();
+		~DebugUI_Vulkan() noexcept;
 		void Initialize(DebugUI_VulkanCreateInfo const&);
 		void Render(VkCommandBuffer);
 

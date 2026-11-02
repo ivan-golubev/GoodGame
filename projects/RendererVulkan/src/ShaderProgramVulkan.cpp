@@ -94,7 +94,7 @@ namespace gg
 		return {};
 	}
 
-	ShaderProgramVulkan::~ShaderProgramVulkan()
+	ShaderProgramVulkan::~ShaderProgramVulkan() noexcept
 	{
 		if (device && vertexShader)
 			vkDestroyShaderModule(device, vertexShader, nullptr);

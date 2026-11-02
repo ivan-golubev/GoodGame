@@ -41,7 +41,7 @@ namespace gg
 			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
-	DebugUI_D3D12::~DebugUI_D3D12()
+	DebugUI_D3D12::~DebugUI_D3D12() noexcept
 	{
 		if (dx12BackendInitialized)
 			ImGui_ImplDX12_Shutdown();

@@ -12,7 +12,7 @@ export namespace gg
 	class DebugUI_D3D12
 	{
 	public:
-		~DebugUI_D3D12();
+		~DebugUI_D3D12() noexcept;
 		void Initialize(ComPtr<ID3D12Device4>, SDL_Window*);
 		void Render(ComPtr<ID3D12GraphicsCommandList>);
 

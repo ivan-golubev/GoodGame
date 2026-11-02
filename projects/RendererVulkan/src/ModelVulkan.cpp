@@ -21,7 +21,7 @@ namespace gg
 	{
 	}
 
-	ModelVulkan::~ModelVulkan()
+	ModelVulkan::~ModelVulkan() noexcept
 	{
 		if (!device)
 			return;

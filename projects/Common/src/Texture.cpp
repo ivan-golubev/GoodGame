@@ -42,7 +42,7 @@ namespace gg
 		return L"Texture_" + baseName;
 	}
 
-	Texture::~Texture()
+	Texture::~Texture() noexcept
 	{
 		stbi_image_free(pixels);
 	}

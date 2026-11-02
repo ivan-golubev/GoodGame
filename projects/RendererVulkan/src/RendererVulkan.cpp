@@ -722,7 +722,7 @@ namespace gg
 			VkBuffer stagingBuffer{};
 			VkDeviceMemory stagingMemory{};
 
-			~BufferResources()
+			~BufferResources() noexcept
 			{
 				if (stagingBuffer)
 					vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -891,7 +891,7 @@ namespace gg
 			VkBuffer buffer{};
 			VkDeviceMemory memory{};
 
-			~BufferResources()
+			~BufferResources() noexcept
 			{
 				if (buffer)
 					vkDestroyBuffer(device, buffer, nullptr);
@@ -946,7 +946,7 @@ namespace gg
 		EndSingleTimeCommands(commandBuffer);
 	}
 
-	RendererVulkan::~RendererVulkan()
+	RendererVulkan::~RendererVulkan() noexcept
 	{
 		if (device)
 		{
@@ -1087,7 +1087,7 @@ namespace gg
 			VkBuffer buffer{};
 			VkDeviceMemory memory{};
 
-			~StagingResources()
+			~StagingResources() noexcept
 			{
 				if (buffer)
 					vkDestroyBuffer(device, buffer, nullptr);

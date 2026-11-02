@@ -31,15 +31,26 @@ namespace
 
 namespace gg
 {
-	void DebugLog(DebugLevel debugLevel, std::string const& message)
+	void DebugLog(DebugLevel debugLevel, std::string const& message) noexcept
 	{
 		if constexpr (IsDebug())
 		{
 			if constexpr (IsWindowsSubSystem())
-				PrintToVSDebugConsole(debugLevel, message);
+			{
+				try
+				{
+					PrintToVSDebugConsole(debugLevel, message);
+				}
+				catch (...)
+				{
+					// Logging must not interfere with application shutdown or error handling.
+				}
+			}
 			else
 			{
 				auto& outStream = (debugLevel == DebugLevel::Info) ? std::cout : std::cerr;
+				// Keep logging failures in the stream state instead of throwing.
+				outStream.exceptions(std::ios::goodbit);
 				outStream << message << std::endl;
 			}
 		}

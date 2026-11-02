@@ -49,7 +49,7 @@ namespace gg
 	{
 	}
 
-	Application::~Application()
+	Application::~Application() noexcept
 	{
 		DebugLog(DebugLevel::Info, "Shutting down the application");
 	}

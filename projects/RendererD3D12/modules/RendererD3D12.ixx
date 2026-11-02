@@ -36,7 +36,7 @@ namespace gg
 	{
 	public:
 		RendererD3D12() = default;
-		~RendererD3D12();
+		~RendererD3D12() noexcept;
 		void Initialize(RendererSettings const&) override;
 
 		static std::shared_ptr<RendererD3D12> Get();

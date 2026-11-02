@@ -10,7 +10,7 @@ namespace gg
 	export class Texture
 	{
 	public:
-		virtual ~Texture();
+		virtual ~Texture() noexcept;
 		explicit Texture(std::string const& textureRelativePath);
 		Texture(Texture const&) = delete;
 		Texture& operator=(Texture const&) = delete;

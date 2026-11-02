@@ -13,7 +13,7 @@ export namespace gg
 	{
 	public:
 		TextureVulkan(VkDevice, std::string const& textureRelativePath);
-		~TextureVulkan();
+		~TextureVulkan() noexcept;
 		std::expected<void, Error> Initialize();
 
 		VkImageView textureImageView{};
