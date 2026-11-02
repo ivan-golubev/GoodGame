@@ -604,7 +604,16 @@ namespace gg
 		/* Ensure that the GPU is no longer referencing resources that are about to be
 		 cleaned up by the destructor. */
 		if (commandQueue && fence && fenceEvent)
-			WaitForPreviousFrame();
+		{
+			try
+			{
+				WaitForPreviousFrame();
+			}
+			catch (...)
+			{
+				// Continue releasing resources if the device or fence has already failed.
+			}
+		}
 		if (fenceEvent)
 			CloseHandle(fenceEvent);
 
