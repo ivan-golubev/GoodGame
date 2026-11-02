@@ -602,11 +602,6 @@ namespace gg
 
 		debugUI.reset();
 
-		if (windowHandleSDL)
-		{
-			SDL_DestroyWindow(windowHandleSDL);
-			SDL_Quit();
-		}
 	}
 
 	std::shared_ptr<RendererD3D12> RendererD3D12::Get()

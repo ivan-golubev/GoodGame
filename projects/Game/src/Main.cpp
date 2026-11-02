@@ -83,7 +83,15 @@ namespace
 	uint32_t RunApplication(uint32_t width, uint32_t height, gg::RendererType& rendererType)
 	{
 		using namespace gg;
-		SDL_Window* window = SDL_CreateWindow("Rendering sample", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+		auto destroyWindow = [](SDL_Window* window)
+		{
+			if (window)
+				SDL_DestroyWindow(window);
+		};
+		std::unique_ptr<SDL_Window, decltype(destroyWindow)> window{
+			SDL_CreateWindow("Rendering sample", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE),
+			destroyWindow,
+		};
 		if (!window)
 		{
 			DebugLog(DebugLevel::Error, "Could not create SDL window");
@@ -95,18 +103,17 @@ namespace
 			ApplicationSettings const appSettings{
 				.width = width,
 				.height = height,
-				.windowHandle = window,
+				.windowHandle = window.get(),
 				.rendererType = rendererType,
 			};
 			std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 			DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
-			auto handleAssetLoadError = [window](Error const& error)
+			auto handleAssetLoadError = [](Error const& error)
 			{
 				DebugLog(DebugLevel::Error, error.message);
 				Application::Destroy();
-				SDL_DestroyWindow(window);
 			};
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };
@@ -127,7 +134,6 @@ namespace
 
 			uint32_t status = MainLoop(app, rendererType);
 			Application::Destroy();
-			SDL_DestroyWindow(window);
 
 			if (status != EXIT_SUCCESS)
 				return status;

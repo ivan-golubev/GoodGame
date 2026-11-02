@@ -936,11 +936,6 @@ namespace gg
 		if (device) vkDestroyDevice(device, nullptr);
 		if (instance) vkDestroyInstance(instance, nullptr);
 
-		if (windowHandleSDL)
-		{
-			SDL_DestroyWindow(windowHandleSDL);
-			SDL_Quit();
-		}
 	}
 
 	void RendererVulkan::OnWindowResized(uint32_t width, uint32_t height)
