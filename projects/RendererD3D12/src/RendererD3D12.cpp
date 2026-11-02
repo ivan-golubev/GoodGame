@@ -396,7 +396,8 @@ namespace gg
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
-		model->Initialize();
+		if (auto const result{ model->Initialize() }; !result)
+			throw AssetLoadException(result.error().message);
 
 		CreateGraphicsPipeline(model);
 		CreateVertexBuffer(model);

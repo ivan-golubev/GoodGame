@@ -1,5 +1,6 @@
 module;
 #include <string>
+#include <format>
 #include <utility>
 #include <vulkan/vulkan.h>
 module TextureVulkan;
@@ -19,7 +20,8 @@ namespace gg
 
 	void TextureVulkan::Initialize()
 	{
-		Texture::Initialize();
+		if (auto const result{ Texture::Initialize() }; !result)
+			throw AssetLoadException(result.error().message);
 		CreateTextureImage();
 		CreateTextureImageView();
 		textureSampler = RendererVulkan::Get()->CreateTextureSampler();

@@ -1,5 +1,6 @@
 module;
 #include <exception>
+#include <expected>
 #include <stdexcept>
 #include <string>
 #include <windows.h>
@@ -7,6 +8,22 @@ export module ErrorHandling;
 
 export namespace gg
 {
+	enum class ErrorCode
+	{
+		ModelImportFailed,
+		ModelContainsNoMeshes,
+		ModelMeshMissingPositions,
+		ModelMeshMissingTextureCoordinates,
+		ModelMeshMissingNormals,
+		TextureLoadFailed,
+	};
+
+	struct Error
+	{
+		ErrorCode code;
+		std::string message;
+	};
+
 	class ComException : public std::exception
 	{
 	public:

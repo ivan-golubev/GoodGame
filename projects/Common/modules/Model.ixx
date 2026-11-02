@@ -1,6 +1,7 @@
 module;
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
+#include <expected>
 #include <memory>
 #include <string>
 #include <vector>
@@ -9,6 +10,7 @@ export module Model;
 import Vertex;
 import ShaderProgram;
 import Texture;
+export import ErrorHandling;
 
 
 export namespace gg
@@ -43,7 +45,7 @@ export namespace gg
 		glm::mat4x4 translation{};
 
 		void SetPosition(glm::vec3& position);
-		void Initialize();
+		std::expected<void, Error> Initialize();
 
 		std::shared_ptr<ShaderProgram> shaderProgram;
 		std::vector<std::string> textureNames;

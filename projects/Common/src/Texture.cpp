@@ -1,5 +1,6 @@
 module;
 #include <filesystem>
+#include <format>
 #include <stb_image.h>
 #include <string>
 #include <utility>
@@ -12,17 +13,27 @@ namespace gg
 	{
 	}
 
-	void Texture::Initialize()
+	std::expected<void, Error> Texture::Initialize()
 	{
 		stbi_image_free(pixels);
+		pixels = nullptr;
+		width = 0;
+		height = 0;
+		channels = 0;
 		int imageWidth{}, imageHeight{}, imageChannels{};
 		pixels = stbi_load(textureAbsolutePath.c_str(), &imageWidth, &imageHeight, &imageChannels, STBI_rgb_alpha);
+		if (!pixels)
+			return std::unexpected(Error{
+				.code = ErrorCode::TextureLoadFailed,
+				.message = std::format("Failed to load texture '{}': {}", textureAbsolutePath, stbi_failure_reason() ? stbi_failure_reason() : "unknown image loading error"),
+			});
 		width = static_cast<uint32_t>(imageWidth);
 		height = static_cast<uint32_t>(imageHeight);
 		channels = static_cast<uint32_t>(imageChannels);
 #ifdef NDEBUG
 		std::string{}.swap(textureAbsolutePath);
 #endif
+		return {};
 	}
 
 	std::wstring Texture::GetName()

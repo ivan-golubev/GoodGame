@@ -1,5 +1,6 @@
 module;
 #include <string>
+#include <format>
 #include <utility>
 module TextureD3D12;
 
@@ -16,7 +17,8 @@ namespace gg
 
 	void TextureD3D12::Initialize()
 	{
-		Texture::Initialize();
+		if (auto const result{ Texture::Initialize() }; !result)
+			throw AssetLoadException(result.error().message);
 	}
 
 } // namespace gg

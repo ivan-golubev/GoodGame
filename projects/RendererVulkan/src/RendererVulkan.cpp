@@ -1007,7 +1007,8 @@ namespace gg
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
-		model->Initialize();
+		if (auto const result{ model->Initialize() }; !result)
+			throw AssetLoadException(result.error().message);
 
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline(model);

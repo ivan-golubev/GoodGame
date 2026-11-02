@@ -1,6 +1,9 @@
 module;
 #include <string>
+#include <expected>
 export module Texture;
+
+export import ErrorHandling;
 
 namespace gg
 {
@@ -9,7 +12,7 @@ namespace gg
 	public:
 		virtual ~Texture();
 		explicit Texture(std::string const& textureRelativePath);
-		void Initialize();
+		std::expected<void, Error> Initialize();
 		uint64_t SizeBytes() const;
 
 		std::wstring GetName();
