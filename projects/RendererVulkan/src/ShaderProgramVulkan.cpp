@@ -103,21 +103,28 @@ namespace gg
 	}
 
 	ShaderProgramVulkan::ShaderProgramVulkan(ShaderProgramVulkan&& other) noexcept
+		: vertexShaderBlob{ std::move(other.vertexShaderBlob) }
+		, fragmentShaderBlob{ std::move(other.fragmentShaderBlob) }
+		, device{ std::exchange(other.device, VK_NULL_HANDLE) }
+		, vertexShader{ std::exchange(other.vertexShader, VK_NULL_HANDLE) }
+		, fragmentShader{ std::exchange(other.fragmentShader, VK_NULL_HANDLE) }
 	{
-		vertexShader = nullptr;
-		fragmentShader = nullptr;
-		std::exchange(vertexShader, other.vertexShader);
-		std::exchange(fragmentShader, other.fragmentShader);
 	}
 
 	ShaderProgramVulkan& ShaderProgramVulkan::operator=(ShaderProgramVulkan&& other) noexcept
 	{
 		if (this != &other)
 		{
-			vertexShader = nullptr;
-			fragmentShader = nullptr;
-			std::exchange(vertexShader, other.vertexShader);
-			std::exchange(fragmentShader, other.fragmentShader);
+			if (device && vertexShader)
+				vkDestroyShaderModule(device, vertexShader, nullptr);
+			if (device && fragmentShader)
+				vkDestroyShaderModule(device, fragmentShader, nullptr);
+
+			vertexShaderBlob = std::move(other.vertexShaderBlob);
+			fragmentShaderBlob = std::move(other.fragmentShaderBlob);
+			device = std::exchange(other.device, VK_NULL_HANDLE);
+			vertexShader = std::exchange(other.vertexShader, VK_NULL_HANDLE);
+			fragmentShader = std::exchange(other.fragmentShader, VK_NULL_HANDLE);
 		}
 		return *this;
 	}
