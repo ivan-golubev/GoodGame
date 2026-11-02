@@ -251,7 +251,12 @@ namespace gg
 	{
 		swapChainImageViews.resize(swapChainImages.size());
 		for (size_t i{ 0 }; i < swapChainImages.size(); ++i)
-			swapChainImageViews[i] = CreateImageView(device, swapChainImages[i], swapChainImageFormat);
+		{
+			auto imageViewResult{ CreateImageView(device, swapChainImages[i], swapChainImageFormat) };
+			if (!imageViewResult)
+				throw VulkanInitException(std::format("Failed to create swap chain image view {}: {}", i, imageViewResult.error().message));
+			swapChainImageViews[i] = *imageViewResult;
+		}
 	}
 
 	void RendererVulkan::CreateRenderPass()
@@ -999,9 +1004,10 @@ namespace gg
 	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& name)
 	{
 		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
-		TextureVulkan* texture = new TextureVulkan(device, textureRelativePath);
-		texture->Initialize();
-		return std::shared_ptr<Texture>(texture);
+		std::unique_ptr<TextureVulkan> texture{ new TextureVulkan(device, textureRelativePath) };
+		if (auto const result{ texture->Initialize() }; !result)
+			throw AssetLoadException(result.error().message);
+		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
 	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)

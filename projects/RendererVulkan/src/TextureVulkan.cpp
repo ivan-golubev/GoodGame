@@ -18,13 +18,16 @@ namespace gg
 	{
 	}
 
-	void TextureVulkan::Initialize()
+	std::expected<void, Error> TextureVulkan::Initialize()
 	{
 		if (auto const result{ Texture::Initialize() }; !result)
-			throw AssetLoadException(result.error().message);
-		CreateTextureImage();
-		CreateTextureImageView();
+			return std::unexpected(result.error());
+		if (auto const result{ CreateTextureImage() }; !result)
+			return std::unexpected(result.error());
+		if (auto const result{ CreateTextureImageView() }; !result)
+			return std::unexpected(result.error());
 		textureSampler = RendererVulkan::Get()->CreateTextureSampler();
+		return {};
 	}
 
 	TextureVulkan::~TextureVulkan()
@@ -42,10 +45,13 @@ namespace gg
 	}
 
 
-	void TextureVulkan::CreateTextureImage()
+	std::expected<void, Error> TextureVulkan::CreateTextureImage()
 	{
 		if (!pixels)
-			throw AssetLoadException("failed to load texture image!");
+			return std::unexpected(Error{
+				.code = ErrorCode::TextureLoadFailed,
+				.message = "Cannot upload texture to Vulkan because its pixel data is not loaded",
+			});
 
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkDevice device = renderer->GetDevice();
@@ -59,29 +65,63 @@ namespace gg
 			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		);
 
-		void* mappedData;
-		vkMapMemory(device, stagingBufferMemory, 0, imageSizeBytes, 0, &mappedData);
+		void* mappedData{};
+		VkResult const mapResult{ vkMapMemory(device, stagingBufferMemory, 0, imageSizeBytes, 0, &mappedData) };
+		if (mapResult != VK_SUCCESS)
+		{
+			vkDestroyBuffer(device, stagingBuffer, nullptr);
+			vkFreeMemory(device, stagingBufferMemory, nullptr);
+			return std::unexpected(Error{
+				.code = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to map staging buffer memory for texture upload (VkResult {})", static_cast<int>(mapResult)),
+			});
+		}
 		memcpy(mappedData, pixels, static_cast<size_t>(imageSizeBytes));
 		vkUnmapMemory(device, stagingBufferMemory);
 
-		CreateImage(width
+		auto imageResult{ CreateImage(width
 			, height
 			, VK_FORMAT_R8G8B8A8_SRGB
 			, VK_IMAGE_TILING_OPTIMAL
 			, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
 			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			, textureImage
-			, textureImageMemory);
+			, textureImageMemory) };
+		if (!imageResult)
+		{
+			vkDestroyBuffer(device, stagingBuffer, nullptr);
+			vkFreeMemory(device, stagingBufferMemory, nullptr);
+			return std::unexpected(imageResult.error());
+		}
 
-		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		CopyBufferToImage(stagingBuffer, textureImage, width, height);
-		TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		auto transitionToTransferResult{ TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) };
+		if (!transitionToTransferResult)
+		{
+			vkDestroyBuffer(device, stagingBuffer, nullptr);
+			vkFreeMemory(device, stagingBufferMemory, nullptr);
+			return std::unexpected(transitionToTransferResult.error());
+		}
+		auto copyResult{ CopyBufferToImage(stagingBuffer, textureImage, width, height) };
+		if (!copyResult)
+		{
+			vkDestroyBuffer(device, stagingBuffer, nullptr);
+			vkFreeMemory(device, stagingBufferMemory, nullptr);
+			return std::unexpected(copyResult.error());
+		}
+		auto transitionToShaderResult{ TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) };
+		if (!transitionToShaderResult)
+		{
+			vkDestroyBuffer(device, stagingBuffer, nullptr);
+			vkFreeMemory(device, stagingBufferMemory, nullptr);
+			return std::unexpected(transitionToShaderResult.error());
+		}
 
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
+		return {};
 	}
 
-	void TextureVulkan::CreateImage(
+	std::expected<void, Error> TextureVulkan::CreateImage(
 		uint32_t width
 		, uint32_t height
 		, VkFormat format
@@ -108,8 +148,12 @@ namespace gg
 			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		};
 
-		if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
-			throw VulkanInitException("failed to create image!");
+		VkResult const imageResult{ vkCreateImage(device, &imageInfo, nullptr, &image) };
+		if (imageResult != VK_SUCCESS)
+			return std::unexpected(Error{
+				.code = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to create Vulkan texture image (VkResult {})", static_cast<int>(imageResult)),
+			});
 
 		VkMemoryRequirements memRequirements;
 		vkGetImageMemoryRequirements(device, image, &memRequirements);
@@ -120,13 +164,23 @@ namespace gg
 			.memoryTypeIndex = renderer->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
 		};
 
-		if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-			throw VulkanInitException("failed to allocate image memory!");
+		VkResult const allocationResult{ vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) };
+		if (allocationResult != VK_SUCCESS)
+			return std::unexpected(Error{
+				.code = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to allocate memory for Vulkan texture image (VkResult {})", static_cast<int>(allocationResult)),
+			});
 
-		vkBindImageMemory(device, image, imageMemory, 0);
+		VkResult const bindResult{ vkBindImageMemory(device, image, imageMemory, 0) };
+		if (bindResult != VK_SUCCESS)
+			return std::unexpected(Error{
+				.code = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to bind memory to Vulkan texture image (VkResult {})", static_cast<int>(bindResult)),
+			});
+		return {};
 	}
 
-	void TextureVulkan::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+	std::expected<void, Error> TextureVulkan::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
@@ -153,7 +207,10 @@ namespace gg
 			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
 		else
-			throw VulkanRenderException("unsupported layout transition!");
+			return std::unexpected(Error{
+				.code = ErrorCode::VulkanTextureUnsupportedLayoutTransition,
+				.message = std::format("Cannot transition Vulkan texture image from layout {} to unsupported layout {}", static_cast<int>(oldLayout), static_cast<int>(newLayout)),
+			});
 
 		VkImageMemoryBarrier barrier{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -177,9 +234,10 @@ namespace gg
 		);
 
 		renderer->EndSingleTimeCommands(commandBuffer);
+		return {};
 	}
 
-	void TextureVulkan::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+	std::expected<void, Error> TextureVulkan::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
@@ -203,9 +261,10 @@ namespace gg
 		);
 
 		renderer->EndSingleTimeCommands(commandBuffer);
+		return {};
 	}
 
-	VkImageView CreateImageView(VkDevice device, VkImage image, VkFormat format)
+	std::expected<VkImageView, Error> CreateImageView(VkDevice device, VkImage image, VkFormat format)
 	{
 		VkImageViewCreateInfo viewInfo{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -215,14 +274,22 @@ namespace gg
 			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 },
 		};
 
-		VkImageView imageView;
-		if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
-			throw VulkanInitException("failed to create texture image view!");
+		VkImageView imageView{};
+		VkResult const result{ vkCreateImageView(device, &viewInfo, nullptr, &imageView) };
+		if (result != VK_SUCCESS)
+			return std::unexpected(Error{
+				.code = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to create Vulkan texture image view (VkResult {})", static_cast<int>(result)),
+			});
 		return imageView;
 	}
 
-	void TextureVulkan::CreateTextureImageView()
+	std::expected<void, Error> TextureVulkan::CreateTextureImageView()
 	{
-		textureImageView = CreateImageView(RendererVulkan::Get()->GetDevice(), textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+		auto imageViewResult{ CreateImageView(RendererVulkan::Get()->GetDevice(), textureImage, VK_FORMAT_R8G8B8A8_SRGB) };
+		if (!imageViewResult)
+			return std::unexpected(imageViewResult.error());
+		textureImageView = *imageViewResult;
+		return {};
 	}
 } // namespace gg

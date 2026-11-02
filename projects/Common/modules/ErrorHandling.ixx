@@ -19,6 +19,8 @@ export namespace gg
 		ShaderFileReadFailed,
 		ShaderFileEmpty,
 		ShaderModuleCreationFailed,
+		VulkanTextureResourceCreationFailed,
+		VulkanTextureUnsupportedLayoutTransition,
 	};
 
 	struct Error

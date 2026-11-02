@@ -1,8 +1,10 @@
 module;
 #include <string>
+#include <expected>
 #include <vulkan/vulkan.h>
 export module TextureVulkan;
 
+export import ErrorHandling;
 import Texture;
 
 export namespace gg
@@ -12,23 +14,23 @@ export namespace gg
 	public:
 		TextureVulkan(VkDevice, std::string const& textureRelativePath);
 		~TextureVulkan();
-		void Initialize();
+		std::expected<void, Error> Initialize();
 
 		VkImageView textureImageView{};
 		VkSampler textureSampler{};
 
 	private:
-		void CreateTextureImage();
-		void CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
-		void CreateTextureImageView();
+		std::expected<void, Error> CreateTextureImage();
+		std::expected<void, Error> CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
+		std::expected<void, Error> CreateTextureImageView();
 
-		void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
-		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
+		std::expected<void, Error> TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
+		std::expected<void, Error> CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
 		VkDevice device;
 		VkImage textureImage{};
 		VkDeviceMemory textureImageMemory{};
 	};
 
-	VkImageView CreateImageView(VkDevice, VkImage, VkFormat);
+	std::expected<VkImageView, Error> CreateImageView(VkDevice, VkImage, VkFormat);
 }
