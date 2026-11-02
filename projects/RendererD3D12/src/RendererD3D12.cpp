@@ -334,14 +334,7 @@ namespace gg
 		if (auto const result{ texture->Initialize() }; !result)
 			return std::unexpected(result.error());
 
-		/* uploading the texture  */
-		HRESULT result{ commandAllocator->Reset() };
-		if (FAILED(result))
-			return std::unexpected(makeUploadError("reset the command allocator", result));
-		result = commandList->Reset(commandAllocator.Get(), nullptr);
-		if (FAILED(result))
-			return std::unexpected(makeUploadError("reset the command list", result));
-
+		HRESULT result{};
 		// Describe and create a Texture2D.
 		D3D12_RESOURCE_DESC textureDesc{
 			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
@@ -382,6 +375,14 @@ namespace gg
 		if (FAILED(result))
 			return std::unexpected(makeUploadError("create the texture upload resource", result));
 
+		/* Record the upload only after all resource creation has succeeded. */
+		result = commandAllocator->Reset();
+		if (FAILED(result))
+			return std::unexpected(makeUploadError("reset the command allocator", result));
+		result = commandList->Reset(commandAllocator.Get(), nullptr);
+		if (FAILED(result))
+			return std::unexpected(makeUploadError("reset the command list", result));
+
 		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the Texture2D. */
 		LONG_PTR const textureRowPitch = texture->width * texture->channels;
@@ -392,7 +393,17 @@ namespace gg
 			.SlicePitch = textureSlicePitch,
 		};
 
-		UpdateSubresources(commandList.Get(), texture->texture_GPU_Resource.Get(), texture->texture_CPU_Resource.Get(), 0, 0, 1, &textureData);
+		UINT64 const uploadedBytes{ UpdateSubresources(commandList.Get(), texture->texture_GPU_Resource.Get(), texture->texture_CPU_Resource.Get(), 0, 0, 1, &textureData) };
+		if (uploadedBytes == 0)
+		{
+			HRESULT const closeResult{ commandList->Close() };
+			if (FAILED(closeResult))
+				return std::unexpected(makeUploadError("close the command list after texture upload failed", closeResult));
+			return std::unexpected(Error{
+				.code = ErrorCode::D3D12TextureUploadFailed,
+				.message = std::format("Failed to copy texture '{}' into the D3D12 upload resource", textureRelativePath),
+			});
+		}
 
 		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(texture->texture_GPU_Resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) };
 		commandList->ResourceBarrier(1, &barrier);
