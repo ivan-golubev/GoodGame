@@ -12,6 +12,8 @@ namespace gg
 	public:
 		virtual ~Texture();
 		explicit Texture(std::string const& textureRelativePath);
+		Texture(Texture const&) = delete;
+		Texture& operator=(Texture const&) = delete;
 		std::expected<void, Error> Initialize();
 		uint64_t SizeBytes() const;
 

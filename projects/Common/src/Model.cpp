@@ -97,22 +97,22 @@ namespace
 		return mesh;
 	}
 
-	std::expected<void, gg::Error> loadMeshes(aiScene const& scene, gg::Model& model)
+	std::expected<void, gg::Error> loadMeshes(aiScene const& scene, std::vector<gg::Mesh>& meshes)
 	{
 		for (unsigned int i{ 0 }; i < scene.mNumMeshes; ++i)
 		{
 			auto mesh{ readMesh(scene.mMeshes[i]) };
 			if (!mesh)
 				return std::unexpected(mesh.error());
-			model.meshes.emplace_back(std::move(*mesh));
+			meshes.emplace_back(std::move(*mesh));
 		}
 		return {};
 	}
 
-	void loadTextureNames(aiScene const& scene, gg::Model& model)
+	void loadTextureNames(aiScene const& scene, std::vector<std::string>& textureNames)
 	{
 		for (uint32_t i = 0; i < scene.mNumTextures; ++i)
-			model.textureNames.emplace_back(scene.mTextures[i]->mFilename.C_Str());
+			textureNames.emplace_back(scene.mTextures[i]->mFilename.C_Str());
 	}
 }
 
@@ -158,11 +158,17 @@ namespace gg
 		if (!sceneResult)
 			return std::unexpected(sceneResult.error());
 		aiScene const* scene{ *sceneResult };
-		name = scene->mMeshes[0]->mName.C_Str();
-		auto meshesResult{ loadMeshes(*scene, *this) };
+		std::string loadedName{ scene->mMeshes[0]->mName.C_Str() };
+		std::vector<Mesh> loadedMeshes{};
+		auto meshesResult{ loadMeshes(*scene, loadedMeshes) };
 		if (!meshesResult)
 			return std::unexpected(meshesResult.error());
-		loadTextureNames(*scene, *this);
+		std::vector<std::string> loadedTextureNames{};
+		loadTextureNames(*scene, loadedTextureNames);
+
+		name.swap(loadedName);
+		meshes.swap(loadedMeshes);
+		textureNames.swap(loadedTextureNames);
 
 #ifdef NDEBUG
 		std::string{}.swap(modelAbsolutePath);
