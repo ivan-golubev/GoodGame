@@ -24,25 +24,26 @@ namespace gg
 		{ /* create a descriptor pool for ImGUI data */
 			VkDescriptorPoolSize pool_sizes[] =
 			{
-				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+				{ .type = VK_DESCRIPTOR_TYPE_SAMPLER, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, .descriptorCount = 1000 },
+				{ .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, .descriptorCount = 1000 }
 			};
 
-			VkDescriptorPoolCreateInfo poolInfo = {};
-			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-			poolInfo.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
-			poolInfo.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
-			poolInfo.pPoolSizes = pool_sizes;
+			VkDescriptorPoolCreateInfo poolInfo{
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+				.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+				.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes),
+				.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes),
+				.pPoolSizes = pool_sizes,
+			};
 
 			if (VK_SUCCESS != vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool))
 				throw VulkanInitException("failed to create descriptor pool!");
@@ -51,22 +52,23 @@ namespace gg
 		ImGui_ImplSDL2_InitForVulkan(info.windowHandleSDL);
 
 		{
-			ImGui_ImplVulkan_InitInfo init_info = {};
-			init_info.Instance = info.instance;
-			init_info.PhysicalDevice = info.physicalDevice;
-			init_info.Device = device;
-			init_info.QueueFamily = info.graphicsQueueFamily;
-			init_info.Queue = info.graphicsQueue;
-			init_info.PipelineCache = VK_NULL_HANDLE;
-			init_info.DescriptorPool = descriptorPool;
-			init_info.Subpass = 0;
-			init_info.MinImageCount = maxFramesInFlight;
-			init_info.ImageCount = maxFramesInFlight;
-			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-			init_info.Allocator = VK_NULL_HANDLE;
-			init_info.CheckVkResultFn = [](VkResult err) {
+			ImGui_ImplVulkan_InitInfo init_info{
+				.Instance = info.instance,
+				.PhysicalDevice = info.physicalDevice,
+				.Device = device,
+				.QueueFamily = info.graphicsQueueFamily,
+				.Queue = info.graphicsQueue,
+				.PipelineCache = VK_NULL_HANDLE,
+				.DescriptorPool = descriptorPool,
+				.Subpass = 0,
+				.MinImageCount = maxFramesInFlight,
+				.ImageCount = maxFramesInFlight,
+				.MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+				.Allocator = VK_NULL_HANDLE,
+				.CheckVkResultFn = [](VkResult err) {
 				if (VK_SUCCESS != err)
 					throw VulkanInitException("failed to initialize imGUI!");
+				},
 			};
 
 			ImGui_ImplVulkan_Init(&init_info, info.renderPass);

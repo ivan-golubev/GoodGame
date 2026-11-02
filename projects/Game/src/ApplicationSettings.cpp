@@ -19,7 +19,13 @@ namespace gg
 	{
 		std::shared_ptr<TimeManager> timeManager{ std::make_shared<TimeManager>() };
 		std::shared_ptr<InputManager> inputManager{ std::make_shared<InputManager>() };
-		RendererSettings const rendererSettings{ s.width, s.height, s.windowHandle, timeManager, inputManager };
+		RendererSettings const rendererSettings{
+			.width = s.width,
+			.height = s.height,
+			.windowHandle = s.windowHandle,
+			.timeManager = timeManager,
+			.inputManager = inputManager,
+		};
 
 		if (s.rendererType == RendererType::Vulkan)
 			Application::Init(std::make_unique<RendererVulkan>(rendererSettings), timeManager, inputManager);

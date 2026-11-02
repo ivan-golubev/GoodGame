@@ -16,10 +16,11 @@ namespace
 
 	VkShaderModule createShaderModule(VkDevice device, std::string const& shaderBlob)
 	{
-		VkShaderModuleCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = shaderBlob.size();
-		createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderBlob.data());
+		VkShaderModuleCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+			.codeSize = shaderBlob.size(),
+			.pCode = reinterpret_cast<const uint32_t*>(shaderBlob.data()),
+		};
 		VkShaderModule shaderModule;
 		if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 		{

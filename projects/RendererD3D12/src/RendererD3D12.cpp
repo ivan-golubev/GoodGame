@@ -99,23 +99,25 @@ namespace gg
 		}
 
 		{ /* Create a command queue */
-			D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-			queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-			queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+			D3D12_COMMAND_QUEUE_DESC queueDesc{
+				.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+				.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
+			};
 
 			ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)));
 			SetName(commandQueue.Get(), L"MainCommandQueue");
 		}
 
 		{ /* Create a swap chain */
-			DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-			swapChainDesc.BufferCount = maxFramesInFlight;
-			swapChainDesc.Width = width;
-			swapChainDesc.Height = height;
-			swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-			swapChainDesc.SampleDesc.Count = 1;
+			DXGI_SWAP_CHAIN_DESC1 swapChainDesc{
+				.Width = width,
+				.Height = height,
+				.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+				.SampleDesc = { .Count = 1, .Quality = 0 },
+				.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+				.BufferCount = maxFramesInFlight,
+				.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+			};
 
 			ComPtr<IDXGISwapChain1> swapChain1;
 			ThrowIfFailed(factory->CreateSwapChainForHwnd(
@@ -133,10 +135,11 @@ namespace gg
 		ThrowIfFailed(factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER));
 
 		{ /* Describe and create a render target view (RTV) descriptor heap. */
-			D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-			rtvHeapDesc.NumDescriptors = maxFramesInFlight;
-			rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-			rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+			D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{
+				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+				.NumDescriptors = maxFramesInFlight,
+				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+			};
 			ThrowIfFailed(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&renderTargetViewHeap)));
 			SetName(renderTargetViewHeap.Get(), L"RTV_DescriptorHeap");
 			rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -166,10 +169,11 @@ namespace gg
 		}
 
 		{ /* Describe and create a depth stencil view (DSV) descriptor heap. */
-			D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-			dsvHeapDesc.NumDescriptors = 1;
-			dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-			dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+			D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{
+				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+				.NumDescriptors = 1,
+				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+			};
 			ThrowIfFailed(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&depthStencilHeap)));
 
 			dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -180,8 +184,9 @@ namespace gg
 		{ /* create the root signature */
 			/* Check for the highest supported root signature */
 			// TODO: move the root signature to HLSL and precompile it
-			D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData{};
-			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+			D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData{
+				.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1,
+			};
 			if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
 			{
 				featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
@@ -201,20 +206,21 @@ namespace gg
 			rootParameters[1].InitAsConstants(sizeof(DirectionalLight) / sizeof(float), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 			rootParameters[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
-			D3D12_STATIC_SAMPLER_DESC sampler{};
-			sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-			sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-			sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-			sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-			sampler.MipLODBias = 0;
-			sampler.MaxAnisotropy = 0;
-			sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-			sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-			sampler.MinLOD = 0.0f;
-			sampler.MaxLOD = D3D12_FLOAT32_MAX;
-			sampler.ShaderRegister = 0;
-			sampler.RegisterSpace = 0;
-			sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+			D3D12_STATIC_SAMPLER_DESC sampler{
+				.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+				.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+				.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+				.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+				.MipLODBias = 0,
+				.MaxAnisotropy = 0,
+				.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
+				.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
+				.MinLOD = 0.0f,
+				.MaxLOD = D3D12_FLOAT32_MAX,
+				.ShaderRegister = 0,
+				.RegisterSpace = 0,
+				.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL,
+			};
 
 			CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
 			rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, rootSignatureFlags);
@@ -251,31 +257,37 @@ namespace gg
 
 		/* Specify the input layout */
 		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
-			{"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{"NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+			{ .SemanticName = "POSITION", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32A32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
+			{ .SemanticName = "NORMAL", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32A32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
+			{ .SemanticName = "TEXCOORD", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 }
 		};
 
-		D3D12_RT_FORMAT_ARRAY rtvFormats{};
-		rtvFormats.NumRenderTargets = 1;
-		rtvFormats.RTFormats[0] = rtvFormat;
+		D3D12_RT_FORMAT_ARRAY rtvFormats{
+			.RTFormats = { rtvFormat },
+			.NumRenderTargets = 1,
+		};
 
 		CD3DX12_BLEND_DESC blendDesc{ D3D12_DEFAULT };
 		CD3DX12_RASTERIZER_DESC rasterizerDesc{ D3D12_DEFAULT };
 
-		PipelineStateStream pipelineStateStream{};
-		pipelineStateStream.pRootSignature = rootSignature.Get();
-		pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
-		pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		pipelineStateStream.BlendState = blendDesc;
-		pipelineStateStream.RasterizerState = rasterizerDesc;
-		pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get());
-		pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get());
-		pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-		pipelineStateStream.RTVFormats = rtvFormats;
+		PipelineStateStream pipelineStateStream{
+			.pRootSignature = rootSignature.Get(),
+			.InputLayout = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(D3D12_INPUT_LAYOUT_DESC{
+				.pInputElementDescs = inputLayout,
+				.NumElements = _countof(inputLayout),
+			}),
+			.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+			.BlendState = blendDesc,
+			.RasterizerState = rasterizerDesc,
+			.VS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get()),
+			.PS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get()),
+			.DSVFormat = DXGI_FORMAT_D32_FLOAT,
+			.RTVFormats = rtvFormats,
+		};
 
 		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc{
-			sizeof(PipelineStateStream), &pipelineStateStream
+			.SizeInBytes = sizeof(PipelineStateStream),
+			.pPipelineStateSubobjectStream = &pipelineStateStream,
 		};
 		ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&model->pipelineState)));
 		std::string const psoName{ std::format("PSO_{}", model->name) };
@@ -307,16 +319,18 @@ namespace gg
 		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
 		// Describe and create a Texture2D.
-		D3D12_RESOURCE_DESC textureDesc{};
-		textureDesc.MipLevels = 1;
-		textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		textureDesc.Width = texture->width;
-		textureDesc.Height = texture->height;
-		textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-		textureDesc.DepthOrArraySize = 1;
-		textureDesc.SampleDesc.Count = 1;
-		textureDesc.SampleDesc.Quality = 0;
-		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		D3D12_RESOURCE_DESC textureDesc{
+			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Alignment = 0,
+			.Width = texture->width,
+			.Height = texture->height,
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+			.SampleDesc = { .Count = 1, .Quality = 0 },
+			.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+			.Flags = D3D12_RESOURCE_FLAG_NONE,
+		};
 
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
 		ThrowIfFailed(device->CreateCommittedResource(
@@ -342,10 +356,13 @@ namespace gg
 
 		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the Texture2D. */
-		D3D12_SUBRESOURCE_DATA textureData{};
-		textureData.pData = texture->pixels;
-		textureData.RowPitch = texture->width * texture->channels;
-		textureData.SlicePitch = textureData.RowPitch * texture->height;
+		LONG_PTR const textureRowPitch = texture->width * texture->channels;
+		LONG_PTR const textureSlicePitch = textureRowPitch * texture->height;
+		D3D12_SUBRESOURCE_DATA textureData{
+			.pData = texture->pixels,
+			.RowPitch = textureRowPitch,
+			.SlicePitch = textureSlicePitch,
+		};
 
 		UpdateSubresources(commandList.Get(), texture->texture_GPU_Resource.Get(), texture->texture_CPU_Resource.Get(), 0, 0, 1, &textureData);
 
@@ -353,11 +370,12 @@ namespace gg
 		commandList->ResourceBarrier(1, &barrier);
 		{
 			/* Describe and create a SRV for the texture. */
-			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			srvDesc.Format = textureDesc.Format;
-			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-			srvDesc.Texture2D.MipLevels = 1;
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{
+				.Format = textureDesc.Format,
+				.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+				.Texture2D = { .MostDetailedMip = 0, .MipLevels = 1, .PlaneSlice = 0, .ResourceMinLODClamp = 0.0f },
+			};
 			device->CreateShaderResourceView(texture->texture_GPU_Resource.Get(), &srvDesc, srvHeap->GetCPUDescriptorHandleForHeapStart());
 		}
 
@@ -379,10 +397,11 @@ namespace gg
 		CreateVertexBuffer(model);
 
 		{ /* Create  a shader resource view (SRV) heap for textures */
-			D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-			srvHeapDesc.NumDescriptors = 1;
-			srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+			D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{
+				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+				.NumDescriptors = 1,
+				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+			};
 			ThrowIfFailed(device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&model->srvHeap)));
 
 			std::wstring const resourceName{ model->name.begin(), model->name.end() };
@@ -447,9 +466,10 @@ namespace gg
 	{
 		depthBuffer.Reset();
 
-		D3D12_CLEAR_VALUE optimizedClearValue{};
-		optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-		optimizedClearValue.DepthStencil = { 1.0f, 0 };
+		D3D12_CLEAR_VALUE optimizedClearValue{
+			.Format = DXGI_FORMAT_D32_FLOAT,
+			.DepthStencil = { .Depth = 1.0f, .Stencil = 0 },
+		};
 
 		uint32_t const width{ std::max(this->width, 0U) };
 		uint32_t const height{ std::max(this->height, 0U) };
@@ -470,10 +490,12 @@ namespace gg
 		SetName(depthBuffer.Get(), std::format(L"{}_GPU", L"DepthStencilTexture"));
 
 		/* create the DSV */
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{
+			.Format = DXGI_FORMAT_D32_FLOAT,
+			.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
+			.Flags = D3D12_DSV_FLAG_NONE,
+			.Texture2D = { .MipSlice = 0 },
+		};
 		dsvHandle = { depthStencilHeap->GetCPUDescriptorHandleForHeapStart() };
 		device->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHandle);
 	}
@@ -514,9 +536,11 @@ namespace gg
 		SetName(gpuResource.Get(), std::format(L"{}_GPU", resourceName));
 
 		/* transfer the data */
-		D3D12_SUBRESOURCE_DATA subresourceData{};
-		subresourceData.pData = data;
-		subresourceData.RowPitch = subresourceData.SlicePitch = sizeBytes;
+		D3D12_SUBRESOURCE_DATA subresourceData{
+			.pData = data,
+			.RowPitch = static_cast<LONG_PTR>(sizeBytes),
+			.SlicePitch = static_cast<LONG_PTR>(sizeBytes),
+		};
 
 		UpdateSubresources(
 			commandList.Get(),
@@ -631,8 +655,8 @@ namespace gg
 				commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 				ModelViewProjectionCB mvpMatrices{
-					CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					camera->GetPositionVec4()
+					.MVP = CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
+					.ViewPosition = camera->GetPositionVec4(),
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjectionCB) / sizeof(float), &mvpMatrices, 0);
 				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);

@@ -23,10 +23,11 @@ namespace gg
 		ImGui::StyleColorsDark();
 
 		{ /* Memory for Imgui's fonts */
-			D3D12_DESCRIPTOR_HEAP_DESC desc{};
-			desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			desc.NumDescriptors = 1;
-			desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+			D3D12_DESCRIPTOR_HEAP_DESC desc{
+				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+				.NumDescriptors = 1,
+				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+			};
 			ThrowIfFailed(
 				device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap))
 			);

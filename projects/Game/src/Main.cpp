@@ -93,7 +93,12 @@ namespace
 
 		try
 		{
-			ApplicationSettings const appSettings{ width, height, window, rendererType };
+			ApplicationSettings const appSettings{
+				.width = width,
+				.height = height,
+				.windowHandle = window,
+				.rendererType = rendererType,
+			};
 			std::shared_ptr<Application> app{ MakeApplication(appSettings) };
 			DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
