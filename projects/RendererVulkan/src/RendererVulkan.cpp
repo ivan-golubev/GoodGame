@@ -985,46 +985,57 @@ namespace gg
 		currentFrame = (currentFrame + 1) % maxFramesInFlight;
 	}
 
-	std::shared_ptr<ShaderProgram> RendererVulkan::LoadShader(std::string const& shaderName)
+	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererVulkan::LoadShader(std::string const& shaderName)
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
 		std::unique_ptr<ShaderProgramVulkan> shader{ new ShaderProgramVulkan(device) };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
-	void RendererVulkan::LoadTextures(std::shared_ptr<ModelVulkan> model)
+	std::expected<void, Error> RendererVulkan::LoadTextures(std::shared_ptr<ModelVulkan> model)
 	{
 		for (std::string const& textureName : model->textureNames)
-			model->textures.emplace_back(LoadTexture(textureName));
+		{
+			auto textureResult{ LoadTexture(textureName) };
+			if (!textureResult)
+				return std::unexpected(textureResult.error());
+			model->textures.emplace_back(std::move(*textureResult));
+		}
+		return {};
 	}
 
-	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& name)
+	std::expected<std::shared_ptr<Texture>, Error> RendererVulkan::LoadTexture(std::string const& name)
 	{
 		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
-		std::unique_ptr<TextureVulkan> texture{ new TextureVulkan(device, textureRelativePath) };
+		auto texture{ std::make_unique<TextureVulkan>(device, textureRelativePath) };
 		if (auto const result{ texture->Initialize() }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
 		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
-	void RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
+	std::expected<void, Error> RendererVulkan::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
 	{
-		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
+		auto shaderResult{ LoadShader(shaderName) };
+		if (!shaderResult)
+			return std::unexpected(shaderResult.error());
+		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
 		if (auto const result{ model->Initialize() }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
 
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline(model);
-		LoadTextures(model);
+		if (auto const result{ LoadTextures(model) }; !result)
+			return std::unexpected(result.error());
 
 		CreateUniformBuffers(model);
 		CreateDescriptorSets(model);
 
 		models.push_back(model);
+		return {};
 	}
 
 	void RendererVulkan::CreateVertexBuffer(std::shared_ptr<ModelVulkan> inputModel)

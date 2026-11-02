@@ -52,8 +52,8 @@ namespace gg
 
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
-		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
-		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
+		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
+		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 	private:
 		void PopulateCommandList();

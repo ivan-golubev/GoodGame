@@ -2,6 +2,7 @@ module;
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
@@ -49,8 +50,8 @@ namespace gg
 
 		void OnWindowResized(uint32_t width, uint32_t height) override;
 		void Render(nanoseconds deltaTime) override;
-		std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) override;
-		void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
+		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
+		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 		VkDevice GetDevice() const;
 
@@ -97,11 +98,11 @@ namespace gg
 
 		void CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
 		void CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
-		void LoadTextures(std::shared_ptr<ModelVulkan>);
+		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelVulkan>);
 		void CreateUniformBuffers(std::shared_ptr<ModelVulkan>);
 		void CreateDescriptorSets(std::shared_ptr<ModelVulkan>);
 
-		std::shared_ptr<Texture> LoadTexture(std::string const& name);
+		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 
 		void CreateFrameBuffers();
 

@@ -1,6 +1,7 @@
 module;
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
@@ -14,6 +15,7 @@ import Input;
 import ShaderProgram;
 import Texture;
 import Camera;
+export import ErrorHandling;
 import SettingsRenderer;
 
 using std::chrono::nanoseconds;
@@ -47,8 +49,8 @@ export namespace gg
 
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(nanoseconds deltaTime) = 0;
-		virtual std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) = 0;
-		virtual void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) = 0;
+		virtual std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) = 0;
+		virtual std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) = 0;
 	};
 
 	glm::mat4x4 CalculateMVP(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);

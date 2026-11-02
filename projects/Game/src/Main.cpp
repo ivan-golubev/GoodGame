@@ -102,13 +102,27 @@ namespace
 			DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
+			auto handleAssetLoadError = [window](Error const& error)
+			{
+				DebugLog(DebugLevel::Error, error.message);
+				Application::Destroy();
+				SDL_DestroyWindow(window);
+			};
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };
-				renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position);
+				if (auto const result{ renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position) }; !result)
+				{
+					handleAssetLoadError(result.error());
+					return EXIT_FAILURE;
+				}
 			}
 			{
 				glm::vec3 position{ 2.f, 0.f, 0.f };
-				renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position);
+				if (auto const result{ renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position) }; !result)
+				{
+					handleAssetLoadError(result.error());
+					return EXIT_FAILURE;
+				}
 			}
 
 			uint32_t status = MainLoop(app, rendererType);

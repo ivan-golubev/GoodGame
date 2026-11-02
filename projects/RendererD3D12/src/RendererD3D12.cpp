@@ -297,13 +297,13 @@ namespace gg
 		SetName(model->pipelineState.Get(), psoNameW);
 	}
 
-	std::shared_ptr<ShaderProgram> RendererD3D12::LoadShader(std::string const& shaderName)
+	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		std::unique_ptr<ShaderProgramD3D12> shader{ new ShaderProgramD3D12() };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
@@ -418,12 +418,15 @@ namespace gg
 		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
-	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
+	std::expected<void, Error> RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
 	{
-		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
+		auto shaderResult{ LoadShader(shaderName) };
+		if (!shaderResult)
+			return std::unexpected(shaderResult.error());
+		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
 		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
 		if (auto const result{ model->Initialize() }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
 
 		CreateGraphicsPipeline(model);
 		CreateVertexBuffer(model);
@@ -440,9 +443,10 @@ namespace gg
 			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_{}", resourceName));
 		}
 		if (auto const result{ LoadTextures(model) }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
 
 		models.push_back(model);
+		return {};
 	}
 
 	void RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> model)
