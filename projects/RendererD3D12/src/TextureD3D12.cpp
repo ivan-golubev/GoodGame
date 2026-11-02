@@ -15,10 +15,11 @@ namespace gg
 	{
 	}
 
-	void TextureD3D12::Initialize()
+	std::expected<void, Error> TextureD3D12::Initialize()
 	{
 		if (auto const result{ Texture::Initialize() }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
+		return {};
 	}
 
 } // namespace gg

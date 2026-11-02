@@ -316,9 +316,10 @@ namespace gg
 	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
 	{
 		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
-		TextureD3D12* texture = new TextureD3D12(textureRelativePath);
+		std::unique_ptr<TextureD3D12> texture{ std::make_unique<TextureD3D12>(textureRelativePath) };
 		std::wstring const textureName{ texture->GetName() };
-		texture->Initialize();
+		if (auto const result{ texture->Initialize() }; !result)
+			throw AssetLoadException(result.error().message);
 
 		/* uploading the texture  */
 		ThrowIfFailed(commandAllocator->Reset());
@@ -391,7 +392,7 @@ namespace gg
 
 		WaitForPreviousFrame();
 
-		return std::shared_ptr<Texture>{ texture };
+		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
 	void RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)

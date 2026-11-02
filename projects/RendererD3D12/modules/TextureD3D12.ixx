@@ -5,6 +5,7 @@ module;
 #include <wrl.h>
 export module TextureD3D12;
 
+export import ErrorHandling;
 import Texture;
 
 using Microsoft::WRL::ComPtr;
@@ -15,7 +16,7 @@ export namespace gg
 	{
 	public:
 		explicit TextureD3D12(std::string const& textureRelativePath);
-		void Initialize();
+		std::expected<void, Error> Initialize();
 
 	private:
 		ComPtr<ID3D12Resource> texture_CPU_Resource;
