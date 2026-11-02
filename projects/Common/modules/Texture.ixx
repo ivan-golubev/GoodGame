@@ -7,17 +7,18 @@ namespace gg
 	export class Texture
 	{
 	public:
-		Texture(std::string const& relativePath);
 		virtual ~Texture();
+		explicit Texture(std::string const& textureRelativePath);
+		void Initialize();
 		uint64_t SizeBytes() const;
 
 		std::wstring GetName();
 
-		std::string const absPath;
-		uint32_t width;
-		uint32_t height;
-		uint32_t channels;
-		unsigned char* pixels;
+		std::string textureAbsolutePath;
+		uint32_t width{};
+		uint32_t height{};
+		uint32_t channels{};
+		unsigned char* pixels{};
 
 	};
 } // namespace gg

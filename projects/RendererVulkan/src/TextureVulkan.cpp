@@ -1,5 +1,6 @@
 module;
 #include <string>
+#include <utility>
 #include <vulkan/vulkan.h>
 module TextureVulkan;
 
@@ -10,10 +11,15 @@ import RendererVulkan;
 
 namespace gg
 {
-	TextureVulkan::TextureVulkan(std::string const& textureRelativePath, VkDevice d)
-		: Texture(textureRelativePath)
+	TextureVulkan::TextureVulkan(VkDevice d, std::string const& textureRelativePath)
+		: Texture{ textureRelativePath }
 		, device{ d }
 	{
+	}
+
+	void TextureVulkan::Initialize()
+	{
+		Texture::Initialize();
 		CreateTextureImage();
 		CreateTextureImageView();
 		textureSampler = RendererVulkan::Get()->CreateTextureSampler();
@@ -21,10 +27,16 @@ namespace gg
 
 	TextureVulkan::~TextureVulkan()
 	{
-		vkDestroySampler(device, textureSampler, nullptr);
-		vkDestroyImageView(device, textureImageView, nullptr);
-		vkDestroyImage(device, textureImage, nullptr);
-		vkFreeMemory(device, textureImageMemory, nullptr);
+		if (!device)
+			return;
+		if (textureSampler)
+			vkDestroySampler(device, textureSampler, nullptr);
+		if (textureImageView)
+			vkDestroyImageView(device, textureImageView, nullptr);
+		if (textureImage)
+			vkDestroyImage(device, textureImage, nullptr);
+		if (textureImageMemory)
+			vkFreeMemory(device, textureImageMemory, nullptr);
 	}
 
 

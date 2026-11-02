@@ -23,13 +23,16 @@ export namespace gg
 	class DebugUI_Vulkan
 	{
 	public:
-		DebugUI_Vulkan(DebugUI_VulkanCreateInfo const&);
 		~DebugUI_Vulkan();
+		void Initialize(DebugUI_VulkanCreateInfo const&);
 		void Render(VkCommandBuffer);
 
 	private:
-		VkDevice device;
-		VkDescriptorPool descriptorPool;
+		VkDevice device{};
+		VkDescriptorPool descriptorPool{};
+		bool contextCreated{};
+		bool sdlBackendInitialized{};
+		bool vulkanBackendInitialized{};
 	};
 
 } //namespace gg

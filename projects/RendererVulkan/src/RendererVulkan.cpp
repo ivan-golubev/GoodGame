@@ -28,7 +28,6 @@ import ErrorHandlingVulkan;
 import GlobalSettings;
 import Input;
 import Lighting;
-import ModelLoader;
 import ModelVulkan;
 import ShaderProgramVulkan;
 import Texture;
@@ -88,13 +87,13 @@ namespace
 
 namespace gg
 {
-	RendererVulkan::RendererVulkan(RendererSettings const& rs)
-		: width{ rs.width }
-		, height{ rs.height }
-		, windowHandleSDL{ rs.windowHandle }
-		, timeManager{ rs.timeManager }
-		, camera{ std::make_shared<Camera>(rs.inputManager) }
+	void RendererVulkan::Initialize(RendererSettings const& rs)
 	{
+		width = rs.width;
+		height = rs.height;
+		windowHandleSDL = rs.windowHandle;
+		timeManager = rs.timeManager;
+		camera = std::make_shared<Camera>(rs.inputManager);
 		uint32_t extension_count;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extension_count, nullptr))
 			throw VulkanInitException("Could not get the number of required instance extensions from SDL.");
@@ -142,7 +141,8 @@ namespace gg
 				.renderer = this,
 			};
 
-			debugUI = std::make_unique<DebugUI_Vulkan>(debugUI_info);
+			debugUI = std::make_unique<DebugUI_Vulkan>();
+			debugUI->Initialize(debugUI_info);
 		}
 	}
 
@@ -816,17 +816,31 @@ namespace gg
 
 	void RendererVulkan::CleanupSwapChain()
 	{
+		if (!device)
+			return;
 		for (auto framebuffer : frameBuffers)
-			vkDestroyFramebuffer(device, framebuffer, nullptr);
+			if (framebuffer) vkDestroyFramebuffer(device, framebuffer, nullptr);
+		frameBuffers.clear();
 		for (auto imageView : swapChainImageViews)
-			vkDestroyImageView(device, imageView, nullptr);
+			if (imageView) vkDestroyImageView(device, imageView, nullptr);
+		swapChainImageViews.clear();
 		for (auto model : models)
 		{
-			vkDestroyPipeline(device, model->graphicsPipeline, nullptr);
-			vkDestroyPipelineLayout(device, model->pipelineLayout, nullptr);
+			if (model->graphicsPipeline)
+			{
+				vkDestroyPipeline(device, model->graphicsPipeline, nullptr);
+				model->graphicsPipeline = VK_NULL_HANDLE;
+			}
+			if (model->pipelineLayout)
+			{
+				vkDestroyPipelineLayout(device, model->pipelineLayout, nullptr);
+				model->pipelineLayout = VK_NULL_HANDLE;
+			}
 		}
-		vkDestroyRenderPass(device, renderPass, nullptr);
-		vkDestroySwapchainKHR(device, swapChain, nullptr);
+		if (renderPass) vkDestroyRenderPass(device, renderPass, nullptr);
+		renderPass = VK_NULL_HANDLE;
+		if (swapChain) vkDestroySwapchainKHR(device, swapChain, nullptr);
+		swapChain = VK_NULL_HANDLE;
 	}
 
 	void RendererVulkan::RecreateSwapChain()
@@ -889,34 +903,39 @@ namespace gg
 
 	RendererVulkan::~RendererVulkan()
 	{
-		/* Ensure that the GPU is no longer referencing resources that are about to be
-		 cleaned up by the destructor. */
-		vkDeviceWaitIdle(device);
-
-		CleanupSwapChain();
-
-		for (size_t i = 0; i < maxFramesInFlight; ++i)
+		if (device)
 		{
-			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-			vkDestroyFence(device, inFlightFences[i], nullptr);
+			/* Ensure that the GPU is no longer referencing resources that are about to be
+			 cleaned up by the destructor. */
+			vkDeviceWaitIdle(device);
+
+			CleanupSwapChain();
+
+			for (size_t i = 0; i < maxFramesInFlight; ++i)
+			{
+				if (imageAvailableSemaphores[i]) vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+				if (renderFinishedSemaphores[i]) vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+				if (inFlightFences[i]) vkDestroyFence(device, inFlightFences[i], nullptr);
+			}
+			if (commandPool) vkDestroyCommandPool(device, commandPool, nullptr);
 		}
-		vkDestroyCommandPool(device, commandPool, nullptr);
 
 		/* destroys the associated shaders and textures */
 		models.clear();
 
 		debugUI.reset();
+		if (device && descriptorPool) vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+		if (device && descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
+		if (device) vkDestroyDevice(device, nullptr);
+		if (instance) vkDestroyInstance(instance, nullptr);
 
-		vkDestroySurfaceKHR(instance, surface, nullptr);
-		vkDestroyDevice(device, nullptr);
-		vkDestroyInstance(instance, nullptr);
-
-		SDL_DestroyWindow(windowHandleSDL);
-		SDL_Quit();
+		if (windowHandleSDL)
+		{
+			SDL_DestroyWindow(windowHandleSDL);
+			SDL_Quit();
+		}
 	}
 
 	void RendererVulkan::OnWindowResized(uint32_t width, uint32_t height)
@@ -965,7 +984,8 @@ namespace gg
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
-		ShaderProgram* shader = new ShaderProgramVulkan(vertexShaderRelativePath, fragmentShaderRelativePath, device);
+		ShaderProgramVulkan* shader = new ShaderProgramVulkan(device);
+		shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath);
 		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
@@ -977,8 +997,9 @@ namespace gg
 
 	std::shared_ptr<Texture> RendererVulkan::LoadTexture(std::string const& name)
 	{
-		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
-		TextureVulkan* texture = new TextureVulkan(textureAbsolutePath, device);
+		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
+		TextureVulkan* texture = new TextureVulkan(device, textureRelativePath);
+		texture->Initialize();
 		return std::shared_ptr<Texture>(texture);
 	}
 
@@ -986,6 +1007,7 @@ namespace gg
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
+		model->Initialize();
 
 		CreateVertexBuffer(model);
 		CreateGraphicsPipeline(model);

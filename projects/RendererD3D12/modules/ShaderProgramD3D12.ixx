@@ -29,7 +29,7 @@ export namespace gg
 		/* Only D3D12 Renderer can create ShaderProgramD3D12 */
 		friend class RendererD3D12;
 		ShaderProgramD3D12() = default;
-		ShaderProgramD3D12(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
+		void Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
 		ComPtr<ID3DBlob> vertexShaderBlob;
 		ComPtr<ID3DBlob> fragmentShaderBlob;

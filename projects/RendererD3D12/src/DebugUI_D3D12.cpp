@@ -16,10 +16,11 @@ using Microsoft::WRL::ComPtr;
 
 namespace gg
 {
-	DebugUI_D3D12::DebugUI_D3D12(ComPtr<ID3D12Device4> device, SDL_Window* windowHandleSDL)
+	void DebugUI_D3D12::Initialize(ComPtr<ID3D12Device4> device, SDL_Window* windowHandleSDL)
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
+		contextCreated = true;
 		ImGui::StyleColorsDark();
 
 		{ /* Memory for Imgui's fonts */
@@ -33,8 +34,8 @@ namespace gg
 			);
 		}
 
-		ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
-		ImGui_ImplDX12_Init(device.Get(), maxFramesInFlight, rtvFormat,
+		sdlBackendInitialized = ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
+		dx12BackendInitialized = ImGui_ImplDX12_Init(device.Get(), maxFramesInFlight, rtvFormat,
 			imguiSrvDescHeap.Get(),
 			imguiSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
 			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
@@ -42,8 +43,12 @@ namespace gg
 
 	DebugUI_D3D12::~DebugUI_D3D12()
 	{
-		ImGui_ImplDX12_Shutdown();
-		ImGui_ImplSDL2_Shutdown();
+		if (dx12BackendInitialized)
+			ImGui_ImplDX12_Shutdown();
+		if (sdlBackendInitialized)
+			ImGui_ImplSDL2_Shutdown();
+		if (contextCreated)
+			ImGui::DestroyContext();
 	}
 
 	void DebugUI_D3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList)

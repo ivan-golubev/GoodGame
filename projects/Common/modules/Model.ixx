@@ -43,12 +43,14 @@ export namespace gg
 		glm::mat4x4 translation{};
 
 		void SetPosition(glm::vec3& position);
+		void Initialize();
 
 		std::shared_ptr<ShaderProgram> shaderProgram;
 		std::vector<std::string> textureNames;
 		std::vector<std::shared_ptr<Texture>> textures;
 		std::vector<Mesh> meshes;
 		std::string name;
+		std::string modelAbsolutePath;
 	};
 
 } // namespace gg

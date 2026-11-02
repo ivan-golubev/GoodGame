@@ -50,15 +50,18 @@ namespace
 
 namespace gg
 {
-	ShaderProgramVulkan::ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice d)
-		: vertexShaderBlob{ readFile(std::filesystem::absolute(vertexShaderRelativePath).generic_string()) }
-		, fragmentShaderBlob{ readFile(std::filesystem::absolute(fragmentShaderRelativePath).generic_string()) }
-		, device{ d }
+	ShaderProgramVulkan::ShaderProgramVulkan(VkDevice d)
+		: device{ d }
 	{
+	}
+
+	void ShaderProgramVulkan::Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	{
+		vertexShaderBlob = readFile(std::filesystem::absolute(vertexShaderRelativePath).generic_string());
+		fragmentShaderBlob = readFile(std::filesystem::absolute(fragmentShaderRelativePath).generic_string());
 		BreakIfFalse(vertexShaderBlob.size() != 0);
 		BreakIfFalse(fragmentShaderBlob.size() != 0);
 
-		VkDevice device{ RendererVulkan::Get()->GetDevice() };
 		vertexShader = createShaderModule(device, vertexShaderBlob);
 		fragmentShader = createShaderModule(device, fragmentShaderBlob);
 
@@ -68,9 +71,9 @@ namespace gg
 
 	ShaderProgramVulkan::~ShaderProgramVulkan()
 	{
-		if (vertexShader)
+		if (device && vertexShader)
 			vkDestroyShaderModule(device, vertexShader, nullptr);
-		if (fragmentShader)
+		if (device && fragmentShader)
 			vkDestroyShaderModule(device, fragmentShader, nullptr);
 	}
 

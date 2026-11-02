@@ -25,13 +25,13 @@ export namespace gg
 	private:
 		/* Only Vulkan Renderer can create ShaderProgramVulkan */
 		friend class RendererVulkan;
-		ShaderProgramVulkan() = default;
-		ShaderProgramVulkan(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath, VkDevice);
+		explicit ShaderProgramVulkan(VkDevice);
+		void Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
 		std::string vertexShaderBlob;
 		std::string fragmentShaderBlob;
 
-		VkDevice device;
+		VkDevice device{};
 		VkShaderModule vertexShader{ nullptr };
 		VkShaderModule fragmentShader{ nullptr };
 	};

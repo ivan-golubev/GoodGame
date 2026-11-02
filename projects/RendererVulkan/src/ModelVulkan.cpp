@@ -3,6 +3,7 @@ module;
 #include <glm/vec3.hpp>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vulkan/vulkan.h>
 module ModelVulkan;
 
@@ -22,16 +23,25 @@ namespace gg
 
 	ModelVulkan::~ModelVulkan()
 	{
-		vkDestroyBuffer(device, VB, nullptr);
-		vkFreeMemory(device, vertexBufferMemory, nullptr);
+		if (!device)
+			return;
+
+		if (VB)
+			vkDestroyBuffer(device, VB, nullptr);
+		if (vertexBufferMemory)
+			vkFreeMemory(device, vertexBufferMemory, nullptr);
 
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			vkDestroyBuffer(device, uniformBuffersMVP[i], nullptr);
-			vkFreeMemory(device, uniformBuffersMemoryMVP[i], nullptr);
+			if (uniformBuffersMVP[i])
+				vkDestroyBuffer(device, uniformBuffersMVP[i], nullptr);
+			if (uniformBuffersMemoryMVP[i])
+				vkFreeMemory(device, uniformBuffersMemoryMVP[i], nullptr);
 
-			vkDestroyBuffer(device, uniformBuffersDirLight[i], nullptr);
-			vkFreeMemory(device, uniformBuffersMemoryDirLight[i], nullptr);
+			if (uniformBuffersDirLight[i])
+				vkDestroyBuffer(device, uniformBuffersDirLight[i], nullptr);
+			if (uniformBuffersMemoryDirLight[i])
+				vkFreeMemory(device, uniformBuffersMemoryDirLight[i], nullptr);
 		}
 
 	}

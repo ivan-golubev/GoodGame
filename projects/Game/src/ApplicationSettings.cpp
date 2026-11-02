@@ -1,6 +1,7 @@
 module;
 #include <cstdint>
 #include <memory>
+#include <utility>
 module ApplicationSettings;
 
 import Application;
@@ -27,10 +28,12 @@ namespace gg
 			.inputManager = inputManager,
 		};
 
-		if (s.rendererType == RendererType::Vulkan)
-			Application::Init(std::make_unique<RendererVulkan>(rendererSettings), timeManager, inputManager);
-		else
-			Application::Init(std::make_unique<RendererD3D12>(rendererSettings), timeManager, inputManager);
+		std::unique_ptr<Renderer> renderer = s.rendererType == RendererType::Vulkan
+			? std::unique_ptr<Renderer>{ std::make_unique<RendererVulkan>() }
+			: std::unique_ptr<Renderer>{ std::make_unique<RendererD3D12>() };
+
+		renderer->Initialize(rendererSettings);
+		Application::Init(std::move(renderer), timeManager, inputManager);
 
 		return Application::Get();
 	}

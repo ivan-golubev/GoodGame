@@ -33,8 +33,9 @@ namespace gg
 	export class RendererD3D12 : public Renderer
 	{
 	public:
-		RendererD3D12(RendererSettings const&);
+		RendererD3D12() = default;
 		~RendererD3D12();
+		void Initialize(RendererSettings const&) override;
 
 		static std::shared_ptr<RendererD3D12> Get();
 
@@ -81,8 +82,8 @@ namespace gg
 
 		bool isWindowResized{ true };
 
-		D3D12_VIEWPORT viewport;
-		D3D12_RECT scissorRect;
+		D3D12_VIEWPORT viewport{};
+		D3D12_RECT scissorRect{};
 
 		ComPtr<ID3D12Device4> device;
 		ComPtr<ID3D12CommandQueue> commandQueue;
@@ -95,14 +96,14 @@ namespace gg
 		ComPtr<ID3D12Resource> renderTargets[maxFramesInFlight];
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandles[maxFramesInFlight];
 		ComPtr<ID3D12DescriptorHeap> renderTargetViewHeap;
-		uint32_t rtvDescriptorSize;
+		uint32_t rtvDescriptorSize{};
 		uint32_t frameIndex{ 0 };
 
 		/* Depth */
 		ComPtr<ID3D12Resource> depthBuffer;
 		ComPtr<ID3D12DescriptorHeap> depthStencilHeap;
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
-		uint32_t dsvDescriptorSize;
+		uint32_t dsvDescriptorSize{};
 
 		std::vector<std::shared_ptr<ModelD3D12>> models;
 		std::shared_ptr<TimeManager> timeManager;

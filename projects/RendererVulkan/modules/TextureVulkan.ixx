@@ -10,11 +10,12 @@ export namespace gg
 	class TextureVulkan : public Texture
 	{
 	public:
-		TextureVulkan(std::string const& textureRelativePath, VkDevice);
+		TextureVulkan(VkDevice, std::string const& textureRelativePath);
 		~TextureVulkan();
+		void Initialize();
 
-		VkImageView textureImageView;
-		VkSampler textureSampler;
+		VkImageView textureImageView{};
+		VkSampler textureSampler{};
 
 	private:
 		void CreateTextureImage();
@@ -25,8 +26,8 @@ export namespace gg
 		void CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
 		VkDevice device;
-		VkImage textureImage;
-		VkDeviceMemory textureImageMemory;
+		VkImage textureImage{};
+		VkDeviceMemory textureImageMemory{};
 	};
 
 	VkImageView CreateImageView(VkDevice, VkImage, VkFormat);

@@ -2,23 +2,32 @@ module;
 #include <filesystem>
 #include <stb_image.h>
 #include <string>
+#include <utility>
 module Texture;
 
 namespace gg
 {
-	Texture::Texture(std::string const& relativePath)
-		: absPath{ std::filesystem::absolute(relativePath).generic_string() }
+	Texture::Texture(std::string const& textureRelativePath)
+		: textureAbsolutePath{ std::filesystem::absolute(textureRelativePath).generic_string() }
 	{
-		int width, height, channels;
-		pixels = stbi_load(absPath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-		this->width = width;
-		this->height = height;
-		this->channels = channels;
+	}
+
+	void Texture::Initialize()
+	{
+		stbi_image_free(pixels);
+		int imageWidth{}, imageHeight{}, imageChannels{};
+		pixels = stbi_load(textureAbsolutePath.c_str(), &imageWidth, &imageHeight, &imageChannels, STBI_rgb_alpha);
+		width = static_cast<uint32_t>(imageWidth);
+		height = static_cast<uint32_t>(imageHeight);
+		channels = static_cast<uint32_t>(imageChannels);
+#ifdef NDEBUG
+		std::string{}.swap(textureAbsolutePath);
+#endif
 	}
 
 	std::wstring Texture::GetName()
 	{
-		std::wstring baseName{ std::filesystem::path(absPath).stem() };
+		std::wstring baseName{ std::filesystem::path(textureAbsolutePath).stem() };
 		return L"Texture_" + baseName;
 	}
 

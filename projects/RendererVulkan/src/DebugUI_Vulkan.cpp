@@ -14,11 +14,12 @@ import SettingsRenderer;
 
 namespace gg
 {
-	DebugUI_Vulkan::DebugUI_Vulkan(DebugUI_VulkanCreateInfo const& info)
-		: device{ info.device }
+	void DebugUI_Vulkan::Initialize(DebugUI_VulkanCreateInfo const& info)
 	{
+		device = info.device;
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
+		contextCreated = true;
 		ImGui::StyleColorsDark();
 
 		{ /* create a descriptor pool for ImGUI data */
@@ -49,7 +50,7 @@ namespace gg
 				throw VulkanInitException("failed to create descriptor pool!");
 		}
 
-		ImGui_ImplSDL2_InitForVulkan(info.windowHandleSDL);
+		sdlBackendInitialized = ImGui_ImplSDL2_InitForVulkan(info.windowHandleSDL);
 
 		{
 			ImGui_ImplVulkan_InitInfo init_info{
@@ -71,7 +72,7 @@ namespace gg
 				},
 			};
 
-			ImGui_ImplVulkan_Init(&init_info, info.renderPass);
+			vulkanBackendInitialized = ImGui_ImplVulkan_Init(&init_info, info.renderPass);
 		}
 
 		{ /* upload fonts for ImGUI */
@@ -83,9 +84,14 @@ namespace gg
 
 	DebugUI_Vulkan::~DebugUI_Vulkan()
 	{
-		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-		ImGui_ImplVulkan_Shutdown();
-		ImGui_ImplSDL2_Shutdown();
+		if (vulkanBackendInitialized)
+			ImGui_ImplVulkan_Shutdown();
+		if (sdlBackendInitialized)
+			ImGui_ImplSDL2_Shutdown();
+		if (contextCreated)
+			ImGui::DestroyContext();
+		if (device && descriptorPool)
+			vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 	}
 
 	void DebugUI_Vulkan::Render(VkCommandBuffer commandBuffer)

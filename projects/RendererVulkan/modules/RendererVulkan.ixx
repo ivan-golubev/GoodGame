@@ -32,8 +32,9 @@ namespace gg
 	export class RendererVulkan : public Renderer
 	{
 	public:
-		RendererVulkan(RendererSettings const&);
+		RendererVulkan() = default;
 		~RendererVulkan();
+		void Initialize(RendererSettings const&) override;
 
 		static std::shared_ptr<RendererVulkan> Get();
 
@@ -133,7 +134,7 @@ namespace gg
 		SDL_Window* windowHandleSDL{ nullptr };
 
 		VkCommandPool commandPool{};
-		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers;
+		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers{};
 		VkRenderPass renderPass{};
 		VkDescriptorSetLayout descriptorSetLayout{};
 
@@ -146,7 +147,7 @@ namespace gg
 
 		uint32_t currentFrame{ 0 };
 
-		VkDescriptorPool descriptorPool;
+		VkDescriptorPool descriptorPool{};
 
 		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager> timeManager;
@@ -160,9 +161,9 @@ namespace gg
 		VkSurfaceKHR surface{};
 		VkSwapchainKHR swapChain{};
 		/* Synchronization objects */
-		std::array<VkSemaphore, maxFramesInFlight> imageAvailableSemaphores;
-		std::array<VkSemaphore, maxFramesInFlight> renderFinishedSemaphores;
-		std::array<VkFence, maxFramesInFlight> inFlightFences;
+		std::array<VkSemaphore, maxFramesInFlight> imageAvailableSemaphores{};
+		std::array<VkSemaphore, maxFramesInFlight> renderFinishedSemaphores{};
+		std::array<VkFence, maxFramesInFlight> inFlightFences{};
 	};
 
 } // namespace gg

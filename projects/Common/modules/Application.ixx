@@ -9,7 +9,6 @@ export module Application;
 import Renderer;
 import Input;
 import TimeManager;
-import ModelLoader;
 
 namespace gg
 {

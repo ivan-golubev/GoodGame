@@ -15,7 +15,6 @@ import ApplicationSettings;
 import ErrorHandling;
 import ErrorHandlingVulkan;
 import Logging;
-import ModelLoader;
 import ShaderProgram;
 import ShaderProgramVulkan;
 import SettingsRenderer;

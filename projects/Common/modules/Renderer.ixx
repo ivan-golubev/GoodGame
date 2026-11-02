@@ -20,6 +20,15 @@ using std::chrono::nanoseconds;
 
 export namespace gg
 {
+	struct RendererSettings
+	{
+		uint32_t width;
+		uint32_t height;
+		SDL_Window* windowHandle;
+		std::shared_ptr<TimeManager> timeManager;
+		std::shared_ptr<InputManager> inputManager;
+	};
+
 	class Renderer
 	{
 	public:
@@ -34,20 +43,12 @@ export namespace gg
 
 		virtual std::shared_ptr<Camera> GetCamera() = 0;
 		virtual RendererType GetType() const = 0;
+		virtual void Initialize(RendererSettings const&) = 0;
 
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
 		virtual void Render(nanoseconds deltaTime) = 0;
 		virtual std::shared_ptr<ShaderProgram> LoadShader(std::string const& shaderName) = 0;
 		virtual void LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) = 0;
-	};
-
-	struct RendererSettings
-	{
-		uint32_t width;
-		uint32_t height;
-		SDL_Window* windowHandle;
-		std::shared_ptr<TimeManager> timeManager;
-		std::shared_ptr<InputManager> inputManager;
 	};
 
 	glm::mat4x4 CalculateMVP(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);

@@ -2,6 +2,7 @@ module;
 #include <glm/vec3.hpp>
 #include <memory>
 #include <string>
+#include <utility>
 module ModelD3D12;
 
 import Model;

@@ -49,16 +49,16 @@ namespace
 
 namespace gg
 {
-	RendererD3D12::RendererD3D12(RendererSettings const& rs)
-		: width{ rs.width }
-		, height{ rs.height }
-		, windowHandle{ getWindowHandle(rs.windowHandle) }
-		, windowHandleSDL{ rs.windowHandle }
-		, timeManager{ rs.timeManager }
-		, camera{ std::make_shared<Camera>(rs.inputManager) }
-		, scissorRect{ D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX }
-		, viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f }
+	void RendererD3D12::Initialize(RendererSettings const& rs)
 	{
+		width = rs.width;
+		height = rs.height;
+		windowHandleSDL = rs.windowHandle;
+		windowHandle = getWindowHandle(rs.windowHandle);
+		timeManager = rs.timeManager;
+		camera = std::make_shared<Camera>(rs.inputManager);
+		scissorRect = { D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX };
+		viewport = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f };
 		uint8_t dxgiFactoryFlags{ 0 };
 
 		if constexpr (IsDebug())
@@ -237,7 +237,8 @@ namespace gg
 			);
 			SetName(rootSignature.Get(), L"RootSignature");
 		}
-		debugUI = std::make_unique<DebugUI_D3D12>(device, windowHandleSDL);
+		debugUI = std::make_unique<DebugUI_D3D12>();
+		debugUI->Initialize(device, windowHandleSDL);
 	}
 
 	RendererType RendererD3D12::GetType() const
@@ -299,7 +300,8 @@ namespace gg
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
-		ShaderProgram* shader = new ShaderProgramD3D12(vertexShaderRelativePath, fragmentShaderRelativePath);
+		ShaderProgramD3D12* shader = new ShaderProgramD3D12();
+		shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath);
 		return std::shared_ptr<ShaderProgram>{ shader };
 	}
 
@@ -311,8 +313,10 @@ namespace gg
 
 	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
 	{
-		std::string const textureAbsolutePath{ std::format("{}/{}.{}",  texturesLocation, name, texturesExtension) };
-		TextureD3D12* texture = new TextureD3D12(textureAbsolutePath);
+		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
+		TextureD3D12* texture = new TextureD3D12(textureRelativePath);
+		std::wstring const textureName{ texture->GetName() };
+		texture->Initialize();
 
 		/* uploading the texture  */
 		ThrowIfFailed(commandAllocator->Reset());
@@ -341,7 +345,7 @@ namespace gg
 			nullptr,
 			IID_PPV_ARGS(&texture->texture_GPU_Resource)
 		));
-		SetName(texture->texture_GPU_Resource.Get(), texture->GetName());
+		SetName(texture->texture_GPU_Resource.Get(), textureName);
 		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(texture->texture_GPU_Resource.Get(), 0, 1);
 
 		CD3DX12_HEAP_PROPERTIES const uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
@@ -392,6 +396,7 @@ namespace gg
 	{
 		std::shared_ptr<ShaderProgram> shader = LoadShader(shaderName);
 		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
+		model->Initialize();
 
 		CreateGraphicsPipeline(model);
 		CreateVertexBuffer(model);
@@ -555,16 +560,21 @@ namespace gg
 	{
 		/* Ensure that the GPU is no longer referencing resources that are about to be
 		 cleaned up by the destructor. */
-		WaitForPreviousFrame();
-		CloseHandle(fenceEvent);
+		if (commandQueue && fence && fenceEvent)
+			WaitForPreviousFrame();
+		if (fenceEvent)
+			CloseHandle(fenceEvent);
 
 		/* destroys the associated shaders and textures */
 		models.clear();
 
 		debugUI.reset();
 
-		SDL_DestroyWindow(windowHandleSDL);
-		SDL_Quit();
+		if (windowHandleSDL)
+		{
+			SDL_DestroyWindow(windowHandleSDL);
+			SDL_Quit();
+		}
 	}
 
 	std::shared_ptr<RendererD3D12> RendererD3D12::Get()

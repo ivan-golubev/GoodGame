@@ -12,7 +12,7 @@ using Microsoft::WRL::ComPtr;
 namespace gg
 {
 
-	ShaderProgramD3D12::ShaderProgramD3D12(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	void ShaderProgramD3D12::Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
 	{
 		std::wstring vertexShaderAbsPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_wstring() };
 		std::wstring fragmentShaderAbsPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_wstring() };
