@@ -55,29 +55,39 @@ namespace gg
 
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkDevice device = renderer->GetDevice();
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
+		struct StagingResources
+		{
+			VkDevice device;
+			VkBuffer buffer{};
+			VkDeviceMemory memory{};
+
+			~StagingResources()
+			{
+				if (buffer)
+					vkDestroyBuffer(device, buffer, nullptr);
+				if (memory)
+					vkFreeMemory(device, memory, nullptr);
+			}
+		} staging{ device };
 		VkDeviceSize imageSizeBytes = SizeBytes();
-		renderer->CreateBuffer(stagingBuffer
-			, stagingBufferMemory
+		renderer->CreateBuffer(staging.buffer
+			, staging.memory
 			, imageSizeBytes
 			, VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		);
 
 		void* mappedData{};
-		VkResult const mapResult{ vkMapMemory(device, stagingBufferMemory, 0, imageSizeBytes, 0, &mappedData) };
+		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, imageSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 		{
-			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			vkFreeMemory(device, stagingBufferMemory, nullptr);
 			return std::unexpected(Error{
 				.code = ErrorCode::VulkanTextureResourceCreationFailed,
 				.message = std::format("Failed to map staging buffer memory for texture upload (VkResult {})", static_cast<int>(mapResult)),
 			});
 		}
 		memcpy(mappedData, pixels, static_cast<size_t>(imageSizeBytes));
-		vkUnmapMemory(device, stagingBufferMemory);
+		vkUnmapMemory(device, staging.memory);
 
 		auto imageResult{ CreateImage(width
 			, height
@@ -88,36 +98,17 @@ namespace gg
 			, textureImage
 			, textureImageMemory) };
 		if (!imageResult)
-		{
-			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			vkFreeMemory(device, stagingBufferMemory, nullptr);
 			return std::unexpected(imageResult.error());
-		}
 
 		auto transitionToTransferResult{ TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) };
 		if (!transitionToTransferResult)
-		{
-			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			vkFreeMemory(device, stagingBufferMemory, nullptr);
 			return std::unexpected(transitionToTransferResult.error());
-		}
-		auto copyResult{ CopyBufferToImage(stagingBuffer, textureImage, width, height) };
+		auto copyResult{ CopyBufferToImage(staging.buffer, textureImage, width, height) };
 		if (!copyResult)
-		{
-			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			vkFreeMemory(device, stagingBufferMemory, nullptr);
 			return std::unexpected(copyResult.error());
-		}
 		auto transitionToShaderResult{ TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) };
 		if (!transitionToShaderResult)
-		{
-			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			vkFreeMemory(device, stagingBufferMemory, nullptr);
 			return std::unexpected(transitionToShaderResult.error());
-		}
-
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
 		return {};
 	}
 
@@ -183,7 +174,6 @@ namespace gg
 	std::expected<void, Error> TextureVulkan::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
 
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
@@ -211,6 +201,8 @@ namespace gg
 				.code = ErrorCode::VulkanTextureUnsupportedLayoutTransition,
 				.message = std::format("Cannot transition Vulkan texture image from layout {} to unsupported layout {}", static_cast<int>(oldLayout), static_cast<int>(newLayout)),
 			});
+
+		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
 
 		VkImageMemoryBarrier barrier{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,

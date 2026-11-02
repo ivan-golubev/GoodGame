@@ -14,6 +14,7 @@ module;
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_vulkan.h>
 #include <set>
+#include <utility>
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <windows.h>
@@ -713,26 +714,41 @@ namespace gg
 
 	void RendererVulkan::CreateIndexBuffer(Mesh const& mesh)
 	{
-		VkBuffer IB{};
-		VkDeviceMemory IndexBufferMemory{};
+		struct BufferResources
+		{
+			VkDevice device;
+			VkBuffer buffer{};
+			VkDeviceMemory memory{};
+			VkBuffer stagingBuffer{};
+			VkDeviceMemory stagingMemory{};
+
+			~BufferResources()
+			{
+				if (stagingBuffer)
+					vkDestroyBuffer(device, stagingBuffer, nullptr);
+				if (stagingMemory)
+					vkFreeMemory(device, stagingMemory, nullptr);
+				if (buffer)
+					vkDestroyBuffer(device, buffer, nullptr);
+				if (memory)
+					vkFreeMemory(device, memory, nullptr);
+			}
+		} resources{ device };
 
 		uint64_t const IB_sizeBytes{ mesh.IndicesSizeBytes() };
 
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		CreateBuffer(stagingBuffer, stagingBufferMemory, IB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		CreateBuffer(resources.stagingBuffer, resources.stagingMemory, IB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-		void* mappedData;
-		vkMapMemory(device, stagingBufferMemory, 0, IB_sizeBytes, 0, &mappedData);
+		void* mappedData{};
+		VkResult const mapResult{ vkMapMemory(device, resources.stagingMemory, 0, IB_sizeBytes, 0, &mappedData) };
+		if (mapResult != VK_SUCCESS)
+			throw VulkanInitException(std::format("Failed to map staging buffer for index data (VkResult {})", static_cast<int>(mapResult)));
 		memcpy(mappedData, mesh.indices.data(), static_cast<size_t>(IB_sizeBytes));
-		vkUnmapMemory(device, stagingBufferMemory);
+		vkUnmapMemory(device, resources.stagingMemory);
 
 		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-		CreateBuffer(IB, IndexBufferMemory, IB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		CopyBuffer(stagingBuffer, IB, IB_sizeBytes);
-
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
+		CreateBuffer(resources.buffer, resources.memory, IB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		CopyBuffer(resources.stagingBuffer, resources.buffer, IB_sizeBytes);
 	}
 
 	void RendererVulkan::CreateUniformBuffers(std::shared_ptr<ModelVulkan> model)
@@ -869,31 +885,55 @@ namespace gg
 		VkMemoryPropertyFlags properties
 	)
 	{
+		struct BufferResources
+		{
+			VkDevice device;
+			VkBuffer buffer{};
+			VkDeviceMemory memory{};
+
+			~BufferResources()
+			{
+				if (buffer)
+					vkDestroyBuffer(device, buffer, nullptr);
+				if (memory)
+					vkFreeMemory(device, memory, nullptr);
+			}
+		} resources{ device };
+		outBuffer = VK_NULL_HANDLE;
+		outBufferMemory = VK_NULL_HANDLE;
+
 		VkBufferCreateInfo bufferInfo{
 			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 			.size = sizeBytes,
 			.usage = static_cast<VkBufferUsageFlags>(usage),
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		};
-		if (VK_SUCCESS != vkCreateBuffer(device, &bufferInfo, nullptr, &outBuffer))
+		VkResult const createResult{ vkCreateBuffer(device, &bufferInfo, nullptr, &resources.buffer) };
+		if (createResult != VK_SUCCESS)
 		{
-			throw VulkanInitException("failed to create vertex buffer!");
+			throw VulkanInitException(std::format("Failed to create Vulkan buffer (VkResult {})", static_cast<int>(createResult)));
 		}
 
 		/* allocate and bind memory to this buffer */
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device, outBuffer, &memRequirements);
+		vkGetBufferMemoryRequirements(device, resources.buffer, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{
 			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 			.allocationSize = memRequirements.size,
 			.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties),
 		};
-		if (VK_SUCCESS != vkAllocateMemory(device, &allocInfo, nullptr, &outBufferMemory))
+		VkResult const allocationResult{ vkAllocateMemory(device, &allocInfo, nullptr, &resources.memory) };
+		if (allocationResult != VK_SUCCESS)
 		{
-			throw VulkanInitException("failed to allocate vertex buffer memory!");
+			throw VulkanInitException(std::format("Failed to allocate memory for Vulkan buffer (VkResult {})", static_cast<int>(allocationResult)));
 		}
-		vkBindBufferMemory(device, outBuffer, outBufferMemory, 0);
+		VkResult const bindResult{ vkBindBufferMemory(device, resources.buffer, resources.memory, 0) };
+		if (bindResult != VK_SUCCESS)
+			throw VulkanInitException(std::format("Failed to bind memory to Vulkan buffer (VkResult {})", static_cast<int>(bindResult)));
+
+		outBuffer = std::exchange(resources.buffer, VK_NULL_HANDLE);
+		outBufferMemory = std::exchange(resources.memory, VK_NULL_HANDLE);
 	}
 
 	void RendererVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -1041,21 +1081,32 @@ namespace gg
 
 		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
 
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		CreateBuffer(stagingBuffer, stagingBufferMemory, VB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		struct StagingResources
+		{
+			VkDevice device;
+			VkBuffer buffer{};
+			VkDeviceMemory memory{};
 
-		void* mappedData;
-		vkMapMemory(device, stagingBufferMemory, 0, VB_sizeBytes, 0, &mappedData);
+			~StagingResources()
+			{
+				if (buffer)
+					vkDestroyBuffer(device, buffer, nullptr);
+				if (memory)
+					vkFreeMemory(device, memory, nullptr);
+			}
+		} staging{ device };
+		CreateBuffer(staging.buffer, staging.memory, VB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+		void* mappedData{};
+		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, VB_sizeBytes, 0, &mappedData) };
+		if (mapResult != VK_SUCCESS)
+			throw VulkanInitException(std::format("Failed to map staging buffer for vertex data (VkResult {})", static_cast<int>(mapResult)));
 		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(VB_sizeBytes));
-		vkUnmapMemory(device, stagingBufferMemory);
+		vkUnmapMemory(device, staging.memory);
 
 		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 		CreateBuffer(inputModel->VB, inputModel->vertexBufferMemory, VB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		CopyBuffer(stagingBuffer, inputModel->VB, VB_sizeBytes);
-
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
+		CopyBuffer(staging.buffer, inputModel->VB, VB_sizeBytes);
 	}
 
 	VkResult RendererVulkan::Present(uint32_t imageIndex)
@@ -1163,21 +1214,33 @@ namespace gg
 			.commandBufferCount = 1,
 		};
 
-		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+		VkCommandBuffer commandBuffer{};
+		VkResult const allocationResult{ vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) };
+		if (allocationResult != VK_SUCCESS)
+			throw VulkanInitException(std::format("Failed to allocate a one-time command buffer (VkResult {})", static_cast<int>(allocationResult)));
 
 		VkCommandBufferBeginInfo beginInfo{
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 		};
 
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		VkResult const beginResult{ vkBeginCommandBuffer(commandBuffer, &beginInfo) };
+		if (beginResult != VK_SUCCESS)
+		{
+			vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+			throw VulkanInitException(std::format("Failed to begin a one-time command buffer (VkResult {})", static_cast<int>(beginResult)));
+		}
 		return commandBuffer;
 	}
 
 	void RendererVulkan::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
 	{
-		vkEndCommandBuffer(commandBuffer);
+		VkResult const endResult{ vkEndCommandBuffer(commandBuffer) };
+		if (endResult != VK_SUCCESS)
+		{
+			vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+			throw VulkanRenderException(std::format("Failed to end a one-time command buffer (VkResult {})", static_cast<int>(endResult)));
+		}
 
 		VkSubmitInfo submitInfo{
 			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -1185,8 +1248,15 @@ namespace gg
 			.pCommandBuffers = &commandBuffer,
 		};
 
-		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(graphicsQueue);
+		VkResult const submitResult{ vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) };
+		if (submitResult != VK_SUCCESS)
+		{
+			vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+			throw VulkanRenderException(std::format("Failed to submit a one-time command buffer (VkResult {})", static_cast<int>(submitResult)));
+		}
+		VkResult const waitResult{ vkQueueWaitIdle(graphicsQueue) };
+		if (waitResult != VK_SUCCESS)
+			throw VulkanRenderException(std::format("Failed to wait for a one-time command buffer to finish (VkResult {})", static_cast<int>(waitResult)));
 
 		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	}

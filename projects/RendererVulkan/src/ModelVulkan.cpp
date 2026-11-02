@@ -26,6 +26,11 @@ namespace gg
 		if (!device)
 			return;
 
+		if (graphicsPipeline)
+			vkDestroyPipeline(device, graphicsPipeline, nullptr);
+		if (pipelineLayout)
+			vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
 		if (VB)
 			vkDestroyBuffer(device, VB, nullptr);
 		if (vertexBufferMemory)
