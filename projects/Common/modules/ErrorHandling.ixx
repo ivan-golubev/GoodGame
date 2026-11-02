@@ -22,6 +22,7 @@ export namespace gg
 		VulkanTextureResourceCreationFailed,
 		VulkanTextureUnsupportedLayoutTransition,
 		D3D12ShaderReadFailed,
+		D3D12TextureUploadFailed,
 	};
 
 	struct Error

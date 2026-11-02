@@ -4,6 +4,7 @@ module;
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
 #include <dxgi1_6.h>
+#include <expected>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
@@ -14,6 +15,7 @@ export module RendererD3D12;
 
 import Camera;
 import DebugUI_D3D12;
+import ErrorHandling;
 import GlobalSettings;
 import Input;
 import Model;
@@ -62,9 +64,9 @@ namespace gg
 
 		void CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model);
 		void CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
-		void LoadTextures(std::shared_ptr<ModelD3D12>);
+		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelD3D12>);
 
-		std::shared_ptr<Texture> LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap);
+		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap);
 
 		void CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,

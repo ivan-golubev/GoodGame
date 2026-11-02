@@ -307,23 +307,40 @@ namespace gg
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
-	void RendererD3D12::LoadTextures(std::shared_ptr<ModelD3D12> model)
+	std::expected<void, Error> RendererD3D12::LoadTextures(std::shared_ptr<ModelD3D12> model)
 	{
 		for (std::string const& textureName : model->textureNames)
-			model->textures.emplace_back(LoadTexture(textureName, model->srvHeap));
+		{
+			auto textureResult{ LoadTexture(textureName, model->srvHeap) };
+			if (!textureResult)
+				return std::unexpected(textureResult.error());
+			model->textures.emplace_back(std::move(*textureResult));
+		}
+		return {};
 	}
 
-	std::shared_ptr<Texture> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
+	std::expected<std::shared_ptr<Texture>, Error> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
 	{
 		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
+		auto makeUploadError = [&textureRelativePath](char const* operation, HRESULT result)
+		{
+			return Error{
+				.code = ErrorCode::D3D12TextureUploadFailed,
+				.message = std::format("Failed to {} for texture '{}': HRESULT 0x{:08X}", operation, textureRelativePath, static_cast<uint32_t>(result)),
+			};
+		};
 		std::unique_ptr<TextureD3D12> texture{ std::make_unique<TextureD3D12>(textureRelativePath) };
 		std::wstring const textureName{ texture->GetName() };
 		if (auto const result{ texture->Initialize() }; !result)
-			throw AssetLoadException(result.error().message);
+			return std::unexpected(result.error());
 
 		/* uploading the texture  */
-		ThrowIfFailed(commandAllocator->Reset());
-		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+		HRESULT result{ commandAllocator->Reset() };
+		if (FAILED(result))
+			return std::unexpected(makeUploadError("reset the command allocator", result));
+		result = commandList->Reset(commandAllocator.Get(), nullptr);
+		if (FAILED(result))
+			return std::unexpected(makeUploadError("reset the command list", result));
 
 		// Describe and create a Texture2D.
 		D3D12_RESOURCE_DESC textureDesc{
@@ -340,26 +357,30 @@ namespace gg
 		};
 
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-		ThrowIfFailed(device->CreateCommittedResource(
+		result = device->CreateCommittedResource(
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			nullptr,
 			IID_PPV_ARGS(&texture->texture_GPU_Resource)
-		));
+		);
+		if (FAILED(result))
+			return std::unexpected(makeUploadError("create the GPU texture resource", result));
 		SetName(texture->texture_GPU_Resource.Get(), textureName);
 		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(texture->texture_GPU_Resource.Get(), 0, 1);
 
 		CD3DX12_HEAP_PROPERTIES const uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
 		CD3DX12_RESOURCE_DESC const bufferResDesc{ CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize) };
-		ThrowIfFailed(device->CreateCommittedResource(
+		result = device->CreateCommittedResource(
 			&uploadHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&bufferResDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&texture->texture_CPU_Resource)));
+			IID_PPV_ARGS(&texture->texture_CPU_Resource));
+		if (FAILED(result))
+			return std::unexpected(makeUploadError("create the texture upload resource", result));
 
 		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the Texture2D. */
@@ -386,7 +407,9 @@ namespace gg
 			device->CreateShaderResourceView(texture->texture_GPU_Resource.Get(), &srvDesc, srvHeap->GetCPUDescriptorHandleForHeapStart());
 		}
 
-		ThrowIfFailed(commandList->Close());
+		result = commandList->Close();
+		if (FAILED(result))
+			return std::unexpected(makeUploadError("close the texture upload command list", result));
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
 		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
@@ -416,7 +439,8 @@ namespace gg
 			std::wstring const resourceName{ model->name.begin(), model->name.end() };
 			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_{}", resourceName));
 		}
-		LoadTextures(model);
+		if (auto const result{ LoadTextures(model) }; !result)
+			throw AssetLoadException(result.error().message);
 
 		models.push_back(model);
 	}
