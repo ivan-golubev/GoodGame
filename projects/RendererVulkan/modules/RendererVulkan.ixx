@@ -35,7 +35,7 @@ namespace gg
 	public:
 		RendererVulkan() = default;
 		~RendererVulkan() noexcept;
-		void Initialize(RendererSettings const&) override;
+		std::expected<void, Error> Initialize(RendererSettings const&) override;
 
 		static std::shared_ptr<RendererVulkan> Get();
 
@@ -49,19 +49,19 @@ namespace gg
 		RendererType GetType() const override;
 
 		void OnWindowResized(uint32_t width, uint32_t height) override;
-		void Render(nanoseconds deltaTime) override;
+		std::expected<void, Error> Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 		VkDevice GetDevice() const;
 
-		VkCommandBuffer BeginSingleTimeCommands();
-		void EndSingleTimeCommands(VkCommandBuffer);
+		std::expected<VkCommandBuffer, Error> BeginSingleTimeCommands();
+		std::expected<void, Error> EndSingleTimeCommands(VkCommandBuffer);
 
-		VkSampler CreateTextureSampler();
-		uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
+		std::expected<VkSampler, Error> CreateTextureSampler();
+		std::expected<uint32_t, Error> FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
 
-		void CreateBuffer(
+		std::expected<void, Error> CreateBuffer(
 			VkBuffer& outBuffer,
 			VkDeviceMemory& outMemory,
 			uint64_t sizeBytes,
@@ -69,7 +69,7 @@ namespace gg
 			VkMemoryPropertyFlags
 		);
 
-		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+		std::expected<void, Error> CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	private:
 		struct QueueFamilyIndices
@@ -86,39 +86,39 @@ namespace gg
 			std::vector<VkPresentModeKHR> presentModes;
 		};
 
-		void CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions);
-		void SelectPhysicalDevice();
-		void CreateLogicalDevice();
-		void CreateSwapChain();
-		void CreateRenderPass();
-		void CreateDescriptorSetLayout();
-		void CreateCommandPool();
+		std::expected<void, Error> CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions);
+		std::expected<void, Error> SelectPhysicalDevice();
+		std::expected<void, Error> CreateLogicalDevice();
+		std::expected<void, Error> CreateSwapChain();
+		std::expected<void, Error> CreateRenderPass();
+		std::expected<void, Error> CreateDescriptorSetLayout();
+		std::expected<void, Error> CreateCommandPool();
 
-		void CreateImageViews();
+		std::expected<void, Error> CreateImageViews();
 
-		void CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
-		void CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
+		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
+		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
 		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelVulkan>);
-		void CreateUniformBuffers(std::shared_ptr<ModelVulkan>);
-		void CreateDescriptorSets(std::shared_ptr<ModelVulkan>);
+		std::expected<void, Error> CreateUniformBuffers(std::shared_ptr<ModelVulkan>);
+		std::expected<void, Error> CreateDescriptorSets(std::shared_ptr<ModelVulkan>);
 
 		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 
-		void CreateFrameBuffers();
+		std::expected<void, Error> CreateFrameBuffers();
 
-		void CreateCommandBuffers();
-		void CreateSyncObjects();
-		void CreateIndexBuffer(Mesh const&);
-		void CreateDescriptorPool();
+		std::expected<void, Error> CreateCommandBuffers();
+		std::expected<void, Error> CreateSyncObjects();
+		std::expected<void, Error> CreateIndexBuffer(Mesh const&);
+		std::expected<void, Error> CreateDescriptorPool();
 
-		void RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex);
-		void SubmitCommands();
+		std::expected<void, Error> RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex);
+		std::expected<void, Error> SubmitCommands();
 
 		VkResult Present(uint32_t imageIndex);
 
 		void CleanupSwapChain();
-		void RecreateSwapChain();
-		void ResizeWindow();
+		std::expected<void, Error> RecreateSwapChain();
+		std::expected<void, Error> ResizeWindow();
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const) const;
 		bool IsDeviceSuitable(VkPhysicalDevice const) const;

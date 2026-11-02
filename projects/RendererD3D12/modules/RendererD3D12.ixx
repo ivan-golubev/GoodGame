@@ -37,7 +37,7 @@ namespace gg
 	public:
 		RendererD3D12() = default;
 		~RendererD3D12() noexcept;
-		void Initialize(RendererSettings const&) override;
+		std::expected<void, Error> Initialize(RendererSettings const&) override;
 
 		static std::shared_ptr<RendererD3D12> Get();
 
@@ -51,24 +51,24 @@ namespace gg
 		RendererType GetType() const override;
 
 		void OnWindowResized(uint32_t width, uint32_t height) override;
-		void Render(nanoseconds deltaTime) override;
+		std::expected<void, Error> Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 
 	private:
-		void PopulateCommandList();
-		void WaitForPreviousFrame();
-		void ResizeRenderTargets();
-		void ResizeDepthBuffer();
-		void ResizeWindow();
+		std::expected<void, Error> PopulateCommandList();
+		std::expected<void, Error> WaitForPreviousFrame();
+		std::expected<void, Error> ResizeRenderTargets();
+		std::expected<void, Error> ResizeDepthBuffer();
+		std::expected<void, Error> ResizeWindow();
 
-		void CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model);
-		void CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
+		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model);
+		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
 		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelD3D12>);
 
 		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap);
 
-		void CreateBuffer(
+		std::expected<void, Error> CreateBuffer(
 			ComPtr<ID3D12GraphicsCommandList> const& commandList,
 			ComPtr<ID3D12Resource>& gpuResource,
 			ComPtr<ID3D12Resource>& cpuResource,

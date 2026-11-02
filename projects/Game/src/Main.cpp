@@ -75,7 +75,11 @@ namespace
 				}
 			}
 			// All events processed - tick the world
-			app->Tick();
+			if (auto const tickResult{ app->Tick() }; !tickResult)
+			{
+				DebugLog(DebugLevel::Error, tickResult.error().message);
+				return EXIT_FAILURE;
+			}
 		}
 		return EXIT_SUCCESS;
 	}
@@ -106,7 +110,13 @@ namespace
 				.windowHandle = window.get(),
 				.rendererType = rendererType,
 			};
-			std::shared_ptr<Application> app{ MakeApplication(appSettings) };
+			auto appResult{ MakeApplication(appSettings) };
+			if (!appResult)
+			{
+				DebugLog(DebugLevel::Error, appResult.error().message);
+				return EXIT_FAILURE;
+			}
+			std::shared_ptr<Application> app{ std::move(*appResult) };
 			DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };

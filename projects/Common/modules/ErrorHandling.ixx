@@ -23,6 +23,18 @@ export namespace gg
 		VulkanTextureUnsupportedLayoutTransition,
 		D3D12ShaderReadFailed,
 		D3D12TextureUploadFailed,
+		D3D12InitializationFailed,
+		D3D12PipelineCreationFailed,
+		D3D12CommandRecordingFailed,
+		D3D12BufferCreationFailed,
+		D3D12ResizeFailed,
+		D3D12PresentationFailed,
+		D3D12SynchronizationFailed,
+		D3D12DebugUIInitializationFailed,
+		VulkanRendererInitializationFailed,
+		VulkanRendererFrameFailed,
+		VulkanResourceCreationFailed,
+		VulkanCommandFailed,
 	};
 
 	struct Error

@@ -26,6 +26,7 @@ import ErrorHandling;
 import GlobalSettings;
 import Input;
 import Lighting;
+import Logging;
 import ModelD3D12;
 import PipelineStateStream;
 import SettingsD3D12;
@@ -36,6 +37,16 @@ import Vertex;
 
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
+
+#define D3D12_CHECK_HRESULT(hr, errorCode, operation) \
+	do \
+	{ \
+		if (FAILED(hr)) \
+			return std::unexpected(gg::Error{ \
+				.code = errorCode, \
+				.message = std::format("D3D12 {} failed with HRESULT 0x{:08X}", operation, static_cast<uint32_t>(hr)), \
+			}); \
+	} while (false)
 
 namespace
 {
@@ -50,7 +61,7 @@ namespace
 
 namespace gg
 {
-	void RendererD3D12::Initialize(RendererSettings const& rs)
+	std::expected<void, Error> RendererD3D12::Initialize(RendererSettings const& rs)
 	{
 		width = rs.width;
 		height = rs.height;
@@ -74,17 +85,19 @@ namespace gg
 		}
 
 		ComPtr<IDXGIFactory4> factory;
-		ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
+		HRESULT const factoryResult{ CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)) };
+		D3D12_CHECK_HRESULT(factoryResult, ErrorCode::D3D12InitializationFailed, "create DXGI factory");
 
 		{ /* Select a hardware adapter and create a D3D12 device */
 			ComPtr<IDXGIAdapter1> hardwareAdapter;
 			GetHardwareAdapter(factory.Get(), &hardwareAdapter, true);
 
-			ThrowIfFailed(D3D12CreateDevice(
+			HRESULT const deviceResult{ D3D12CreateDevice(
 				hardwareAdapter.Get(),
 				D3D_FEATURE_LEVEL_11_0,
 				IID_PPV_ARGS(&device)
-			));
+			) };
+			D3D12_CHECK_HRESULT(deviceResult, ErrorCode::D3D12InitializationFailed, "create D3D12 device");
 			SetName(device.Get(), L"DefaultDevice");
 		}
 
@@ -105,7 +118,8 @@ namespace gg
 				.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
 			};
 
-			ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)));
+			HRESULT const commandQueueResult{ device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)) };
+			D3D12_CHECK_HRESULT(commandQueueResult, ErrorCode::D3D12InitializationFailed, "create command queue");
 			SetName(commandQueue.Get(), L"MainCommandQueue");
 		}
 
@@ -121,19 +135,22 @@ namespace gg
 			};
 
 			ComPtr<IDXGISwapChain1> swapChain1;
-			ThrowIfFailed(factory->CreateSwapChainForHwnd(
+			HRESULT const swapChainResult{ factory->CreateSwapChainForHwnd(
 				commandQueue.Get(),
 				windowHandle,
 				&swapChainDesc,
 				nullptr,
 				nullptr,
 				&swapChain1
-			));
-			ThrowIfFailed(swapChain1.As(&swapChain));
+			) };
+			D3D12_CHECK_HRESULT(swapChainResult, ErrorCode::D3D12InitializationFailed, "create swap chain");
+			HRESULT const swapChainInterfaceResult{ swapChain1.As(&swapChain) };
+			D3D12_CHECK_HRESULT(swapChainInterfaceResult, ErrorCode::D3D12InitializationFailed, "query swap chain interface");
 		}
 
 		/* No support for fullscreen transitions. */
-		ThrowIfFailed(factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER));
+		HRESULT const windowAssociationResult{ factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER) };
+		D3D12_CHECK_HRESULT(windowAssociationResult, ErrorCode::D3D12InitializationFailed, "configure window association");
 
 		{ /* Describe and create a render target view (RTV) descriptor heap. */
 			D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{
@@ -141,23 +158,28 @@ namespace gg
 				.NumDescriptors = maxFramesInFlight,
 				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
-			ThrowIfFailed(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&renderTargetViewHeap)));
+			HRESULT const d3d12CreateRenderTargetDescriptorHeapResult{ device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&renderTargetViewHeap)) };
+			D3D12_CHECK_HRESULT(d3d12CreateRenderTargetDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create render target descriptor heap");
 			SetName(renderTargetViewHeap.Get(), L"RTV_DescriptorHeap");
 			rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		}
 
 		/* Create render targets */
-		ResizeRenderTargets();
+		if (auto result{ ResizeRenderTargets() }; !result)
+			return std::unexpected(result.error());
 
 		/* Create a command allocator and a command list */
-		ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+		HRESULT const d3d12CreateCommandAllocatorResult{ device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)) };
+		D3D12_CHECK_HRESULT(d3d12CreateCommandAllocatorResult, ErrorCode::D3D12InitializationFailed, "create command allocator");
 		SetName(commandAllocator.Get(), L"DefaultAllocator");
-		ThrowIfFailed(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+		HRESULT const d3d12CreateCommandListResult{ device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)) };
+		D3D12_CHECK_HRESULT(d3d12CreateCommandListResult, ErrorCode::D3D12InitializationFailed, "create command list");
 		SetName(commandList.Get(), L"DefaultCommandList");
 		auto name = GetName(commandList.Get());
 
 		{ /* Create synchronization objects */
-			ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+			HRESULT const d3d12CreateFenceResult{ device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)) };
+			D3D12_CHECK_HRESULT(d3d12CreateFenceResult, ErrorCode::D3D12InitializationFailed, "create fence");
 			SetName(fence.Get(), L"DefaultFence");
 			fenceValue = 1;
 
@@ -165,7 +187,8 @@ namespace gg
 			fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 			if (fenceEvent == nullptr)
 			{
-				ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
+				HRESULT const d3d12CreateFenceEventResult{ HRESULT_FROM_WIN32(GetLastError()) };
+				D3D12_CHECK_HRESULT(d3d12CreateFenceEventResult, ErrorCode::D3D12InitializationFailed, "create fence event");
 			}
 		}
 
@@ -175,12 +198,14 @@ namespace gg
 				.NumDescriptors = 1,
 				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
-			ThrowIfFailed(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&depthStencilHeap)));
+			HRESULT const d3d12CreateDepthStencilDescriptorHeapResult{ device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&depthStencilHeap)) };
+			D3D12_CHECK_HRESULT(d3d12CreateDepthStencilDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create depth stencil descriptor heap");
 
 			dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		}
 		/* Create depth buffer */
-		ResizeDepthBuffer();
+		if (auto result{ ResizeDepthBuffer() }; !result)
+			return std::unexpected(result.error());
 
 		{ /* create the root signature */
 			/* Check for the highest supported root signature */
@@ -229,17 +254,28 @@ namespace gg
 			/* Serialize the root signature */
 			ComPtr<ID3DBlob> rootSignatureBlob;
 			ComPtr<ID3DBlob> errorBlob;
-			ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
-				featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
+			HRESULT const d3d12SerializeRootSignatureResult{ D3DX12SerializeVersionedRootSignature(
+					&rootSignatureDescription,
+					featureData.HighestVersion,
+					&rootSignatureBlob,
+					&errorBlob
+				) };
+			D3D12_CHECK_HRESULT(d3d12SerializeRootSignatureResult, ErrorCode::D3D12InitializationFailed, "serialize root signature");
 
 			// Create the root signature.
-			ThrowIfFailed(device->CreateRootSignature(
-				0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))
-			);
+			HRESULT const d3d12CreateRootSignatureResult{ device->CreateRootSignature(
+					0,
+					rootSignatureBlob->GetBufferPointer(),
+					rootSignatureBlob->GetBufferSize(),
+					IID_PPV_ARGS(&rootSignature)
+				) };
+			D3D12_CHECK_HRESULT(d3d12CreateRootSignatureResult, ErrorCode::D3D12InitializationFailed, "create root signature");
 			SetName(rootSignature.Get(), L"RootSignature");
 		}
 		debugUI = std::make_unique<DebugUI_D3D12>();
-		debugUI->Initialize(device, windowHandleSDL);
+		if (auto result{ debugUI->Initialize(device, windowHandleSDL) }; !result)
+			return std::unexpected(result.error());
+		return {};
 	}
 
 	RendererType RendererD3D12::GetType() const
@@ -252,7 +288,7 @@ namespace gg
 		return camera;
 	}
 
-	void RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
+	std::expected<void, Error> RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
 	{
 		BreakIfFalse(model->shaderProgram.get());
 		ShaderProgramD3D12* shaderProgram = dynamic_cast<ShaderProgramD3D12*>(model->shaderProgram.get());
@@ -291,10 +327,12 @@ namespace gg
 			.SizeInBytes = sizeof(PipelineStateStream),
 			.pPipelineStateSubobjectStream = &pipelineStateStream,
 		};
-		ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&model->pipelineState)));
+		HRESULT const d3d12CreateGraphicsPipelineStateResult{ device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&model->pipelineState)) };
+		D3D12_CHECK_HRESULT(d3d12CreateGraphicsPipelineStateResult, ErrorCode::D3D12PipelineCreationFailed, "create graphics pipeline state");
 		std::string const psoName{ std::format("PSO_{}", model->name) };
 		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
 		SetName(model->pipelineState.Get(), psoNameW);
+		return {};
 	}
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)
@@ -424,7 +462,8 @@ namespace gg
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
 		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-		WaitForPreviousFrame();
+		if (auto const waitResult{ WaitForPreviousFrame() }; !waitResult)
+			return std::unexpected(waitResult.error());
 
 		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
@@ -439,8 +478,10 @@ namespace gg
 		if (auto const result{ model->Initialize() }; !result)
 			return std::unexpected(result.error());
 
-		CreateGraphicsPipeline(model);
-		CreateVertexBuffer(model);
+		if (auto result{ CreateGraphicsPipeline(model) }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ CreateVertexBuffer(model) }; !result)
+			return std::unexpected(result.error());
 
 		{ /* Create  a shader resource view (SRV) heap for textures */
 			D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{
@@ -448,7 +489,8 @@ namespace gg
 				.NumDescriptors = 1,
 				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 			};
-			ThrowIfFailed(device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&model->srvHeap)));
+			HRESULT const d3d12CreateModelTextureDescriptorHeapResult{ device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&model->srvHeap)) };
+			D3D12_CHECK_HRESULT(d3d12CreateModelTextureDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create model texture descriptor heap");
 
 			std::wstring const resourceName{ model->name.begin(), model->name.end() };
 			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_{}", resourceName));
@@ -460,57 +502,69 @@ namespace gg
 		return {};
 	}
 
-	void RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> model)
+	std::expected<void, Error> RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> model)
 	{
 		// TODO: handle multiple meshes properly, need to create multiple Vertex Buffers
 		BreakIfFalse(model->meshes.size() < 2);
 		Mesh const& mesh{ model->meshes[0] };
 
-		ThrowIfFailed(commandAllocator->Reset());
-		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), model->pipelineState.Get()));
+		HRESULT const d3d12ResetCommandAllocatorForVertexUploadResult{ commandAllocator->Reset() };
+		D3D12_CHECK_HRESULT(d3d12ResetCommandAllocatorForVertexUploadResult, ErrorCode::D3D12CommandRecordingFailed, "reset command allocator for vertex upload");
+		HRESULT const d3d12ResetCommandListForVertexUploadResult{ commandList->Reset(commandAllocator.Get(), model->pipelineState.Get()) };
+		D3D12_CHECK_HRESULT(d3d12ResetCommandListForVertexUploadResult, ErrorCode::D3D12CommandRecordingFailed, "reset command list for vertex upload");
 
 		uint64_t const VB_sizeBytes = mesh.VerticesSizeBytes();
 
-		CreateBuffer(commandList, model->VB_GPU_Resource, model->VB_CPU_Resource, mesh.vertices.data(), VB_sizeBytes, L"VertexBuffer");
-		ThrowIfFailed(commandList->Close());
+		if (auto result{ CreateBuffer(commandList, model->VB_GPU_Resource, model->VB_CPU_Resource, mesh.vertices.data(), VB_sizeBytes, L"VertexBuffer") }; !result)
+			return std::unexpected(result.error());
+		HRESULT const d3d12CloseVertexUploadCommandListResult{ commandList->Close() };
+		D3D12_CHECK_HRESULT(d3d12CloseVertexUploadCommandListResult, ErrorCode::D3D12CommandRecordingFailed, "close vertex upload command list");
 
 		/* Upload Vertex and Index buffers */
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
 		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-		WaitForPreviousFrame();
+		if (auto result{ WaitForPreviousFrame() }; !result)
+			return std::unexpected(result.error());
 
 		/* Init the Vertex buffer view */
 		model->vertexBufferView.BufferLocation = model->VB_GPU_Resource->GetGPUVirtualAddress();
 		model->vertexBufferView.SizeInBytes = static_cast<uint32_t>(VB_sizeBytes);
 		model->vertexBufferView.StrideInBytes = sizeof(Vertex);
+		return {};
 	}
 
-	void RendererD3D12::ResizeWindow()
+	std::expected<void, Error> RendererD3D12::ResizeWindow()
 	{
 		viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		ResizeRenderTargets();
-		ResizeDepthBuffer();
+		if (auto result{ ResizeRenderTargets() }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ ResizeDepthBuffer() }; !result)
+			return std::unexpected(result.error());
 		isWindowResized = false;
+		return {};
 	}
 
-	void RendererD3D12::ResizeRenderTargets()
+	std::expected<void, Error> RendererD3D12::ResizeRenderTargets()
 	{
 		for (uint32_t i{ 0 }; i < maxFramesInFlight; ++i)
 			renderTargets[i].Reset();
 
-		ThrowIfFailed(swapChain->ResizeBuffers(maxFramesInFlight, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
+		HRESULT const d3d12ResizeSwapChainBuffersResult{ swapChain->ResizeBuffers(maxFramesInFlight, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0) };
+		D3D12_CHECK_HRESULT(d3d12ResizeSwapChainBuffersResult, ErrorCode::D3D12ResizeFailed, "resize swap chain buffers");
 
 		for (uint8_t n{ 0 }; n < maxFramesInFlight; n++)
 		{
-			ThrowIfFailed(swapChain->GetBuffer(n, IID_PPV_ARGS(&renderTargets[n])));
+			HRESULT const d3d12GetResizedSwapChainBufferResult{ swapChain->GetBuffer(n, IID_PPV_ARGS(&renderTargets[n])) };
+			D3D12_CHECK_HRESULT(d3d12GetResizedSwapChainBufferResult, ErrorCode::D3D12ResizeFailed, "get resized swap chain buffer");
 			rtvHandles[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), n, rtvDescriptorSize);
 			device->CreateRenderTargetView(renderTargets[n].Get(), nullptr, rtvHandles[n]);
 			SetName(renderTargets[n].Get(), std::format(L"SwapChainBuffer[{}]", n));
 		}
+		return {};
 	}
 
-	void RendererD3D12::ResizeDepthBuffer()
+	std::expected<void, Error> RendererD3D12::ResizeDepthBuffer()
 	{
 		depthBuffer.Reset();
 
@@ -527,14 +581,15 @@ namespace gg
 			DXGI_FORMAT_D32_FLOAT, width, height,
 			1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
 		);
-		ThrowIfFailed(device->CreateCommittedResource(
+		HRESULT const d3d12CreateDepthBufferResourceResult{ device->CreateCommittedResource(
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&resourceDesc,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE,
 			&optimizedClearValue,
 			IID_PPV_ARGS(&depthBuffer)
-		));
+		) };
+		D3D12_CHECK_HRESULT(d3d12CreateDepthBufferResourceResult, ErrorCode::D3D12ResizeFailed, "create depth buffer resource");
 		SetName(depthBuffer.Get(), std::format(L"{}_GPU", L"DepthStencilTexture"));
 
 		/* create the DSV */
@@ -546,9 +601,10 @@ namespace gg
 		};
 		dsvHandle = { depthStencilHeap->GetCPUDescriptorHandleForHeapStart() };
 		device->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHandle);
+		return {};
 	}
 
-	void RendererD3D12::CreateBuffer(
+	std::expected<void, Error> RendererD3D12::CreateBuffer(
 		ComPtr<ID3D12GraphicsCommandList> const& commandList,
 		ComPtr<ID3D12Resource>& gpuResource,
 		ComPtr<ID3D12Resource>& cpuResource,
@@ -560,27 +616,27 @@ namespace gg
 		/* create an intermediate resource */
 		CD3DX12_HEAP_PROPERTIES uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
 		CD3DX12_RESOURCE_DESC uploadResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes) };
-		ThrowIfFailed(device->CreateCommittedResource(
+		HRESULT const d3d12CreateUploadBufferResourceResult{ device->CreateCommittedResource(
 			&uploadHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&uploadResourceProps,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&cpuResource))
-		);
+			IID_PPV_ARGS(&cpuResource)) };
+		D3D12_CHECK_HRESULT(d3d12CreateUploadBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create upload buffer resource");
 		SetName(cpuResource.Get(), std::format(L"{}_CPU", resourceName));
 
 		/* create the target resource on the GPU */
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
 		CD3DX12_RESOURCE_DESC const gpuResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes, D3D12_RESOURCE_FLAG_NONE) };
-		ThrowIfFailed(device->CreateCommittedResource(
+		HRESULT const d3d12CreateGPUBufferResourceResult{ device->CreateCommittedResource(
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&gpuResourceProps,
 			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
-			IID_PPV_ARGS(&gpuResource))
-		);
+			IID_PPV_ARGS(&gpuResource)) };
+		D3D12_CHECK_HRESULT(d3d12CreateGPUBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create GPU buffer resource");
 		SetName(gpuResource.Get(), std::format(L"{}_GPU", resourceName));
 
 		/* transfer the data */
@@ -597,6 +653,7 @@ namespace gg
 			0, 0, 1,
 			&subresourceData
 		);
+		return {};
 	}
 
 	RendererD3D12::~RendererD3D12() noexcept
@@ -605,14 +662,8 @@ namespace gg
 		 cleaned up by the destructor. */
 		if (commandQueue && fence && fenceEvent)
 		{
-			try
-			{
-				WaitForPreviousFrame();
-			}
-			catch (...)
-			{
-				// Continue releasing resources if the device or fence has already failed.
-			}
+			if (auto const result{ WaitForPreviousFrame() }; !result)
+				DebugLog(DebugLevel::Error, result.error().message);
 		}
 		if (fenceEvent)
 			CloseHandle(fenceEvent);
@@ -638,44 +689,53 @@ namespace gg
 		height = std::max(8u, height);
 	}
 
-	void RendererD3D12::Render(nanoseconds deltaTime)
+	std::expected<void, Error> RendererD3D12::Render(nanoseconds deltaTime)
 	{
 		if (isWindowResized)
 		{
-			ResizeWindow();
+			if (auto result{ ResizeWindow() }; !result)
+				return std::unexpected(result.error());
 			camera->UpdateProjectionMatrix(width, height);
 		}
 
 		camera->UpdateCamera(deltaTime);
 		/* Record all the commands we need to render the scene into the command list. */
-		PopulateCommandList();
+		if (auto result{ PopulateCommandList() }; !result)
+			return std::unexpected(result.error());
 
 		/* Execute the command list. */
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
 		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 		/* Present the frame and inefficiently wait for the frame to render. */
-		ThrowIfFailed(swapChain->Present(1, 0));
-		WaitForPreviousFrame();
+		HRESULT const d3d12PresentFrameResult{ swapChain->Present(1, 0) };
+		D3D12_CHECK_HRESULT(d3d12PresentFrameResult, ErrorCode::D3D12PresentationFailed, "present frame");
+		if (auto result{ WaitForPreviousFrame() }; !result)
+			return std::unexpected(result.error());
+		return {};
 	}
 
-	void RendererD3D12::WaitForPreviousFrame()
+	std::expected<void, Error> RendererD3D12::WaitForPreviousFrame()
 	{
 		uint64_t const fencePrevValue{ fenceValue };
-		ThrowIfFailed(commandQueue->Signal(fence.Get(), fencePrevValue));
+		HRESULT const d3d12SignalFrameFenceResult{ commandQueue->Signal(fence.Get(), fencePrevValue) };
+		D3D12_CHECK_HRESULT(d3d12SignalFrameFenceResult, ErrorCode::D3D12SynchronizationFailed, "signal frame fence");
 		fenceValue++;
 
 		/* Wait until the previous frame is finished */
 		if (fence->GetCompletedValue() < fencePrevValue)
 		{
-			ThrowIfFailed(fence->SetEventOnCompletion(fencePrevValue, fenceEvent));
+			HRESULT const d3d12SetFenceCompletionEventResult{ fence->SetEventOnCompletion(fencePrevValue, fenceEvent) };
+			D3D12_CHECK_HRESULT(d3d12SetFenceCompletionEventResult, ErrorCode::D3D12SynchronizationFailed, "set fence completion event");
 			WaitForSingleObject(fenceEvent, INFINITE);
 		}
+		return {};
 	}
 
-	void RendererD3D12::PopulateCommandList()
+	std::expected<void, Error> RendererD3D12::PopulateCommandList()
 	{
-		ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+		HRESULT const d3d12ResetRenderCommandListResult{ commandList->Reset(commandAllocator.Get(), nullptr) };
+		D3D12_CHECK_HRESULT(d3d12ResetRenderCommandListResult, ErrorCode::D3D12CommandRecordingFailed, "reset render command list");
 
 		uint8_t const frameIndex{ static_cast<uint8_t>(swapChain->GetCurrentBackBufferIndex()) };
 		/* Set all the common state first */
@@ -733,7 +793,11 @@ namespace gg
 			);
 			commandList->ResourceBarrier(1, &barrier);
 		}
-		ThrowIfFailed(commandList->Close());
+		HRESULT const d3d12CloseRenderCommandListResult{ commandList->Close() };
+		D3D12_CHECK_HRESULT(d3d12CloseRenderCommandListResult, ErrorCode::D3D12CommandRecordingFailed, "close render command list");
+		return {};
 	}
 
 } // namespace gg
+
+#undef D3D12_CHECK_HRESULT

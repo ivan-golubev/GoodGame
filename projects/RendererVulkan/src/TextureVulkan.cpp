@@ -26,7 +26,10 @@ namespace gg
 			return std::unexpected(result.error());
 		if (auto const result{ CreateTextureImageView() }; !result)
 			return std::unexpected(result.error());
-		textureSampler = RendererVulkan::Get()->CreateTextureSampler();
+		auto samplerResult{ RendererVulkan::Get()->CreateTextureSampler() };
+		if (!samplerResult)
+			return std::unexpected(samplerResult.error());
+		textureSampler = *samplerResult;
 		return {};
 	}
 
@@ -70,12 +73,14 @@ namespace gg
 			}
 		} staging{ device };
 		VkDeviceSize imageSizeBytes = SizeBytes();
-		renderer->CreateBuffer(staging.buffer
+		auto bufferResult{ renderer->CreateBuffer(staging.buffer
 			, staging.memory
 			, imageSizeBytes
 			, VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-		);
+		) };
+		if (!bufferResult)
+			return std::unexpected(bufferResult.error());
 
 		void* mappedData{};
 		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, imageSizeBytes, 0, &mappedData) };
@@ -149,10 +154,13 @@ namespace gg
 		VkMemoryRequirements memRequirements;
 		vkGetImageMemoryRequirements(device, image, &memRequirements);
 
+		auto memoryTypeResult{ renderer->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) };
+		if (!memoryTypeResult)
+			return std::unexpected(memoryTypeResult.error());
 		VkMemoryAllocateInfo allocInfo{
 			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 			.allocationSize = memRequirements.size,
-			.memoryTypeIndex = renderer->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+			.memoryTypeIndex = *memoryTypeResult,
 		};
 
 		VkResult const allocationResult{ vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) };
@@ -202,7 +210,10 @@ namespace gg
 				.message = std::format("Cannot transition Vulkan texture image from layout {} to unsupported layout {}", static_cast<int>(oldLayout), static_cast<int>(newLayout)),
 			});
 
-		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
+		auto commandBufferResult{ renderer->BeginSingleTimeCommands() };
+		if (!commandBufferResult)
+			return std::unexpected(commandBufferResult.error());
+		VkCommandBuffer const commandBuffer{ *commandBufferResult };
 
 		VkImageMemoryBarrier barrier{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -225,14 +236,16 @@ namespace gg
 			1, &barrier
 		);
 
-		renderer->EndSingleTimeCommands(commandBuffer);
-		return {};
+		return renderer->EndSingleTimeCommands(commandBuffer);
 	}
 
 	std::expected<void, Error> TextureVulkan::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		VkCommandBuffer commandBuffer = renderer->BeginSingleTimeCommands();
+		auto commandBufferResult{ renderer->BeginSingleTimeCommands() };
+		if (!commandBufferResult)
+			return std::unexpected(commandBufferResult.error());
+		VkCommandBuffer const commandBuffer{ *commandBufferResult };
 
 		VkBufferImageCopy region{
 			.bufferOffset = 0,
@@ -252,8 +265,7 @@ namespace gg
 			&region
 		);
 
-		renderer->EndSingleTimeCommands(commandBuffer);
-		return {};
+		return renderer->EndSingleTimeCommands(commandBuffer);
 	}
 
 	std::expected<VkImageView, Error> CreateImageView(VkDevice device, VkImage image, VkFormat format)

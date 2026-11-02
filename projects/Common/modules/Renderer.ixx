@@ -45,10 +45,10 @@ export namespace gg
 
 		virtual std::shared_ptr<Camera> GetCamera() = 0;
 		virtual RendererType GetType() const = 0;
-		virtual void Initialize(RendererSettings const&) = 0;
+		virtual std::expected<void, Error> Initialize(RendererSettings const&) = 0;
 
 		virtual void OnWindowResized(uint32_t width, uint32_t height) = 0;
-		virtual void Render(nanoseconds deltaTime) = 0;
+		virtual std::expected<void, Error> Render(nanoseconds deltaTime) = 0;
 		virtual std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) = 0;
 		virtual std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) = 0;
 	};

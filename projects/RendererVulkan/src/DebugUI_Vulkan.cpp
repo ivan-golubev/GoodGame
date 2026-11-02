@@ -2,19 +2,24 @@ module;
 #include <imgui/backends/imgui_impl_sdl2.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
 #include <memory>
+#include <format>
 #include <vulkan/vulkan_core.h>
 module DebugUI_Vulkan;
 
 import Camera;
 import DebugUI;
 import ErrorHandling;
-import ErrorHandlingVulkan;
 import RendererVulkan;
 import SettingsRenderer;
 
 namespace gg
 {
-	void DebugUI_Vulkan::Initialize(DebugUI_VulkanCreateInfo const& info)
+	namespace
+	{
+		VkResult imguiVulkanInitResult{ VK_SUCCESS };
+	}
+
+	std::expected<void, Error> DebugUI_Vulkan::Initialize(DebugUI_VulkanCreateInfo const& info)
 	{
 		device = info.device;
 		IMGUI_CHECKVERSION();
@@ -47,10 +52,12 @@ namespace gg
 			};
 
 			if (VK_SUCCESS != vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool))
-				throw VulkanInitException("failed to create descriptor pool!");
+				return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create the ImGui Vulkan descriptor pool." });
 		}
 
 		sdlBackendInitialized = ImGui_ImplSDL2_InitForVulkan(info.windowHandleSDL);
+		if (!sdlBackendInitialized)
+			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to initialize the ImGui SDL Vulkan backend." });
 
 		{
 			ImGui_ImplVulkan_InitInfo init_info{
@@ -67,19 +74,27 @@ namespace gg
 				.MSAASamples = VK_SAMPLE_COUNT_1_BIT,
 				.Allocator = VK_NULL_HANDLE,
 				.CheckVkResultFn = [](VkResult err) {
-				if (VK_SUCCESS != err)
-					throw VulkanInitException("failed to initialize imGUI!");
+					if (VK_SUCCESS != err)
+						imguiVulkanInitResult = err;
 				},
 			};
 
+			imguiVulkanInitResult = VK_SUCCESS;
 			vulkanBackendInitialized = ImGui_ImplVulkan_Init(&init_info, info.renderPass);
 		}
+		if (!vulkanBackendInitialized || imguiVulkanInitResult != VK_SUCCESS)
+			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = std::format("Failed to initialize ImGui Vulkan backend (VkResult {}).", static_cast<int>(imguiVulkanInitResult)) });
 
 		{ /* upload fonts for ImGUI */
-			VkCommandBuffer commandBuffer{ info.renderer->BeginSingleTimeCommands() };
+			auto commandBufferResult{ info.renderer->BeginSingleTimeCommands() };
+			if (!commandBufferResult)
+				return std::unexpected(commandBufferResult.error());
+			VkCommandBuffer const commandBuffer{ *commandBufferResult };
 			ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-			info.renderer->EndSingleTimeCommands(commandBuffer);
+			if (auto result{ info.renderer->EndSingleTimeCommands(commandBuffer) }; !result)
+				return std::unexpected(result.error());
 		}
+		return {};
 	}
 
 	DebugUI_Vulkan::~DebugUI_Vulkan() noexcept

@@ -1,8 +1,11 @@
 module;
 #include <memory>
+#include <expected>
 #include <SDL2/SDL_video.h>
 #include <vulkan/vulkan_core.h>
 export module DebugUI_Vulkan;
+
+import ErrorHandling;
 
 export namespace gg
 {
@@ -24,7 +27,7 @@ export namespace gg
 	{
 	public:
 		~DebugUI_Vulkan() noexcept;
-		void Initialize(DebugUI_VulkanCreateInfo const&);
+		std::expected<void, Error> Initialize(DebugUI_VulkanCreateInfo const&);
 		void Render(VkCommandBuffer);
 
 	private:

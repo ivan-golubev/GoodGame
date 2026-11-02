@@ -69,10 +69,11 @@ namespace gg
 		return renderer;
 	}
 
-	void Application::Tick()
+	std::expected<void, Error> Application::Tick()
 	{
 		if (!isPaused)
-			renderer->Render(timeManager->Tick());
+			return renderer->Render(timeManager->Tick());
+		return {};
 	}
 
 	void Application::OnWindowResized(uint32_t width, uint32_t height)

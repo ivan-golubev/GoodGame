@@ -1,5 +1,6 @@
 module;
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_video.h>
@@ -28,7 +29,7 @@ namespace gg
 		Application(Application&&) noexcept = default;
 		Application& operator=(Application&&) noexcept = default;
 
-		void Tick();
+		std::expected<void, Error> Tick();
 		void OnWindowResized(uint32_t width, uint32_t height);
 		void OnWindowMinimized();
 		void OnWindowRestored();

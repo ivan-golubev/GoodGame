@@ -1,9 +1,12 @@
 module;
 #include <directx/d3d12.h>
+#include <expected>
 #include <SDL2/SDL_video.h>
 #include <memory>
 #include <wrl.h>
 export module DebugUI_D3D12;
+
+import ErrorHandling;
 
 using Microsoft::WRL::ComPtr;
 
@@ -13,7 +16,7 @@ export namespace gg
 	{
 	public:
 		~DebugUI_D3D12() noexcept;
-		void Initialize(ComPtr<ID3D12Device4>, SDL_Window*);
+		std::expected<void, Error> Initialize(ComPtr<ID3D12Device4>, SDL_Window*);
 		void Render(ComPtr<ID3D12GraphicsCommandList>);
 
 	private:

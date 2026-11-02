@@ -1,10 +1,12 @@
 module;
 #include <memory>
+#include <expected>
 #include <SDL2/SDL_video.h>
 #include <string>
 export module ApplicationSettings;
 
 import Application;
+import ErrorHandling;
 import SettingsRenderer;
 
 export namespace gg
@@ -17,5 +19,5 @@ export namespace gg
 		RendererType rendererType;
 	};
 
-	std::shared_ptr<Application> MakeApplication(ApplicationSettings const&);
+	std::expected<std::shared_ptr<Application>, Error> MakeApplication(ApplicationSettings const&);
 } // namespace gg 

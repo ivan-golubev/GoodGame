@@ -1,5 +1,7 @@
 module;
 #include <directx/d3d12.h>
+#include <cstdint>
+#include <format>
 #include <imgui/backends/imgui_impl_dx12.h>
 #include <imgui/backends/imgui_impl_sdl2.h>
 #include <WinPixEventRuntime/pix3.h>
@@ -16,7 +18,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace gg
 {
-	void DebugUI_D3D12::Initialize(ComPtr<ID3D12Device4> device, SDL_Window* windowHandleSDL)
+	std::expected<void, Error> DebugUI_D3D12::Initialize(ComPtr<ID3D12Device4> device, SDL_Window* windowHandleSDL)
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -29,9 +31,12 @@ namespace gg
 				.NumDescriptors = 1,
 				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 			};
-			ThrowIfFailed(
-				device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap))
-			);
+			HRESULT const result{ device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap)) };
+			if (FAILED(result))
+				return std::unexpected(Error{
+					.code = ErrorCode::D3D12DebugUIInitializationFailed,
+					.message = std::format("Failed to create the D3D12 ImGui descriptor heap (HRESULT 0x{:08X})", static_cast<uint32_t>(result)),
+				});
 		}
 
 		sdlBackendInitialized = ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
@@ -39,6 +44,12 @@ namespace gg
 			imguiSrvDescHeap.Get(),
 			imguiSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
 			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+		if (!sdlBackendInitialized || !dx12BackendInitialized)
+			return std::unexpected(Error{
+				.code = ErrorCode::D3D12DebugUIInitializationFailed,
+				.message = "Failed to initialize an ImGui D3D12 or SDL backend",
+			});
+		return {};
 	}
 
 	DebugUI_D3D12::~DebugUI_D3D12() noexcept
