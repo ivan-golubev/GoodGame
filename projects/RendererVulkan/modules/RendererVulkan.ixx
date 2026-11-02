@@ -108,11 +108,12 @@ namespace gg
 
 		std::expected<void, Error> CreateCommandBuffers();
 		std::expected<void, Error> CreateSyncObjects();
+		std::expected<void, Error> CreateRenderFinishedSemaphores();
 		std::expected<void, Error> CreateIndexBuffer(Mesh const&);
 		std::expected<void, Error> CreateDescriptorPool();
 
 		std::expected<void, Error> RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex);
-		std::expected<void, Error> SubmitCommands();
+		std::expected<void, Error> SubmitCommands(uint32_t imageIndex);
 
 		VkResult Present(uint32_t imageIndex);
 
@@ -162,8 +163,8 @@ namespace gg
 		VkSurfaceKHR surface{};
 		VkSwapchainKHR swapChain{};
 		/* Synchronization objects */
-		std::array<VkSemaphore, maxFramesInFlight> imageAvailableSemaphores{};
-		std::array<VkSemaphore, maxFramesInFlight> renderFinishedSemaphores{};
+		std::array<VkSemaphore, maxFramesInFlight> frameImageAvailableSemaphores{};
+		std::vector<VkSemaphore> swapchainImageRenderFinishedSemaphores;
 		std::array<VkFence, maxFramesInFlight> inFlightFences{};
 	};
 

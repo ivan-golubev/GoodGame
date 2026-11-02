@@ -128,6 +128,7 @@ namespace gg
 
 		if (auto result{ CreateCommandBuffers() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateSyncObjects() }; !result) return std::unexpected(result.error());
+		if (auto result{ CreateRenderFinishedSemaphores() }; !result) return std::unexpected(result.error());
 
 		{ /* ImGUI */
 			QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
@@ -550,12 +551,25 @@ namespace gg
 		};
 		for (size_t i = 0; i < maxFramesInFlight; ++i)
 		{
-			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS
-				|| vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS
+			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frameImageAvailableSemaphores[i]) != VK_SUCCESS
 				|| vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
 			{
 				return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan frame synchronization objects." });
 			}
+		}
+		return {};
+	}
+
+	std::expected<void, Error> RendererVulkan::CreateRenderFinishedSemaphores()
+	{
+		VkSemaphoreCreateInfo semaphoreInfo{
+			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		};
+		swapchainImageRenderFinishedSemaphores.resize(swapChainImages.size(), VK_NULL_HANDLE);
+		for (VkSemaphore& semaphore : swapchainImageRenderFinishedSemaphores)
+		{
+			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore) != VK_SUCCESS)
+				return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan swap chain image synchronization semaphore." });
 		}
 		return {};
 	}
@@ -900,9 +914,13 @@ namespace gg
 	std::expected<void, Error> RendererVulkan::RecreateSwapChain()
 	{
 		vkDeviceWaitIdle(device);
+		for (VkSemaphore semaphore : swapchainImageRenderFinishedSemaphores)
+			if (semaphore) vkDestroySemaphore(device, semaphore, nullptr);
+		swapchainImageRenderFinishedSemaphores.clear();
 		CleanupSwapChain();
 
 		if (auto result{ CreateSwapChain() }; !result) return std::unexpected(result.error());
+		if (auto result{ CreateRenderFinishedSemaphores() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
 		for (auto model : models)
@@ -999,10 +1017,11 @@ namespace gg
 
 			for (size_t i = 0; i < maxFramesInFlight; ++i)
 			{
-				if (imageAvailableSemaphores[i]) vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-				if (renderFinishedSemaphores[i]) vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+				if (frameImageAvailableSemaphores[i]) vkDestroySemaphore(device, frameImageAvailableSemaphores[i], nullptr);
 				if (inFlightFences[i]) vkDestroyFence(device, inFlightFences[i], nullptr);
 			}
+			for (VkSemaphore semaphore : swapchainImageRenderFinishedSemaphores)
+				if (semaphore) vkDestroySemaphore(device, semaphore, nullptr);
 			if (commandPool) vkDestroyCommandPool(device, commandPool, nullptr);
 		}
 
@@ -1033,7 +1052,7 @@ namespace gg
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 		uint32_t imageIndex;
-		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, frameImageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
@@ -1050,7 +1069,7 @@ namespace gg
 		if (auto commandResult{ RecordCommandBuffer(commandBuffers[currentFrame], imageIndex) }; !commandResult)
 			return std::unexpected(commandResult.error());
 		/* Execute the commands */
-		if (auto submitResult{ SubmitCommands() }; !submitResult)
+		if (auto submitResult{ SubmitCommands(imageIndex) }; !submitResult)
 			return std::unexpected(submitResult.error());
 		/* Present the frame and inefficiently wait for the frame to render. */
 		result = Present(imageIndex);
@@ -1165,7 +1184,7 @@ namespace gg
 
 	VkResult RendererVulkan::Present(uint32_t imageIndex)
 	{
-		VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+		VkSemaphore signalSemaphores[] = { swapchainImageRenderFinishedSemaphores[imageIndex] };
 		VkSwapchainKHR swapChains[] = { swapChain };
 		VkPresentInfoKHR presentInfo{
 			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -1178,11 +1197,11 @@ namespace gg
 		return vkQueuePresentKHR(graphicsQueue, &presentInfo);
 	}
 
-	std::expected<void, Error> RendererVulkan::SubmitCommands()
+	std::expected<void, Error> RendererVulkan::SubmitCommands(uint32_t imageIndex)
 	{
-		VkSemaphore waitSemaphores[]{ imageAvailableSemaphores[currentFrame] };
+		VkSemaphore waitSemaphores[]{ frameImageAvailableSemaphores[currentFrame] };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+		VkSemaphore signalSemaphores[] = { swapchainImageRenderFinishedSemaphores[imageIndex] };
 		VkSubmitInfo submitInfo{
 			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 			.waitSemaphoreCount = 1,
