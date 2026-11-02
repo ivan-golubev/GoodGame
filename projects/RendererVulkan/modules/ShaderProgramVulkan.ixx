@@ -4,7 +4,7 @@ module;
 #include <vulkan/vulkan.h>
 export module ShaderProgramVulkan;
 
-import ErrorHandling;
+export import ErrorHandling;
 import ShaderProgram;
 
 export namespace gg

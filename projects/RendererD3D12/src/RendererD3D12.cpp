@@ -8,6 +8,7 @@ module;
 #include <format>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
+#include <memory>
 #include <numbers>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -300,9 +301,10 @@ namespace gg
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
-		ShaderProgramD3D12* shader = new ShaderProgramD3D12();
-		shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath);
-		return std::shared_ptr<ShaderProgram>{ shader };
+		std::unique_ptr<ShaderProgramD3D12> shader{ new ShaderProgramD3D12() };
+		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
+			throw AssetLoadException(result.error().message);
+		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
 	void RendererD3D12::LoadTextures(std::shared_ptr<ModelD3D12> model)

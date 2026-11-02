@@ -1,10 +1,12 @@
 module;
 #include <directx/d3dcommon.h>
+#include <expected>
 #include <string>
 #include <wrl.h>
 export module ShaderProgramD3D12;
 
 import ShaderProgram;
+export import ErrorHandling;
 
 using Microsoft::WRL::ComPtr;
 
@@ -29,7 +31,7 @@ export namespace gg
 		/* Only D3D12 Renderer can create ShaderProgramD3D12 */
 		friend class RendererD3D12;
 		ShaderProgramD3D12() = default;
-		void Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
+		std::expected<void, Error> Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
 		ComPtr<ID3DBlob> vertexShaderBlob;
 		ComPtr<ID3DBlob> fragmentShaderBlob;
