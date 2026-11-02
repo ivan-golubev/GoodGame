@@ -1,8 +1,10 @@
 module;
 #include <string>
+#include <expected>
 #include <vulkan/vulkan.h>
 export module ShaderProgramVulkan;
 
+import ErrorHandling;
 import ShaderProgram;
 
 export namespace gg
@@ -26,7 +28,7 @@ export namespace gg
 		/* Only Vulkan Renderer can create ShaderProgramVulkan */
 		friend class RendererVulkan;
 		explicit ShaderProgramVulkan(VkDevice);
-		void Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
+		std::expected<void, Error> Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
 		std::string vertexShaderBlob;
 		std::string fragmentShaderBlob;

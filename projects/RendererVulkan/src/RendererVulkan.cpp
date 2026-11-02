@@ -984,9 +984,10 @@ namespace gg
 	{
 		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
 		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
-		ShaderProgramVulkan* shader = new ShaderProgramVulkan(device);
-		shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath);
-		return std::shared_ptr<ShaderProgram>{ shader };
+		std::unique_ptr<ShaderProgramVulkan> shader{ new ShaderProgramVulkan(device) };
+		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
+			throw AssetLoadException(result.error().message);
+		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
 	void RendererVulkan::LoadTextures(std::shared_ptr<ModelVulkan> model)

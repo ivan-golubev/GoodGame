@@ -16,6 +16,9 @@ export namespace gg
 		ModelMeshMissingTextureCoordinates,
 		ModelMeshMissingNormals,
 		TextureLoadFailed,
+		ShaderFileReadFailed,
+		ShaderFileEmpty,
+		ShaderModuleCreationFailed,
 	};
 
 	struct Error

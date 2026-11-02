@@ -1,6 +1,8 @@
 module;
 #include <filesystem>
 #include <fstream>
+#include <format>
+#include <expected>
 #include <memory>
 #include <string>
 #include <utility>
@@ -12,38 +14,48 @@ import RendererVulkan;
 
 namespace
 {
-	using gg::AssetLoadException;
-
-	VkShaderModule createShaderModule(VkDevice device, std::string const& shaderBlob)
+	std::expected<VkShaderModule, gg::Error> createShaderModule(VkDevice device, std::string const& shaderBlob, std::string const& shaderPath)
 	{
 		VkShaderModuleCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 			.codeSize = shaderBlob.size(),
 			.pCode = reinterpret_cast<const uint32_t*>(shaderBlob.data()),
 		};
-		VkShaderModule shaderModule;
-		if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
-		{
-			throw AssetLoadException("failed to create shader module!");
-		}
+		VkShaderModule shaderModule{};
+		VkResult const result{ vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) };
+		if (result != VK_SUCCESS)
+			return std::unexpected(gg::Error{
+				.code = gg::ErrorCode::ShaderModuleCreationFailed,
+				.message = std::format("Failed to create Vulkan shader module from '{}': VkResult {}", shaderPath, static_cast<int>(result)),
+			});
 		return shaderModule;
 	}
 
-	std::string readFile(std::string const& filename)
+	std::expected<std::string, gg::Error> readFile(std::string const& filename)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
 		if (!file.is_open())
-		{
-			throw AssetLoadException(std::format("failed to open file: {}", filename));
-		}
+			return std::unexpected(gg::Error{
+				.code = gg::ErrorCode::ShaderFileReadFailed,
+				.message = std::format("Failed to open shader file '{}' for reading", filename),
+			});
 
-		size_t fileSize = static_cast<size_t>(file.tellg());
+		std::streampos const fileSize{ file.tellg() };
+		if (fileSize <= 0)
+			return std::unexpected(gg::Error{
+				.code = gg::ErrorCode::ShaderFileEmpty,
+				.message = std::format("Shader file '{}' is empty or its size could not be read", filename),
+			});
 		std::string buffer{};
-		buffer.resize(fileSize);
+		buffer.resize(static_cast<size_t>(fileSize));
 		file.seekg(0);
-		file.read(buffer.data(), fileSize);
-		file.close();
+		file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+		if (!file)
+			return std::unexpected(gg::Error{
+				.code = gg::ErrorCode::ShaderFileReadFailed,
+				.message = std::format("Failed while reading shader file '{}'", filename),
+			});
 		return buffer;
 	}
 }
@@ -55,18 +67,31 @@ namespace gg
 	{
 	}
 
-	void ShaderProgramVulkan::Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	std::expected<void, Error> ShaderProgramVulkan::Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
 	{
-		vertexShaderBlob = readFile(std::filesystem::absolute(vertexShaderRelativePath).generic_string());
-		fragmentShaderBlob = readFile(std::filesystem::absolute(fragmentShaderRelativePath).generic_string());
-		BreakIfFalse(vertexShaderBlob.size() != 0);
-		BreakIfFalse(fragmentShaderBlob.size() != 0);
+		std::string const vertexShaderPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_string() };
+		std::string const fragmentShaderPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_string() };
+		auto vertexBlobResult{ readFile(vertexShaderPath) };
+		if (!vertexBlobResult)
+			return std::unexpected(vertexBlobResult.error());
+		vertexShaderBlob = std::move(*vertexBlobResult);
+		auto fragmentBlobResult{ readFile(fragmentShaderPath) };
+		if (!fragmentBlobResult)
+			return std::unexpected(fragmentBlobResult.error());
+		fragmentShaderBlob = std::move(*fragmentBlobResult);
 
-		vertexShader = createShaderModule(device, vertexShaderBlob);
-		fragmentShader = createShaderModule(device, fragmentShaderBlob);
+		auto vertexModuleResult{ createShaderModule(device, vertexShaderBlob, vertexShaderPath) };
+		if (!vertexModuleResult)
+			return std::unexpected(vertexModuleResult.error());
+		vertexShader = *vertexModuleResult;
+		auto fragmentModuleResult{ createShaderModule(device, fragmentShaderBlob, fragmentShaderPath) };
+		if (!fragmentModuleResult)
+			return std::unexpected(fragmentModuleResult.error());
+		fragmentShader = *fragmentModuleResult;
 
 		vertexShaderBlob.clear();
 		fragmentShaderBlob.clear();
+		return {};
 	}
 
 	ShaderProgramVulkan::~ShaderProgramVulkan()
