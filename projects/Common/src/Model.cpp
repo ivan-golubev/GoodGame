@@ -19,6 +19,79 @@ import ErrorHandling;
 using gg::AssetLoadException;
 using gg::BreakIfFalse;
 
+namespace
+{
+	aiScene const* readScene(std::string const& modelAbsolutePath, Assimp::Importer& importer)
+	{
+		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
+		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
+			aiProcess_Triangulate
+			| aiProcess_JoinIdenticalVertices
+			| aiProcess_SortByPType
+			| aiProcess_FlipUVs
+		);
+		if (!scene)
+			throw AssetLoadException(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
+
+		BreakIfFalse(scene->mNumMeshes > 0);
+		return scene;
+	}
+
+	gg::Mesh readMesh(aiMesh const* assimpMesh)
+	{
+		constexpr uint32_t UVsetNumber{ 0 };
+		BreakIfFalse(assimpMesh->HasPositions());
+		BreakIfFalse(assimpMesh->HasTextureCoords(UVsetNumber));
+		BreakIfFalse(assimpMesh->HasNormals());
+
+		bool const hasTextureCoords = assimpMesh->HasTextureCoords(UVsetNumber);
+		gg::Mesh mesh{};
+		mesh.vertices.reserve(assimpMesh->mNumVertices);
+		mesh.indices.reserve(assimpMesh->mNumFaces * 3);
+
+		for (unsigned int faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
+		{
+			aiFace* face{ &assimpMesh->mFaces[faceIndex] };
+			for (unsigned int j{ 0 }; j < face->mNumIndices; ++j)
+			{
+				auto vertexIndex = face->mIndices[j];
+				auto const& pos = assimpMesh->mVertices[vertexIndex];
+				auto const& normal = assimpMesh->mNormals[vertexIndex];
+
+				auto const textureCoords = hasTextureCoords
+					? assimpMesh->mTextureCoords[UVsetNumber][vertexIndex]
+					: aiVector3D{ 0, 0, 0 };
+
+				mesh.vertices.emplace_back(
+					static_cast<float>(pos.x),
+					static_cast<float>(pos.y),
+					static_cast<float>(pos.z),
+					1.0f, // w
+					static_cast<float>(textureCoords.x),
+					static_cast<float>(textureCoords.y),
+					static_cast<float>(normal.x),
+					static_cast<float>(normal.y),
+					static_cast<float>(normal.z),
+					0.0f
+				);
+			}
+		}
+		return mesh;
+	}
+
+	void loadMeshes(aiScene const& scene, gg::Model& model)
+	{
+		for (unsigned int i{ 0 }; i < scene.mNumMeshes; ++i)
+			model.meshes.emplace_back(readMesh(scene.mMeshes[i]));
+	}
+
+	void loadTextureNames(aiScene const& scene, gg::Model& model)
+	{
+		for (uint32_t i = 0; i < scene.mNumTextures; ++i)
+			model.textureNames.emplace_back(scene.mTextures[i]->mFilename.C_Str());
+	}
+}
+
 namespace gg
 {
 	uint64_t Mesh::VerticesSizeBytes() const { return static_cast<uint64_t>(vertices.size()) * sizeof(Vertex); }
@@ -57,64 +130,10 @@ namespace gg
 		BreakIfFalse(sizeof(ai_real) == sizeof(float));
 
 		Assimp::Importer importer;
-		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
-		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
-			aiProcess_Triangulate
-			| aiProcess_JoinIdenticalVertices
-			| aiProcess_SortByPType
-			| aiProcess_FlipUVs
-		);
-		if (!scene)
-			throw AssetLoadException(std::format("Failed to read the input model: {}, error: {}", modelAbsolutePath, importer.GetErrorString()));
-
-		BreakIfFalse(scene->mNumMeshes > 0);
+		aiScene const* scene{ readScene(modelAbsolutePath, importer) };
 		name = scene->mMeshes[0]->mName.C_Str();
-		/* Load meshes */
-		for (unsigned int i{ 0 }; i < scene->mNumMeshes; ++i)
-		{
-			aiMesh const* assimpMesh{ scene->mMeshes[i] };
-			constexpr uint32_t UVsetNumber{ 0 };
-			BreakIfFalse(assimpMesh->HasPositions());
-			BreakIfFalse(assimpMesh->HasTextureCoords(UVsetNumber));
-			BreakIfFalse(assimpMesh->HasNormals());
-
-			bool const hasTextureCoords = assimpMesh->HasTextureCoords(UVsetNumber);
-			Mesh mesh{};
-			mesh.vertices.reserve(assimpMesh->mNumVertices);
-			mesh.indices.reserve(assimpMesh->mNumFaces * 3);
-
-			for (unsigned int faceIndex{ 0 }; faceIndex < assimpMesh->mNumFaces; ++faceIndex)
-			{
-				aiFace* face{ &assimpMesh->mFaces[faceIndex] };
-				for (unsigned int j{ 0 }; j < face->mNumIndices; ++j)
-				{
-					auto vertexIndex = face->mIndices[j];
-					auto const& pos = assimpMesh->mVertices[vertexIndex];
-					auto const& normal = assimpMesh->mNormals[vertexIndex];
-
-					auto const textureCoords = hasTextureCoords
-						? assimpMesh->mTextureCoords[UVsetNumber][vertexIndex]
-						: aiVector3D{ 0, 0, 0 };
-
-					mesh.vertices.emplace_back(
-						static_cast<float>(pos.x),
-						static_cast<float>(pos.y),
-						static_cast<float>(pos.z),
-						1.0f, // w
-						static_cast<float>(textureCoords.x),
-						static_cast<float>(textureCoords.y),
-						static_cast<float>(normal.x),
-						static_cast<float>(normal.y),
-						static_cast<float>(normal.z),
-						0.0f
-					);
-				}
-			}
-			meshes.emplace_back(std::move(mesh));
-		}
-		/* Save texture names */
-		for (uint32_t i = 0; i < scene->mNumTextures; ++i)
-			textureNames.emplace_back(scene->mTextures[i]->mFilename.C_Str());
+		loadMeshes(*scene, *this);
+		loadTextureNames(*scene, *this);
 
 #ifdef NDEBUG
 		std::string{}.swap(modelAbsolutePath);
