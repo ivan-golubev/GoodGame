@@ -643,13 +643,29 @@ namespace gg
 			queueCreateInfo.pQueuePriorities = &queuePriority;
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
-		VkPhysicalDeviceFeatures deviceFeatures{};
-		deviceFeatures.samplerAnisotropy = VK_TRUE;
+		VkPhysicalDeviceFeatures enabledVk10Features{
+			.samplerAnisotropy = VK_TRUE
+		};
+		VkPhysicalDeviceVulkan12Features enabledVk12Features{
+			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+			.descriptorIndexing = true,
+			.shaderSampledImageArrayNonUniformIndexing = true,
+			.descriptorBindingVariableDescriptorCount = true,
+			.runtimeDescriptorArray = true,
+			.bufferDeviceAddress = true
+		};
+		VkPhysicalDeviceVulkan13Features enabledVk13Features{
+			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+			.pNext = &enabledVk12Features,
+			.synchronization2 = true,
+			.dynamicRendering = true,
+		};
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-		createInfo.pEnabledFeatures = &deviceFeatures;
+		createInfo.pEnabledFeatures = &enabledVk10Features;
+		createInfo.pNext = &enabledVk13Features;
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		if (VK_SUCCESS != vkCreateDevice(physicalDevice, &createInfo, nullptr, &device))
