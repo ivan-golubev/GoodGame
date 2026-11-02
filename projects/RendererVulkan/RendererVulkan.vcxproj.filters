@@ -31,6 +31,12 @@
     <ClCompile Include="modules\ShaderProgramVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\SkyboxVulkan.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkyboxVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="modules\TextureVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>

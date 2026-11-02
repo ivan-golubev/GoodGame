@@ -54,6 +54,7 @@ namespace gg
 		std::expected<void, Error> Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
+		std::expected<void, Error> LoadSkybox(std::string const& name) override;
 
 	private:
 		std::expected<void, Error> PopulateCommandList();

@@ -468,6 +468,12 @@ namespace gg
 		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
+	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const&)
+	{
+		__debugbreak(); // not implemented
+		return {};
+	}
+
 	std::expected<void, Error> RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
 	{
 		auto shaderResult{ LoadShader(shaderName) };

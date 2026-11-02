@@ -29,6 +29,7 @@ using std::chrono::nanoseconds;
 namespace gg
 {
 	struct ModelVulkan;
+	class SkyboxVulkan;
 
 	export class RendererVulkan : public Renderer
 	{
@@ -52,6 +53,7 @@ namespace gg
 		std::expected<void, Error> Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
+		std::expected<void, Error> LoadSkybox(std::string const& name) override;
 
 		VkDevice GetDevice() const;
 
@@ -155,6 +157,7 @@ namespace gg
 		std::shared_ptr<TimeManager> timeManager;
 		std::shared_ptr<Camera> camera;
 		std::unique_ptr<DebugUI_Vulkan> debugUI;
+		std::unique_ptr<SkyboxVulkan> skybox;
 
 		VkDevice device{};
 		VkInstance instance{};

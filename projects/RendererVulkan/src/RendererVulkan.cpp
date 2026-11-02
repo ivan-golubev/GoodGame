@@ -30,6 +30,7 @@ import Input;
 import Lighting;
 import ModelVulkan;
 import ShaderProgramVulkan;
+import SkyboxVulkan;
 import Texture;
 import TextureVulkan;
 import Vertex;
@@ -1027,6 +1028,7 @@ namespace gg
 
 		/* destroys the associated shaders and textures */
 		models.clear();
+		skybox.reset();
 
 		debugUI.reset();
 		if (device && descriptorPool) vkDestroyDescriptorPool(device, descriptorPool, nullptr);
@@ -1139,6 +1141,15 @@ namespace gg
 			return std::unexpected(result.error());
 
 		models.push_back(model);
+		return {};
+	}
+
+	std::expected<void, Error> RendererVulkan::LoadSkybox(std::string const& name)
+	{
+		skybox = std::make_unique<SkyboxVulkan>(name, device);
+		if (auto result{ skybox->Initialize() }; !result)
+			return std::unexpected(result.error());
+		__debugbreak(); // Skybox rendering is not implemented yet.
 		return {};
 	}
 

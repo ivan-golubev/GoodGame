@@ -125,6 +125,11 @@ namespace
 				DebugLog(DebugLevel::Error, error.message);
 				Application::Destroy();
 			};
+			if (auto const skyboxResult{ renderer->LoadSkybox("water") }; !skyboxResult)
+			{
+				handleAssetLoadError(skyboxResult.error());
+				return EXIT_FAILURE;
+			}
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };
 				if (auto const result{ renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position) }; !result)
