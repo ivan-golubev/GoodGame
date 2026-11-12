@@ -1149,7 +1149,6 @@ namespace gg
 		skybox = std::make_unique<SkyboxVulkan>(name, device);
 		if (auto result{ skybox->Initialize() }; !result)
 			return std::unexpected(result.error());
-		__debugbreak(); // Skybox rendering is not implemented yet.
 		return {};
 	}
 
@@ -1354,7 +1353,7 @@ namespace gg
 
 	std::expected<VkSampler, Error> RendererVulkan::CreateTextureSampler()
 	{
-			VkPhysicalDeviceProperties properties{ .apiVersion = 0 };
+		VkPhysicalDeviceProperties properties{ .apiVersion = 0 };
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 		VkSamplerCreateInfo samplerInfo{
 			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,

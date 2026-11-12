@@ -15,7 +15,8 @@ namespace gg
 {
 	namespace
 	{
-		constexpr std::array<char const*, 6> skyboxFaceNames{ "left", "top", "front", "bottom", "right", "back" };
+		// according to the VkImageSubresourceRange in the Vulkan specification for cube image views, the faces should be in the order +X, -X, +Y, -Y, +Z, -Z
+		constexpr std::array<char const*, 6> skyboxFaceNames{ "right", "left", "top", "bottom", "front", "back" };
 	}
 
 	SkyboxVulkan::SkyboxVulkan(std::string const& name, VkDevice device)

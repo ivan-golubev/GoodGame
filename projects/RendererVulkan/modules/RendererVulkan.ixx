@@ -20,6 +20,7 @@ import Input;
 import Model;
 import Renderer;
 import SettingsRenderer;
+import SkyboxVulkan;
 import Texture;
 import TimeManager;
 import Vertex;
@@ -29,7 +30,6 @@ using std::chrono::nanoseconds;
 namespace gg
 {
 	struct ModelVulkan;
-	class SkyboxVulkan;
 
 	export class RendererVulkan : public Renderer
 	{
