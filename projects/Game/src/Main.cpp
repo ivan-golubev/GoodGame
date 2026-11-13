@@ -124,7 +124,7 @@ namespace
 			{
 				DebugLog(DebugLevel::Error, error.message);
 			};
-			if (auto const skyboxResult{ renderer->LoadSkybox("water") }; !skyboxResult)
+			if (auto const skyboxResult{ renderer->LoadSkybox("water", "skybox")}; !skyboxResult)
 				handleAssetLoadError(skyboxResult.error());
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };

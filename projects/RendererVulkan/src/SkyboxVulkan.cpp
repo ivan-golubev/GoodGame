@@ -8,6 +8,7 @@ module SkyboxVulkan;
 import ErrorHandling;
 import RendererVulkan;
 import SettingsRenderer;
+import ShaderProgram;
 import Texture;
 import TextureVulkan;
 
@@ -19,8 +20,9 @@ namespace gg
 		constexpr std::array<char const*, 6> skyboxFaceNames{ "right", "left", "top", "bottom", "front", "back" };
 	}
 
-	SkyboxVulkan::SkyboxVulkan(std::string const& name, VkDevice device)
-		: device{ device }
+	SkyboxVulkan::SkyboxVulkan(std::string const& name, std::shared_ptr<ShaderProgram> s, VkDevice device)
+		: shaderProgram{ s }
+		, device{ device }
 	{
 		for (size_t i{}; i < textures.size(); ++i)
 			textures[i] = std::make_unique<Texture>(std::format("{}/skybox/{}/{}.{}", texturesLocation, name, skyboxFaceNames[i], texturesExtension));
@@ -34,6 +36,8 @@ namespace gg
 		if (textureImageView) vkDestroyImageView(device, textureImageView, nullptr);
 		if (textureImage) vkDestroyImage(device, textureImage, nullptr);
 		if (textureImageMemory) vkFreeMemory(device, textureImageMemory, nullptr);
+		if (graphicsPipeline) vkDestroyPipeline(device, graphicsPipeline, nullptr);
+		if (pipelineLayout) vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 	}
 
 	std::expected<void, Error> SkyboxVulkan::Initialize()

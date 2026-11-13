@@ -468,7 +468,7 @@ namespace gg
 		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
-	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const&)
+	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const& name, std::string const& shaderName)
 	{
 		__debugbreak(); // not implemented
 		return {};

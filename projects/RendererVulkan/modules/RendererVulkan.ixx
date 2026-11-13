@@ -53,7 +53,7 @@ namespace gg
 		std::expected<void, Error> Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
-		std::expected<void, Error> LoadSkybox(std::string const& name) override;
+		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
 
 		VkDevice GetDevice() const;
 
@@ -97,6 +97,8 @@ namespace gg
 		std::expected<void, Error> CreateCommandPool();
 
 		std::expected<void, Error> CreateImageViews();
+
+		std::expected<void, Error> CreateGraphicsPipeline(SkyboxVulkan&);
 
 		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
 		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);

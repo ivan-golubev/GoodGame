@@ -357,6 +357,12 @@ namespace gg
 		return {};
 	}
 
+	std::expected<void, Error> RendererVulkan::CreateGraphicsPipeline(SkyboxVulkan& skybox)
+	{
+		BreakIfFalse(skybox.shaderProgram.get());
+		return {};
+	}
+
 	std::expected<void, Error> RendererVulkan::CreateGraphicsPipeline(std::shared_ptr<ModelVulkan> model)
 	{
 		BreakIfFalse(model->shaderProgram.get());
@@ -924,6 +930,7 @@ namespace gg
 		if (auto result{ CreateRenderFinishedSemaphores() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
+		if (auto result{ CreateGraphicsPipeline(*skybox) }; !result) return std::unexpected(result.error());
 		for (auto model : models)
 			if (auto result{ CreateGraphicsPipeline(model) }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
@@ -1144,9 +1151,13 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::LoadSkybox(std::string const& name)
+	std::expected<void, Error> RendererVulkan::LoadSkybox(std::string const& name, std::string const& shaderName)
 	{
-		skybox = std::make_unique<SkyboxVulkan>(name, device);
+		auto shaderResult{ LoadShader(shaderName) };
+		if (!shaderResult)
+			return std::unexpected(shaderResult.error());
+		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
+		skybox = std::make_unique<SkyboxVulkan>(name, shader, device);
 		if (auto result{ skybox->Initialize() }; !result)
 			return std::unexpected(result.error());
 		return {};
