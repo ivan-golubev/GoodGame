@@ -369,32 +369,29 @@ namespace gg
 			vkDestroyPipelineLayout(device, skybox.graphicsPipeline.layout, nullptr);
 		skybox.graphicsPipeline = {};
 
-		// TODO(skybox): vertex input. Placeholder: the model vertex layout, which is valid for skybox.hlsl
-		// (it only reads POSITION at location 0) but needs a model-style vertex buffer.
-		// Replace with either an empty VkPipelineVertexInputStateCreateInfo + a cube generated from SV_VertexID
-		// in the shader (no vertex buffer), or a position-only binding (stride 3 floats, R32G32B32_SFLOAT at location 0).
-		auto bindingDescription = GetVertexBindingDescription();
-		auto attributeDescriptions = GetVertexAttributeDescriptions();
-		VkPipelineVertexInputStateCreateInfo vertexInputInfo{
+		// The skybox is a single fullscreen triangle generated in the vertex shader from SV_VertexID,
+		// so it reads no vertex attributes: no bindings, no attributes, and no vertex buffer to bind.
+		// Draw it with vkCmdDraw(commandBuffer, 3, 1, 0, 0).
+		VkPipelineVertexInputStateCreateInfo const vertexInputInfo{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			.vertexBindingDescriptionCount = 1,
-			.pVertexBindingDescriptions = &bindingDescription,
-			.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
-			.pVertexAttributeDescriptions = attributeDescriptions.data(),
+			.vertexBindingDescriptionCount = 0,
+			.pVertexBindingDescriptions = nullptr,
+			.vertexAttributeDescriptionCount = 0,
+			.pVertexAttributeDescriptions = nullptr,
 		};
 
-		// TODO(skybox): cull mode. The camera is inside the cube, so back-face culling hides the sky.
-		// Use VK_CULL_MODE_NONE (or VK_CULL_MODE_FRONT_BIT).
-		VkCullModeFlags const cullMode{ VK_CULL_MODE_BACK_BIT };
+		// One triangle that always faces the viewer; culling has nothing to remove.
+		VkCullModeFlags const cullMode{ VK_CULL_MODE_NONE };
 
 		// TODO(skybox): descriptor set layout. Placeholder: the model layout (bindings 0, 1, 2), which is compatible with
-		// skybox.hlsl. Replace with a dedicated layout: binding 0 = UBO ViewProjection (vertex),
+		// skybox.hlsl. Replace with a dedicated layout: binding 0 = UBO SkyboxCamera (fragment),
 		// binding 2 = combined image sampler for the cube map (fragment). The descriptor pool also needs room for its sets.
 
 		// TODO(skybox): depth state. The render pass has no depth attachment yet, so record the skybox draw before the models.
-		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL, and output position.xyww in the VS.
+		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL (the shader already writes z = 1).
 
-		// TODO(skybox): the ViewProjection uploaded for the skybox must have the camera translation removed.
+		// TODO(skybox): per-frame UBO SkyboxCamera { inverse(projection), transpose(mat3(view)) as a mat4 },
+		// descriptor sets, and the draw call in the command buffer.
 
 		auto result{ CreateGraphicsPipeline(
 			shaderProgram->GetVertexShader()
