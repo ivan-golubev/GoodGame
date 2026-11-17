@@ -8,6 +8,7 @@ module;
 export module SkyboxVulkan;
 
 import ErrorHandling;
+import GraphicsPipelineVulkan;
 import ShaderProgram;
 import Texture;
 
@@ -38,7 +39,8 @@ export namespace gg
 		VkImage textureImage{};
 		VkDeviceMemory textureImageMemory{};
 
-		VkPipeline graphicsPipeline{};
-		VkPipelineLayout pipelineLayout{};
+		GraphicsPipeline graphicsPipeline{};
+
+		friend class RendererVulkan;
 	};
 }

@@ -16,6 +16,7 @@ export module RendererVulkan;
 import Camera;
 import DebugUI_Vulkan;
 import GlobalSettings;
+import GraphicsPipelineVulkan;
 import Input;
 import Model;
 import Renderer;
@@ -102,6 +103,8 @@ namespace gg
 
 		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
 		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
+		std::expected<GraphicsPipeline, Error> CreateGraphicsPipeline(VkShaderModule vertexShader, VkShaderModule fragmentShader
+			, VkPipelineVertexInputStateCreateInfo const&, VkCullModeFlags, VkDescriptorSetLayout const&);
 		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelVulkan>);
 		std::expected<void, Error> CreateUniformBuffers(std::shared_ptr<ModelVulkan>);
 		std::expected<void, Error> CreateDescriptorSets(std::shared_ptr<ModelVulkan>);

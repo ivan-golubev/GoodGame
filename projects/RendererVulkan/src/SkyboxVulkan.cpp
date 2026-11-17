@@ -36,8 +36,8 @@ namespace gg
 		if (textureImageView) vkDestroyImageView(device, textureImageView, nullptr);
 		if (textureImage) vkDestroyImage(device, textureImage, nullptr);
 		if (textureImageMemory) vkFreeMemory(device, textureImageMemory, nullptr);
-		if (graphicsPipeline) vkDestroyPipeline(device, graphicsPipeline, nullptr);
-		if (pipelineLayout) vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+		if (graphicsPipeline.pipeline) vkDestroyPipeline(device, graphicsPipeline.pipeline, nullptr);
+		if (graphicsPipeline.layout) vkDestroyPipelineLayout(device, graphicsPipeline.layout, nullptr);
 	}
 
 	std::expected<void, Error> SkyboxVulkan::Initialize()

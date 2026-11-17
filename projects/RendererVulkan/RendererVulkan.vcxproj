@@ -122,6 +122,7 @@
   <ItemGroup>
     <ClCompile Include="modules\DebugUI_Vulkan.ixx" />
     <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
+    <ClCompile Include="modules\GraphicsPipelineVulkan.ixx" />
     <ClCompile Include="modules\ModelVulkan.ixx" />
     <ClCompile Include="modules\ShaderProgramVulkan.ixx" />
     <ClCompile Include="modules\SkyboxVulkan.ixx" />

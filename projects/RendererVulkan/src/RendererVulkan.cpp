@@ -360,6 +360,51 @@ namespace gg
 	std::expected<void, Error> RendererVulkan::CreateGraphicsPipeline(SkyboxVulkan& skybox)
 	{
 		BreakIfFalse(skybox.shaderProgram.get());
+		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(skybox.shaderProgram.get());
+		BreakIfFalse(shaderProgram);
+
+		if (skybox.graphicsPipeline.pipeline)
+			vkDestroyPipeline(device, skybox.graphicsPipeline.pipeline, nullptr);
+		if (skybox.graphicsPipeline.layout)
+			vkDestroyPipelineLayout(device, skybox.graphicsPipeline.layout, nullptr);
+		skybox.graphicsPipeline = {};
+
+		// TODO(skybox): vertex input. Placeholder: the model vertex layout, which is valid for skybox.hlsl
+		// (it only reads POSITION at location 0) but needs a model-style vertex buffer.
+		// Replace with either an empty VkPipelineVertexInputStateCreateInfo + a cube generated from SV_VertexID
+		// in the shader (no vertex buffer), or a position-only binding (stride 3 floats, R32G32B32_SFLOAT at location 0).
+		auto bindingDescription = GetVertexBindingDescription();
+		auto attributeDescriptions = GetVertexAttributeDescriptions();
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+			.vertexBindingDescriptionCount = 1,
+			.pVertexBindingDescriptions = &bindingDescription,
+			.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
+			.pVertexAttributeDescriptions = attributeDescriptions.data(),
+		};
+
+		// TODO(skybox): cull mode. The camera is inside the cube, so back-face culling hides the sky.
+		// Use VK_CULL_MODE_NONE (or VK_CULL_MODE_FRONT_BIT).
+		VkCullModeFlags const cullMode{ VK_CULL_MODE_BACK_BIT };
+
+		// TODO(skybox): descriptor set layout. Placeholder: the model layout (bindings 0, 1, 2), which is compatible with
+		// skybox.hlsl. Replace with a dedicated layout: binding 0 = UBO ViewProjection (vertex),
+		// binding 2 = combined image sampler for the cube map (fragment). The descriptor pool also needs room for its sets.
+
+		// TODO(skybox): depth state. The render pass has no depth attachment yet, so record the skybox draw before the models.
+		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL, and output position.xyww in the VS.
+
+		// TODO(skybox): the ViewProjection uploaded for the skybox must have the camera translation removed.
+
+		auto result{ CreateGraphicsPipeline(
+			shaderProgram->GetVertexShader()
+			, shaderProgram->GetFragmentShader()
+			, vertexInputInfo
+			, cullMode
+			, descriptorSetLayout) };
+		if (!result)
+			return std::unexpected(std::move(result.error()));
+		skybox.graphicsPipeline = *result;
 		return {};
 	}
 
@@ -367,22 +412,6 @@ namespace gg
 	{
 		BreakIfFalse(model->shaderProgram.get());
 		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(model->shaderProgram.get());
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.stage = VK_SHADER_STAGE_VERTEX_BIT,
-			.module = shaderProgram->GetVertexShader(),
-			.pName = entryPointVertexShader.data(),
-		};
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-			.module = shaderProgram->GetFragmentShader(),
-			.pName = entryPointFragmentShader.data(),
-		};
-
-		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };
 
 		auto bindingDescription = GetVertexBindingDescription();
 		auto attributeDescriptions = GetVertexAttributeDescriptions();
@@ -394,6 +423,43 @@ namespace gg
 			.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
 			.pVertexAttributeDescriptions = attributeDescriptions.data(),
 		};
+
+		auto result{ CreateGraphicsPipeline(
+			shaderProgram->GetVertexShader()
+			, shaderProgram->GetFragmentShader()
+			, vertexInputInfo
+			, VK_CULL_MODE_BACK_BIT
+			, descriptorSetLayout) };
+		if (!result)
+			return std::unexpected(std::move(result.error()));
+		model->graphicsPipeline = *result;
+		return {};
+	}
+
+	std::expected<GraphicsPipeline, Error> RendererVulkan::CreateGraphicsPipeline(
+		VkShaderModule vertexShader
+		, VkShaderModule fragmentShader
+		, VkPipelineVertexInputStateCreateInfo const& vertexInputInfo
+		, VkCullModeFlags cullMode
+		, VkDescriptorSetLayout const& setLayout)
+	{
+		std::expected<GraphicsPipeline, Error> result{ std::in_place };
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.stage = VK_SHADER_STAGE_VERTEX_BIT,
+			.module = vertexShader,
+			.pName = entryPointVertexShader.data(),
+		};
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.module = fragmentShader,
+			.pName = entryPointFragmentShader.data(),
+		};
+
+		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -433,7 +499,7 @@ namespace gg
 			.depthClampEnable = VK_FALSE,
 			.rasterizerDiscardEnable = VK_FALSE,
 			.polygonMode = VK_POLYGON_MODE_FILL,
-			.cullMode = VK_CULL_MODE_BACK_BIT,
+			.cullMode = cullMode,
 			.frontFace = VK_FRONT_FACE_CLOCKWISE,
 			.depthBiasEnable = VK_FALSE,
 			.lineWidth = 1.0f,
@@ -467,10 +533,10 @@ namespace gg
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.setLayoutCount = 1,
-			.pSetLayouts = &descriptorSetLayout,
+			.pSetLayouts = &setLayout,
 		};
 
-		if (VK_SUCCESS != vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &model->pipelineLayout))
+		if (VK_SUCCESS != vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &result->layout))
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan graphics pipeline layout." });
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{
@@ -483,16 +549,17 @@ namespace gg
 			.pRasterizationState = &rasterizer,
 			.pMultisampleState = &multisampling,
 			.pColorBlendState = &colorBlending,
-			.layout = model->pipelineLayout,
+			.layout = result->layout,
 			.renderPass = renderPass,
 			.subpass = 0,
 		};
 
-		if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &model->graphicsPipeline))
+		if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &result->pipeline))
 		{
+			vkDestroyPipelineLayout(device, result->layout, nullptr);
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan graphics pipeline." });
 		}
-		return {};
+		return result;
 	}
 
 	std::expected<void, Error> RendererVulkan::CreateFrameBuffers()
@@ -901,16 +968,11 @@ namespace gg
 		swapChainImageViews.clear();
 		for (auto model : models)
 		{
-			if (model->graphicsPipeline)
-			{
-				vkDestroyPipeline(device, model->graphicsPipeline, nullptr);
-				model->graphicsPipeline = VK_NULL_HANDLE;
-			}
-			if (model->pipelineLayout)
-			{
-				vkDestroyPipelineLayout(device, model->pipelineLayout, nullptr);
-				model->pipelineLayout = VK_NULL_HANDLE;
-			}
+			if (model->graphicsPipeline.pipeline)
+				vkDestroyPipeline(device, model->graphicsPipeline.pipeline, nullptr);
+			if (model->graphicsPipeline.layout)
+				vkDestroyPipelineLayout(device, model->graphicsPipeline.layout, nullptr);
+			model->graphicsPipeline = {};
 		}
 		if (renderPass) vkDestroyRenderPass(device, renderPass, nullptr);
 		renderPass = VK_NULL_HANDLE;
@@ -1282,9 +1344,9 @@ namespace gg
 				vkUnmapMemory(device, model->uniformBuffersMemoryDirLight[currentFrame]);
 			}
 
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline.pipeline);
 			/* bind a desciptor for the UBO */
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->pipelineLayout, 0, 1, &model->descriptorSets[currentFrame], 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline.layout, 0, 1, &model->descriptorSets[currentFrame], 0, nullptr);
 
 			VkBuffer vertexBuffers[]{ model->VB };
 			VkDeviceSize offsets[]{ 0 };

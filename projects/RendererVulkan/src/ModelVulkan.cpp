@@ -26,10 +26,10 @@ namespace gg
 		if (!device)
 			return;
 
-		if (graphicsPipeline)
-			vkDestroyPipeline(device, graphicsPipeline, nullptr);
-		if (pipelineLayout)
-			vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+		if (graphicsPipeline.pipeline)
+			vkDestroyPipeline(device, graphicsPipeline.pipeline, nullptr);
+		if (graphicsPipeline.layout)
+			vkDestroyPipelineLayout(device, graphicsPipeline.layout, nullptr);
 
 		if (VB)
 			vkDestroyBuffer(device, VB, nullptr);

@@ -7,6 +7,7 @@ module;
 #include <vulkan/vulkan.h>
 export module ModelVulkan;
 
+import GraphicsPipelineVulkan;
 import Model;
 import SettingsRenderer;
 
@@ -31,8 +32,7 @@ namespace gg
 
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets{};
 
-		VkPipeline graphicsPipeline{};
-		VkPipelineLayout pipelineLayout{};
+		GraphicsPipeline graphicsPipeline{};
 
 		friend class RendererVulkan;
 	};
