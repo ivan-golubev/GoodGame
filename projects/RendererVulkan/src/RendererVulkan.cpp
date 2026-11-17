@@ -123,6 +123,7 @@ namespace gg
 
 		if (auto result{ CreateDescriptorPool() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateDescriptorSetLayout() }; !result) return std::unexpected(result.error());
+		if (auto result{ CreateSkyboxDescriptorSetLayout() }; !result) return std::unexpected(result.error());
 
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateCommandPool() }; !result) return std::unexpected(result.error());
@@ -357,6 +358,37 @@ namespace gg
 		return {};
 	}
 
+	// Resources read by skybox.hlsl. Binding numbers match its VK_BINDING annotations; binding 1 is unused.
+	std::expected<void, Error> RendererVulkan::CreateSkyboxDescriptorSetLayout()
+	{
+		// SkyboxCamera: inverse projection and camera rotation, used to rebuild the view ray in the pixel shader.
+		VkDescriptorSetLayoutBinding const cameraBinding{
+			.binding = 0,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+		};
+
+		// Cube map and its sampler, sampled with the world-space view ray.
+		VkDescriptorSetLayoutBinding const cubeMapBinding{
+			.binding = 2,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+		};
+
+		std::array<VkDescriptorSetLayoutBinding, 2> const bindings{ cameraBinding, cubeMapBinding };
+		VkDescriptorSetLayoutCreateInfo const layoutInfo{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+			.bindingCount = static_cast<uint32_t>(bindings.size()),
+			.pBindings = bindings.data(),
+		};
+
+		if (VK_SUCCESS != vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &skyboxDescriptorSetLayout))
+			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan skybox descriptor set layout." });
+		return {};
+	}
+
 	std::expected<void, Error> RendererVulkan::CreateGraphicsPipeline(SkyboxVulkan& skybox)
 	{
 		BreakIfFalse(skybox.shaderProgram.get());
@@ -383,9 +415,7 @@ namespace gg
 		// One triangle that always faces the viewer; culling has nothing to remove.
 		VkCullModeFlags const cullMode{ VK_CULL_MODE_NONE };
 
-		// TODO(skybox): descriptor set layout. Placeholder: the model layout (bindings 0, 1, 2), which is compatible with
-		// skybox.hlsl. Replace with a dedicated layout: binding 0 = UBO SkyboxCamera (fragment),
-		// binding 2 = combined image sampler for the cube map (fragment). The descriptor pool also needs room for its sets.
+		// TODO(skybox): the descriptor pool needs room for the skybox descriptor sets.
 
 		// TODO(skybox): depth state. The render pass has no depth attachment yet, so record the skybox draw before the models.
 		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL (the shader already writes z = 1).
@@ -398,7 +428,7 @@ namespace gg
 			, shaderProgram->GetFragmentShader()
 			, vertexInputInfo
 			, cullMode
-			, descriptorSetLayout) };
+			, skyboxDescriptorSetLayout) };
 		if (!result)
 			return std::unexpected(std::move(result.error()));
 		skybox.graphicsPipeline = *result;
@@ -1099,6 +1129,7 @@ namespace gg
 		debugUI.reset();
 		if (device && descriptorPool) vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		if (device && descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		if (device && skyboxDescriptorSetLayout) vkDestroyDescriptorSetLayout(device, skyboxDescriptorSetLayout, nullptr);
 
 		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
 		if (device) vkDestroyDevice(device, nullptr);

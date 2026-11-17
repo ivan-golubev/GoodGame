@@ -95,6 +95,7 @@ namespace gg
 		std::expected<void, Error> CreateSwapChain();
 		std::expected<void, Error> CreateRenderPass();
 		std::expected<void, Error> CreateDescriptorSetLayout();
+		std::expected<void, Error> CreateSkyboxDescriptorSetLayout();
 		std::expected<void, Error> CreateCommandPool();
 
 		std::expected<void, Error> CreateImageViews();
@@ -146,6 +147,7 @@ namespace gg
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers{};
 		VkRenderPass renderPass{};
 		VkDescriptorSetLayout descriptorSetLayout{};
+		VkDescriptorSetLayout skyboxDescriptorSetLayout{};
 
 		/* Render Targets */
 		std::vector<VkImage> swapChainImages;
