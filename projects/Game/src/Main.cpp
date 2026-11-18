@@ -97,6 +97,9 @@ namespace
 					}
 					else if (key == SDLK_F1)
 					{
+						// Switch once per press: ignore the key release and auto-repeat events.
+						if (event.type != SDL_KEYDOWN || event.key.repeat)
+							break;
 						SetMouseLook(false);
 						rendererType = (rendererType == RendererType::Vulkan) ? RendererType::D3D12 : RendererType::Vulkan;
 						DebugLog(DebugLevel::Info, std::format("Changing the renderer to {}", ToString(rendererType)));
