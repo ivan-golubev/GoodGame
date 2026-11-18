@@ -15,6 +15,7 @@ import D3DHelpers;
 import ErrorHandling;
 import RendererD3D12;
 import ShaderProgram;
+import ShaderProgramD3D12;
 import Skybox;
 import Texture;
 
@@ -34,6 +35,8 @@ namespace gg
 		if (auto result{ CreateCubeTexture() }; !result)
 			return std::unexpected(result.error());
 		if (auto result{ CreateRootSignature() }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ CreatePipeline() }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -136,6 +139,42 @@ namespace gg
 			});
 		std::wstring const nameW{ name.begin(), name.end() };
 		SetName(rootSignature.Get(), std::format(L"RootSignature_Skybox_{}", nameW));
+		return {};
+	}
+
+	std::expected<void, Error> SkyboxD3D12::CreatePipeline()
+	{
+		BreakIfFalse(shaderProgram.get());
+		ShaderProgramD3D12 const* const shader{ dynamic_cast<ShaderProgramD3D12 const*>(shaderProgram.get()) };
+		BreakIfFalse(shader);
+
+		/* The skybox is a single fullscreen triangle generated in the vertex shader from SV_VertexID,
+		   so it reads no vertex attributes: empty input layout, and no vertex buffer to bind.
+		   Draw it with DrawInstanced(3, 1, 0, 0). */
+		D3D12_INPUT_LAYOUT_DESC const inputLayout{
+			.pInputElementDescs = nullptr,
+			.NumElements = 0,
+		};
+
+		/* The shader writes z = 1 (far plane). Test against the depth buffer so models cover the sky,
+		   with LESS_EQUAL so the sky passes where the buffer is still at its cleared value of 1.
+		   No depth writes: the sky never occludes anything. */
+		CD3DX12_DEPTH_STENCIL_DESC1 depthStencil{ D3D12_DEFAULT };
+		depthStencil.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+		depthStencil.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+		std::wstring const nameW{ name.begin(), name.end() };
+		auto result{ RendererD3D12::Get()->CreateGraphicsPipeline(
+			CD3DX12_SHADER_BYTECODE(shader->GetVertexShader().Get())
+			, CD3DX12_SHADER_BYTECODE(shader->GetFragmentShader().Get())
+			, inputLayout
+			, D3D12_CULL_MODE_NONE /* one triangle that always faces the viewer; nothing to cull */
+			, depthStencil
+			, rootSignature.Get()
+			, std::format(L"PSO_Skybox_{}", nameW)) };
+		if (!result)
+			return std::unexpected(std::move(result.error()));
+		pipelineState = std::move(*result);
 		return {};
 	}
 } // namespace gg

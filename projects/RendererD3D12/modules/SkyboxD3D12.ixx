@@ -25,6 +25,7 @@ export namespace gg
 	private:
 		std::expected<void, Error> CreateCubeTexture();
 		std::expected<void, Error> CreateRootSignature();
+		std::expected<void, Error> CreatePipeline();
 
 		std::string name;
 		ComPtr<ID3D12Device> device;
@@ -33,5 +34,6 @@ export namespace gg
 		ComPtr<ID3D12Resource> cubeTexture;   /* 2D texture array with one slice per face */
 
 		ComPtr<ID3D12RootSignature> rootSignature;
+		ComPtr<ID3D12PipelineState> pipelineState;
 	};
 } // namespace gg
