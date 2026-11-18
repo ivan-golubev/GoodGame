@@ -2,13 +2,17 @@ module;
 #include <cstdint>
 #include <cstring>
 #include <format>
+#include <glm/glm.hpp>
+#include <utility>
 #include <vulkan/vulkan.h>
 module SkyboxVulkan;
 
+import Camera;
 import ErrorHandling;
 import RendererVulkan;
 import SettingsRenderer;
 import ShaderProgram;
+import ShaderProgramVulkan;
 import Texture;
 import TextureVulkan;
 
@@ -36,8 +40,8 @@ namespace gg
 		if (textureImageView) vkDestroyImageView(device, textureImageView, nullptr);
 		if (textureImage) vkDestroyImage(device, textureImage, nullptr);
 		if (textureImageMemory) vkFreeMemory(device, textureImageMemory, nullptr);
-		if (graphicsPipeline.pipeline) vkDestroyPipeline(device, graphicsPipeline.pipeline, nullptr);
-		if (graphicsPipeline.layout) vkDestroyPipelineLayout(device, graphicsPipeline.layout, nullptr);
+		DestroyPipeline();
+		if (descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
 			if (uniformBuffersCamera[i]) vkDestroyBuffer(device, uniformBuffersCamera[i], nullptr);
@@ -45,7 +49,7 @@ namespace gg
 		}
 	}
 
-	std::expected<void, Error> SkyboxVulkan::Initialize()
+	std::expected<void, Error> SkyboxVulkan::Initialize(VkDescriptorPool descriptorPool)
 	{
 		for (auto& texture : textures)
 		{
@@ -68,7 +72,165 @@ namespace gg
 		if (!samplerResult)
 			return std::unexpected(samplerResult.error());
 		textureSampler = *samplerResult;
+
+		if (auto result{ CreateDescriptorSetLayout() }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ CreateUniformBuffers() }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ CreateDescriptorSets(descriptorPool) }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ CreatePipeline() }; !result)
+			return std::unexpected(result.error());
 		return {};
+	}
+
+	// Resources read by skybox.hlsl. Binding numbers match its VK_BINDING annotations; binding 1 is unused.
+	std::expected<void, Error> SkyboxVulkan::CreateDescriptorSetLayout()
+	{
+		// SkyboxCamera: inverse projection and camera rotation, used to rebuild the view ray in the pixel shader.
+		VkDescriptorSetLayoutBinding const cameraBinding{
+			.binding = 0,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+		};
+
+		// Cube map and its sampler, sampled with the world-space view ray.
+		VkDescriptorSetLayoutBinding const cubeMapBinding{
+			.binding = 2,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+		};
+
+		std::array<VkDescriptorSetLayoutBinding, 2> const bindings{ cameraBinding, cubeMapBinding };
+		VkDescriptorSetLayoutCreateInfo const layoutInfo{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+			.bindingCount = static_cast<uint32_t>(bindings.size()),
+			.pBindings = bindings.data(),
+		};
+
+		if (VK_SUCCESS != vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout))
+			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan skybox descriptor set layout." });
+		return {};
+	}
+
+	std::expected<void, Error> SkyboxVulkan::CreateUniformBuffers()
+	{
+		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
+		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
+		{
+			if (auto result{ renderer->CreateBuffer(uniformBuffersCamera[i], uniformBuffersMemoryCamera[i], sizeof(SkyboxCameraCB), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
+				return std::unexpected(result.error());
+		}
+		return {};
+	}
+
+	std::expected<void, Error> SkyboxVulkan::CreateDescriptorSets(VkDescriptorPool descriptorPool)
+	{
+		std::array<VkDescriptorSetLayout, maxFramesInFlight> layouts{};
+		layouts.fill(descriptorSetLayout);
+		VkDescriptorSetAllocateInfo const allocInfo{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool = descriptorPool,
+			.descriptorSetCount = maxFramesInFlight,
+			.pSetLayouts = layouts.data(),
+		};
+
+		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()))
+			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan descriptor sets for skybox." });
+
+		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
+		{
+			VkDescriptorBufferInfo const cameraInfo{
+				.buffer = uniformBuffersCamera[i],
+				.offset = 0,
+				.range = sizeof(SkyboxCameraCB),
+			};
+
+			VkDescriptorImageInfo const cubeMapInfo{
+				.sampler = textureSampler,
+				.imageView = textureImageView,
+				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			};
+
+			std::array<VkWriteDescriptorSet, 2> const descriptorWrites{
+				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &cameraInfo },
+				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSets[i], .dstBinding = 2, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .pImageInfo = &cubeMapInfo },
+			};
+
+			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		}
+		return {};
+	}
+
+	std::expected<void, Error> SkyboxVulkan::CreatePipeline()
+	{
+		BreakIfFalse(shaderProgram.get());
+		ShaderProgramVulkan* const shader{ dynamic_cast<ShaderProgramVulkan*>(shaderProgram.get()) };
+		BreakIfFalse(shader);
+
+		DestroyPipeline();
+
+		// The skybox is a single fullscreen triangle generated in the vertex shader from SV_VertexID,
+		// so it reads no vertex attributes: no bindings, no attributes, and no vertex buffer to bind.
+		// Draw it with vkCmdDraw(commandBuffer, 3, 1, 0, 0).
+		VkPipelineVertexInputStateCreateInfo const vertexInputInfo{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+			.vertexBindingDescriptionCount = 0,
+			.pVertexBindingDescriptions = nullptr,
+			.vertexAttributeDescriptionCount = 0,
+			.pVertexAttributeDescriptions = nullptr,
+		};
+
+		// One triangle that always faces the viewer; culling has nothing to remove.
+		VkCullModeFlags const cullMode{ VK_CULL_MODE_NONE };
+
+		// TODO(skybox): depth state. The render pass has no depth attachment yet, so the skybox is drawn before the models.
+		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL (the shader already writes z = 1).
+
+		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
+			shader->GetVertexShader()
+			, shader->GetFragmentShader()
+			, vertexInputInfo
+			, cullMode
+			, descriptorSetLayout) };
+		if (!result)
+			return std::unexpected(std::move(result.error()));
+		graphicsPipeline = *result;
+		return {};
+	}
+
+	void SkyboxVulkan::DestroyPipeline()
+	{
+		if (graphicsPipeline.pipeline) vkDestroyPipeline(device, graphicsPipeline.pipeline, nullptr);
+		if (graphicsPipeline.layout) vkDestroyPipelineLayout(device, graphicsPipeline.layout, nullptr);
+		graphicsPipeline = {};
+	}
+
+	void SkyboxVulkan::UpdateCamera(uint32_t frame, Camera const& camera)
+	{
+		SkyboxCameraCB const skyboxCamera{
+			/* screen position -> view-space point, used to rebuild the view ray per pixel */
+			.InvProjection = glm::inverse(camera.GetProjectionMatrix()),
+			/* view-space ray -> world space; rotation only, so the sky ignores the camera position.
+			   The inverse of a pure rotation is its transpose. */
+			.InvViewRotation = glm::mat4x4{ glm::transpose(glm::mat3x3{ camera.GetViewMatrix() }) },
+		};
+		void* data;
+		vkMapMemory(device, uniformBuffersMemoryCamera[frame], 0, sizeof(SkyboxCameraCB), 0, &data);
+		memcpy(data, &skyboxCamera, sizeof(SkyboxCameraCB));
+		vkUnmapMemory(device, uniformBuffersMemoryCamera[frame]);
+	}
+
+	void SkyboxVulkan::Draw(VkCommandBuffer commandBuffer, uint32_t frame, Camera const& camera)
+	{
+		UpdateCamera(frame, camera);
+
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.layout, 0, 1, &descriptorSets[frame], 0, nullptr);
+		/* One fullscreen triangle generated from SV_VertexID: no vertex buffer to bind. */
+		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 	}
 
 	std::expected<void, Error> SkyboxVulkan::CreateTextureImage()

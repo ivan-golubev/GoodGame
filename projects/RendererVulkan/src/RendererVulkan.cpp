@@ -123,7 +123,6 @@ namespace gg
 
 		if (auto result{ CreateDescriptorPool() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateDescriptorSetLayout() }; !result) return std::unexpected(result.error());
-		if (auto result{ CreateSkyboxDescriptorSetLayout() }; !result) return std::unexpected(result.error());
 
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateCommandPool() }; !result) return std::unexpected(result.error());
@@ -355,79 +354,6 @@ namespace gg
 
 		if (VK_SUCCESS != vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout))
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan descriptor set layout." });
-		return {};
-	}
-
-	// Resources read by skybox.hlsl. Binding numbers match its VK_BINDING annotations; binding 1 is unused.
-	std::expected<void, Error> RendererVulkan::CreateSkyboxDescriptorSetLayout()
-	{
-		// SkyboxCamera: inverse projection and camera rotation, used to rebuild the view ray in the pixel shader.
-		VkDescriptorSetLayoutBinding const cameraBinding{
-			.binding = 0,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-		};
-
-		// Cube map and its sampler, sampled with the world-space view ray.
-		VkDescriptorSetLayoutBinding const cubeMapBinding{
-			.binding = 2,
-			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-		};
-
-		std::array<VkDescriptorSetLayoutBinding, 2> const bindings{ cameraBinding, cubeMapBinding };
-		VkDescriptorSetLayoutCreateInfo const layoutInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-			.bindingCount = static_cast<uint32_t>(bindings.size()),
-			.pBindings = bindings.data(),
-		};
-
-		if (VK_SUCCESS != vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &skyboxDescriptorSetLayout))
-			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan skybox descriptor set layout." });
-		return {};
-	}
-
-	std::expected<void, Error> RendererVulkan::CreateGraphicsPipeline(SkyboxVulkan& skybox)
-	{
-		BreakIfFalse(skybox.shaderProgram.get());
-		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(skybox.shaderProgram.get());
-		BreakIfFalse(shaderProgram);
-
-		if (skybox.graphicsPipeline.pipeline)
-			vkDestroyPipeline(device, skybox.graphicsPipeline.pipeline, nullptr);
-		if (skybox.graphicsPipeline.layout)
-			vkDestroyPipelineLayout(device, skybox.graphicsPipeline.layout, nullptr);
-		skybox.graphicsPipeline = {};
-
-		// The skybox is a single fullscreen triangle generated in the vertex shader from SV_VertexID,
-		// so it reads no vertex attributes: no bindings, no attributes, and no vertex buffer to bind.
-		// Draw it with vkCmdDraw(commandBuffer, 3, 1, 0, 0).
-		VkPipelineVertexInputStateCreateInfo const vertexInputInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			.vertexBindingDescriptionCount = 0,
-			.pVertexBindingDescriptions = nullptr,
-			.vertexAttributeDescriptionCount = 0,
-			.pVertexAttributeDescriptions = nullptr,
-		};
-
-		// One triangle that always faces the viewer; culling has nothing to remove.
-		VkCullModeFlags const cullMode{ VK_CULL_MODE_NONE };
-
-		// TODO(skybox): depth state. The render pass has no depth attachment yet, so record the skybox draw before the models.
-		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL (the shader already writes z = 1).
-
-
-		auto result{ CreateGraphicsPipeline(
-			shaderProgram->GetVertexShader()
-			, shaderProgram->GetFragmentShader()
-			, vertexInputInfo
-			, cullMode
-			, skyboxDescriptorSetLayout) };
-		if (!result)
-			return std::unexpected(std::move(result.error()));
-		skybox.graphicsPipeline = *result;
 		return {};
 	}
 
@@ -903,16 +829,6 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::CreateUniformBuffers(SkyboxVulkan& skybox)
-	{
-		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
-		{
-			if (auto result{ CreateBuffer(skybox.uniformBuffersCamera[i], skybox.uniformBuffersMemoryCamera[i], sizeof(SkyboxCameraCB), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-				return std::unexpected(result.error());
-		}
-		return {};
-	}
-
 	std::expected<void, Error> RendererVulkan::CreateDescriptorPool()
 	{
 		// Per frame in flight, a model set uses 2 uniform buffers + 1 combined image sampler,
@@ -982,44 +898,6 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::CreateDescriptorSets(SkyboxVulkan& skybox)
-	{
-		std::array<VkDescriptorSetLayout, maxFramesInFlight> layouts{};
-		layouts.fill(skyboxDescriptorSetLayout);
-		VkDescriptorSetAllocateInfo const allocInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = descriptorPool,
-			.descriptorSetCount = maxFramesInFlight,
-			.pSetLayouts = layouts.data(),
-		};
-
-		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, skybox.descriptorSets.data()))
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan descriptor sets for skybox." });
-
-		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
-		{
-			VkDescriptorBufferInfo const cameraInfo{
-				.buffer = skybox.uniformBuffersCamera[i],
-				.offset = 0,
-				.range = sizeof(SkyboxCameraCB),
-			};
-
-			VkDescriptorImageInfo const cubeMapInfo{
-				.sampler = skybox.textureSampler,
-				.imageView = skybox.textureImageView,
-				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			};
-
-			std::array<VkWriteDescriptorSet, 2> const descriptorWrites{
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = skybox.descriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &cameraInfo },
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = skybox.descriptorSets[i], .dstBinding = 2, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .pImageInfo = &cubeMapInfo },
-			};
-
-			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-		}
-		return {};
-	}
-
 	std::expected<void, Error> RendererVulkan::ResizeWindow()
 	{
 		if (auto result{ RecreateSwapChain() }; !result)
@@ -1066,7 +944,7 @@ namespace gg
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
 		if (skybox)
-			if (auto result{ CreateGraphicsPipeline(*skybox) }; !result) return std::unexpected(result.error());
+			if (auto result{ skybox->CreatePipeline() }; !result) return std::unexpected(result.error());
 		for (auto model : models)
 			if (auto result{ CreateGraphicsPipeline(model) }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
@@ -1176,7 +1054,6 @@ namespace gg
 		debugUI.reset();
 		if (device && descriptorPool) vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		if (device && descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-		if (device && skyboxDescriptorSetLayout) vkDestroyDescriptorSetLayout(device, skyboxDescriptorSetLayout, nullptr);
 
 		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
 		if (device) vkDestroyDevice(device, nullptr);
@@ -1295,13 +1172,7 @@ namespace gg
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
 		skybox = std::make_unique<SkyboxVulkan>(name, shader, device);
-		if (auto result{ skybox->Initialize() }; !result)
-			return std::unexpected(result.error());
-		if (auto result{ CreateUniformBuffers(*skybox) }; !result)
-			return std::unexpected(result.error());
-		if (auto result{ CreateDescriptorSets(*skybox) }; !result)
-			return std::unexpected(result.error());
-		if (auto result{ CreateGraphicsPipeline(*skybox) }; !result)
+		if (auto result{ skybox->Initialize(descriptorPool) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -1406,26 +1277,9 @@ namespace gg
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+		/* No depth buffer yet: draw the sky first so the models are drawn over it. */
 		if (skybox)
-		{  /* submit the UBO data - skybox camera */
-			SkyboxCameraCB const skyboxCamera{
-				/* screen position -> view-space point, used to rebuild the view ray per pixel */
-				.InvProjection = glm::inverse(camera->GetProjectionMatrix()),
-				/* view-space ray -> world space; rotation only, so the sky ignores the camera position.
-				   The inverse of a pure rotation is its transpose. */
-				.InvViewRotation = glm::mat4x4{ glm::transpose(glm::mat3x3{ camera->GetViewMatrix() }) },
-			};
-			void* data;
-			vkMapMemory(device, skybox->uniformBuffersMemoryCamera[currentFrame], 0, sizeof(SkyboxCameraCB), 0, &data);
-			memcpy(data, &skyboxCamera, sizeof(SkyboxCameraCB));
-			vkUnmapMemory(device, skybox->uniformBuffersMemoryCamera[currentFrame]);
-
-			/* No depth buffer yet: draw the sky first so the models are drawn over it. */
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox->graphicsPipeline.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox->graphicsPipeline.layout, 0, 1, &skybox->descriptorSets[currentFrame], 0, nullptr);
-			/* One fullscreen triangle generated from SV_VertexID: no vertex buffer to bind. */
-			vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-		}
+			skybox->Draw(commandBuffer, currentFrame, *camera);
 
 		for (std::shared_ptr<ModelVulkan> model : models)
 		{
