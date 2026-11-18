@@ -6,6 +6,7 @@ module;
 #include <wrl.h>
 export module SkyboxD3D12;
 
+import Camera;
 import ErrorHandling;
 import ShaderProgram;
 import Skybox;
@@ -21,6 +22,7 @@ export namespace gg
 		~SkyboxD3D12() noexcept override = default;
 
 		std::expected<void, Error> Initialize();
+		void Draw(ID3D12GraphicsCommandList*, Camera const&);
 
 	private:
 		std::expected<void, Error> CreateCubeTexture();

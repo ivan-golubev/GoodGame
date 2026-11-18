@@ -11,13 +11,17 @@ module;
 #include <wrl.h>
 module SkyboxD3D12;
 
+import Camera;
 import D3DHelpers;
 import ErrorHandling;
+import Renderer;
 import RendererD3D12;
 import ShaderProgram;
 import ShaderProgramD3D12;
 import Skybox;
 import Texture;
+
+using Microsoft::WRL::ComPtr;
 
 namespace gg
 {
@@ -176,5 +180,23 @@ namespace gg
 			return std::unexpected(std::move(result.error()));
 		pipelineState = std::move(*result);
 		return {};
+	}
+
+	void SkyboxD3D12::Draw(ID3D12GraphicsCommandList* commandList, Camera const& camera)
+	{
+		commandList->SetPipelineState(pipelineState.Get());
+		commandList->SetGraphicsRootSignature(rootSignature.Get());
+
+		ID3D12DescriptorHeap* const heaps[]{ srvHeap.Get() };
+		commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+
+		/* b0: camera data to rebuild the view ray per pixel */
+		SkyboxCameraCB const skyboxCamera{ CalculateSkyboxCamera(camera) };
+		commandList->SetGraphicsRoot32BitConstants(0, sizeof(SkyboxCameraCB) / sizeof(uint32_t), &skyboxCamera, 0);
+		/* t0: the cube map */
+		commandList->SetGraphicsRootDescriptorTable(1, srvHeap->GetGPUDescriptorHandleForHeapStart());
+
+		/* One fullscreen triangle generated from SV_VertexID: no vertex buffer to bind. */
+		commandList->DrawInstanced(3, 1, 0, 0);
 	}
 } // namespace gg

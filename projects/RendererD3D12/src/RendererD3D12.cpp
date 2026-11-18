@@ -863,6 +863,10 @@ namespace gg
 					commandList->DrawInstanced(m.GetVertexCount(), 1, 0, 0);
 			}
 
+			/* After the models: the sky only fills pixels the depth test leaves at the far plane. */
+			if (skybox)
+				skybox->Draw(commandList.Get(), *camera);
+
 			debugUI->Render(commandList);
 
 			/* Indicate that the back buffer will now be used to present. */
