@@ -96,7 +96,7 @@ namespace gg
 
 		auto imageResult{ CreateImage(width
 			, height
-			, VK_FORMAT_R8G8B8A8_SRGB
+			, textureFormat
 			, VK_IMAGE_TILING_OPTIMAL
 			, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
 			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
@@ -105,13 +105,13 @@ namespace gg
 		if (!imageResult)
 			return std::unexpected(imageResult.error());
 
-		auto transitionToTransferResult{ TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) };
+		auto transitionToTransferResult{ TransitionImageLayout(textureImage, textureFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) };
 		if (!transitionToTransferResult)
 			return std::unexpected(transitionToTransferResult.error());
 		auto copyResult{ CopyBufferToImage(staging.buffer, textureImage, width, height) };
 		if (!copyResult)
 			return std::unexpected(copyResult.error());
-		auto transitionToShaderResult{ TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) };
+		auto transitionToShaderResult{ TransitionImageLayout(textureImage, textureFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) };
 		if (!transitionToShaderResult)
 			return std::unexpected(transitionToShaderResult.error());
 		return {};
@@ -292,7 +292,7 @@ namespace gg
 
 	std::expected<void, Error> TextureVulkan::CreateTextureImageView()
 	{
-		auto imageViewResult{ CreateImageView(RendererVulkan::Get()->GetDevice(), textureImage, VK_FORMAT_R8G8B8A8_SRGB) };
+		auto imageViewResult{ CreateImageView(RendererVulkan::Get()->GetDevice(), textureImage, textureFormat) };
 		if (!imageViewResult)
 			return std::unexpected(imageViewResult.error());
 		textureImageView = *imageViewResult;

@@ -423,7 +423,7 @@ namespace gg
 
 		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the Texture2D. */
-		LONG_PTR const textureRowPitch = texture->width * texture->channels;
+		LONG_PTR const textureRowPitch = texture->width * Texture::bytesPerPixel;
 		LONG_PTR const textureSlicePitch = textureRowPitch * texture->height;
 		D3D12_SUBRESOURCE_DATA textureData{
 			.pData = texture->pixels,

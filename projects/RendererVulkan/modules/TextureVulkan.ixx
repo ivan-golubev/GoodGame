@@ -9,6 +9,9 @@ import Texture;
 
 export namespace gg
 {
+	/* Texels are stored and sampled as-is, without sRGB decoding, matching the UNORM swapchain (and the D3D12 renderer). */
+	constexpr VkFormat textureFormat{ VK_FORMAT_R8G8B8A8_UNORM };
+
 	class TextureVulkan : public Texture
 	{
 	public:

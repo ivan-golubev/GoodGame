@@ -49,6 +49,6 @@ namespace gg
 
 	uint64_t Texture::SizeBytes() const
 	{
-		return static_cast<uint64_t>(width) * static_cast<uint64_t>(height) * 4;
+		return static_cast<uint64_t>(width) * static_cast<uint64_t>(height) * bytesPerPixel;
 	}
 } // namespace gg

@@ -17,12 +17,14 @@ namespace gg
 		std::expected<void, Error> Initialize();
 		uint64_t SizeBytes() const;
 
+		static constexpr uint32_t bytesPerPixel{ 4 }; /* pixels are always loaded as RGBA8 */
+
 		std::wstring GetName();
 
 		std::string textureAbsolutePath;
 		uint32_t width{};
 		uint32_t height{};
-		uint32_t channels{};
+		uint32_t channels{}; /* channel count of the source file; pixels in memory are always bytesPerPixel wide */
 		unsigned char* pixels{};
 
 	};

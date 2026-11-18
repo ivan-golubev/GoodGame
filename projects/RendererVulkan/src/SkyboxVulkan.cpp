@@ -264,7 +264,7 @@ namespace gg
 			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 			.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
 			.imageType = VK_IMAGE_TYPE_2D,
-			.format = VK_FORMAT_R8G8B8A8_SRGB,
+			.format = textureFormat,
 			.extent = { .width = textures[0]->width, .height = textures[0]->height, .depth = 1 },
 			.mipLevels = 1,
 			.arrayLayers = static_cast<uint32_t>(textures.size()),
@@ -356,7 +356,7 @@ namespace gg
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 			.image = textureImage,
 			.viewType = VK_IMAGE_VIEW_TYPE_CUBE,
-			.format = VK_FORMAT_R8G8B8A8_SRGB,
+			.format = textureFormat,
 			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = static_cast<uint32_t>(textures.size()) },
 		};
 		VkResult const result{ vkCreateImageView(device, &viewInfo, nullptr, &textureImageView) };
