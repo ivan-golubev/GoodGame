@@ -2,13 +2,13 @@ module;
 #include <cstdint>
 #include <cstring>
 #include <format>
-#include <glm/glm.hpp>
 #include <utility>
 #include <vulkan/vulkan.h>
 module SkyboxVulkan;
 
 import Camera;
 import ErrorHandling;
+import Renderer;
 import RendererVulkan;
 import SettingsRenderer;
 import ShaderProgram;
@@ -193,13 +193,7 @@ namespace gg
 
 	void SkyboxVulkan::UpdateCamera(uint32_t frame, Camera const& camera)
 	{
-		SkyboxCameraCB const skyboxCamera{
-			/* screen position -> view-space point, used to rebuild the view ray per pixel */
-			.InvProjection = glm::inverse(camera.GetProjectionMatrix()),
-			/* view-space ray -> world space; rotation only, so the sky ignores the camera position.
-			   The inverse of a pure rotation is its transpose. */
-			.InvViewRotation = glm::mat4x4{ glm::transpose(glm::mat3x3{ camera.GetViewMatrix() }) },
-		};
+		SkyboxCameraCB const skyboxCamera{ CalculateSkyboxCamera(camera) };
 		void* data;
 		vkMapMemory(device, uniformBuffersMemoryCamera[frame], 0, sizeof(SkyboxCameraCB), 0, &data);
 		memcpy(data, &skyboxCamera, sizeof(SkyboxCameraCB));
