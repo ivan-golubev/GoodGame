@@ -23,6 +23,7 @@ import Model;
 import ModelD3D12;
 import Renderer;
 import SettingsRenderer;
+import SkyboxD3D12;
 import Texture;
 import TimeManager;
 import Vertex;
@@ -128,6 +129,7 @@ namespace gg
 		uint32_t dsvDescriptorSize{};
 
 		std::vector<std::shared_ptr<ModelD3D12>> models;
+		std::unique_ptr<SkyboxD3D12> skybox;
 		std::shared_ptr<TimeManager> timeManager;
 		std::shared_ptr<Camera> camera;
 		std::unique_ptr<DebugUI_D3D12> debugUI;

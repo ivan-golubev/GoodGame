@@ -21,10 +21,16 @@
     <ClCompile Include="modules\ShaderProgramD3D12.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\SkyboxD3D12.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
     <ClCompile Include="src\RendererD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\D3DHelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkyboxD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ShaderProgramD3D12.cpp">

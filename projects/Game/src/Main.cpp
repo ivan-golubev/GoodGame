@@ -160,8 +160,8 @@ namespace
 			{
 				DebugLog(DebugLevel::Error, error.message);
 			};
-		/*	if (auto const skyboxResult{ renderer->LoadSkybox("water", "skybox")}; !skyboxResult)
-				handleAssetLoadError(skyboxResult.error());*/
+			if (auto const skyboxResult{ renderer->LoadSkybox("water", "skybox")}; !skyboxResult)
+				handleAssetLoadError(skyboxResult.error());
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };
 				if (auto const result{ renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position) }; !result)

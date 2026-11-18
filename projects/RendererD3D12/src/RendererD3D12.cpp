@@ -34,6 +34,7 @@ import PipelineStateStream;
 import SettingsD3D12;
 import ShaderProgram;
 import ShaderProgramD3D12;
+import SkyboxD3D12;
 import TextureD3D12;
 import Vertex;
 
@@ -533,7 +534,14 @@ namespace gg
 
 	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const& name, std::string const& shaderName)
 	{
-		__debugbreak(); // not implemented
+		auto shaderResult{ LoadShader(shaderName) };
+		if (!shaderResult)
+			return std::unexpected(shaderResult.error());
+
+		std::unique_ptr<SkyboxD3D12> newSkybox{ std::make_unique<SkyboxD3D12>(name, std::move(*shaderResult)) };
+		if (auto result{ newSkybox->Initialize() }; !result)
+			return std::unexpected(result.error());
+		skybox = std::move(newSkybox);
 		return {};
 	}
 
@@ -739,6 +747,7 @@ namespace gg
 
 		/* destroys the associated shaders and textures */
 		models.clear();
+		skybox.reset();
 
 		debugUI.reset();
 
