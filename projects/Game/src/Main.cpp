@@ -24,11 +24,27 @@ namespace
 {
 	constexpr uint32_t rendererChangeRequested{ 2 };
 
+	/* Shooter-style mouse look: the cursor is hidden and locked to the window, and SDL reports relative motion.
+	   Released (Tab, or when the window loses focus) the cursor is free to use the debug UI. */
+	void SetMouseLook(bool enabled)
+	{
+		SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
+		if (enabled)
+			SDL_FlushEvent(SDL_MOUSEMOTION); // drop motion queued while the cursor was free, so the view does not jump
+	}
+
+	bool IsMouseEvent(SDL_Event const& event)
+	{
+		return event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL;
+	}
+
 	uint32_t MainLoop(std::shared_ptr<gg::Application> app, gg::RendererType& rendererType)
 	{
 		using namespace gg;
 
 		bool isRunning{ true };
+		bool isMouseLook{ true };
+		SetMouseLook(isMouseLook);
 
 		while (isRunning)
 		{
@@ -36,7 +52,9 @@ namespace
 			// Poll for user input.
 			while (SDL_PollEvent(&event))
 			{
-				ImGui_ImplSDL2_ProcessEvent(&event);
+				// While looking around, the mouse drives the camera only, not the debug UI.
+				if (!(isMouseLook && IsMouseEvent(event)))
+					ImGui_ImplSDL2_ProcessEvent(&event);
 				switch (event.type)
 				{
 				case SDL_QUIT:
@@ -51,8 +69,17 @@ namespace
 						app->OnWindowMinimized();
 					else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
 						app->OnWindowRestored();
+					else if (windowEvent == SDL_WINDOWEVENT_FOCUS_LOST && isMouseLook)
+					{
+						isMouseLook = false;
+						SetMouseLook(isMouseLook);
+					}
 				}
 				break;
+				case SDL_MOUSEMOTION:
+					if (isMouseLook)
+						app->OnMouseMoved(event.motion.xrel, event.motion.yrel);
+					break;
 				case SDL_KEYDOWN:
 					[[fallthrough]];
 				case SDL_KEYUP:
@@ -60,8 +87,17 @@ namespace
 					SDL_Keycode key{ event.key.keysym.sym };
 					if (key == SDLK_ESCAPE)
 						isRunning = false;
+					else if (key == SDLK_TAB)
+					{
+						if (event.type == SDL_KEYDOWN && !event.key.repeat)
+						{
+							isMouseLook = !isMouseLook;
+							SetMouseLook(isMouseLook);
+						}
+					}
 					else if (key == SDLK_F1)
 					{
+						SetMouseLook(false);
 						rendererType = (rendererType == RendererType::Vulkan) ? RendererType::D3D12 : RendererType::Vulkan;
 						DebugLog(DebugLevel::Info, std::format("Changing the renderer to {}", ToString(rendererType)));
 						return rendererChangeRequested;
@@ -123,23 +159,18 @@ namespace
 			auto handleAssetLoadError = [](Error const& error)
 			{
 				DebugLog(DebugLevel::Error, error.message);
-				Application::Destroy();
 			};
+			if (auto const skyboxResult{ renderer->LoadSkybox("water", "skybox")}; !skyboxResult)
+				handleAssetLoadError(skyboxResult.error());
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };
 				if (auto const result{ renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position) }; !result)
-				{
 					handleAssetLoadError(result.error());
-					return EXIT_FAILURE;
-				}
 			}
 			{
 				glm::vec3 position{ 2.f, 0.f, 0.f };
 				if (auto const result{ renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position) }; !result)
-				{
 					handleAssetLoadError(result.error());
-					return EXIT_FAILURE;
-				}
 			}
 
 			uint32_t status = MainLoop(app, rendererType);

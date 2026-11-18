@@ -34,6 +34,7 @@ namespace gg
 		void OnWindowMinimized();
 		void OnWindowRestored();
 		void OnKeyPressed(SDL_Keycode, bool isDown);
+		void OnMouseMoved(int32_t deltaX, int32_t deltaY);
 
 		std::shared_ptr<InputManager> GetInputManager();
 		std::shared_ptr<TimeManager> GetTimeManager();

@@ -18,4 +18,15 @@ struct ModelViewProjection
 	float4 ViewPosition;
 };
 
+struct ViewProjection
+{
+	matrix<float, 4, 4> VP;
+};
+
+struct SkyboxCamera
+{
+	matrix<float, 4, 4> InvProjection;   // inverse of the camera projection
+	matrix<float, 4, 4> InvViewRotation; // camera orientation in world space (inverse view, rotation only)
+};
+
 #endif // !COMMON_HLSLI

@@ -1,5 +1,6 @@
 module;
 #include <array>
+#include <expected>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <memory>
@@ -7,6 +8,9 @@ module;
 #include <vulkan/vulkan.h>
 export module ModelVulkan;
 
+import Camera;
+import ErrorHandling;
+import GraphicsPipelineVulkan;
 import Model;
 import SettingsRenderer;
 
@@ -18,7 +22,19 @@ namespace gg
 		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, glm::vec3& position, VkDevice);
 		~ModelVulkan() noexcept;
 
+		std::expected<void, Error> Initialize(VkDescriptorPool);
+		std::expected<void, Error> CreatePipeline();
+		void Draw(VkCommandBuffer, uint32_t frame, Camera const&, double currentTimeSec);
+
 	private:
+		std::expected<void, Error> CreateVertexBuffer();
+		std::expected<void, Error> LoadTextures();
+		std::expected<void, Error> CreateDescriptorSetLayout();
+		std::expected<void, Error> CreateUniformBuffers();
+		std::expected<void, Error> CreateDescriptorSets(VkDescriptorPool);
+		void DestroyPipeline();
+		void UpdateUniformBuffers(uint32_t frame, Camera const&, double currentTimeSec);
+
 		VkDevice device;
 		VkBuffer VB{};
 		VkDeviceMemory vertexBufferMemory{};
@@ -29,11 +45,9 @@ namespace gg
 		std::array<VkBuffer, maxFramesInFlight> uniformBuffersDirLight{};
 		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryDirLight{};
 
+		VkDescriptorSetLayout descriptorSetLayout{};
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets{};
 
-		VkPipeline graphicsPipeline{};
-		VkPipelineLayout pipelineLayout{};
-
-		friend class RendererVulkan;
+		GraphicsPipeline graphicsPipeline{};
 	};
 } //namespace gg

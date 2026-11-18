@@ -16,10 +16,12 @@ export module RendererVulkan;
 import Camera;
 import DebugUI_Vulkan;
 import GlobalSettings;
+import GraphicsPipelineVulkan;
 import Input;
 import Model;
 import Renderer;
 import SettingsRenderer;
+import SkyboxVulkan;
 import Texture;
 import TimeManager;
 import Vertex;
@@ -52,6 +54,7 @@ namespace gg
 		std::expected<void, Error> Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
+		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
 
 		VkDevice GetDevice() const;
 
@@ -70,6 +73,11 @@ namespace gg
 		);
 
 		std::expected<void, Error> CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+		std::expected<GraphicsPipeline, Error> CreateGraphicsPipeline(VkShaderModule vertexShader, VkShaderModule fragmentShader
+			, VkPipelineVertexInputStateCreateInfo const&, VkCullModeFlags, VkDescriptorSetLayout const&);
+
+		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 
 	private:
 		struct QueueFamilyIndices
@@ -91,18 +99,9 @@ namespace gg
 		std::expected<void, Error> CreateLogicalDevice();
 		std::expected<void, Error> CreateSwapChain();
 		std::expected<void, Error> CreateRenderPass();
-		std::expected<void, Error> CreateDescriptorSetLayout();
 		std::expected<void, Error> CreateCommandPool();
 
 		std::expected<void, Error> CreateImageViews();
-
-		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> CreateUniformBuffers(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> CreateDescriptorSets(std::shared_ptr<ModelVulkan>);
-
-		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 
 		std::expected<void, Error> CreateFrameBuffers();
 
@@ -138,7 +137,6 @@ namespace gg
 		VkCommandPool commandPool{};
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers{};
 		VkRenderPass renderPass{};
-		VkDescriptorSetLayout descriptorSetLayout{};
 
 		/* Render Targets */
 		std::vector<VkImage> swapChainImages;
@@ -155,6 +153,7 @@ namespace gg
 		std::shared_ptr<TimeManager> timeManager;
 		std::shared_ptr<Camera> camera;
 		std::unique_ptr<DebugUI_Vulkan> debugUI;
+		std::unique_ptr<SkyboxVulkan> skybox;
 
 		VkDevice device{};
 		VkInstance instance{};

@@ -33,6 +33,19 @@ namespace gg
 			keys[TurnCameraRight] = isDown;
 	}
 
+	void InputManager::OnMouseMoved(int32_t deltaX, int32_t deltaY)
+	{
+		mouseDelta.x += static_cast<float>(deltaX);
+		mouseDelta.y += static_cast<float>(deltaY);
+	}
+
+	MouseDelta InputManager::ConsumeMouseDelta()
+	{
+		MouseDelta const delta{ mouseDelta };
+		mouseDelta = {};
+		return delta;
+	}
+
 	void InputManager::SetKeyDown(InputAction a, bool value)
 	{
 		keys[a] = value;

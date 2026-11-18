@@ -1,5 +1,7 @@
 module;
+#include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
@@ -14,14 +16,14 @@ import Application;
 namespace gg
 {
 	constexpr double cameraMoveSpeed{ 5.0 }; // in metres per second
-	constexpr double cameraTurnSpeed{ std::numbers::pi_v<double> }; // in radians per second
+	constexpr double cameraTurnSpeed{ std::numbers::pi_v<double> }; // in radians per second, arrow keys
+	constexpr float mouseSensitivity{ 0.0022f }; // in radians per pixel of mouse motion
+	constexpr float maxPitch{ std::numbers::pi_v<float> * 89.f / 180.f }; // stop short of straight up/down, where lookAt degenerates
 	constexpr float fieldOfView{ 90.f };
 	constexpr float nearPlane{ 0.1f };
 	constexpr float farPlane{ 100.f };
 
-	constexpr glm::vec3 forward{ 0.f, 0.f, 1.f };
 	constexpr glm::vec3 up{ 0.f, 1.f, 0.f };
-	constexpr glm::vec3 right{ 1.f, 0.f, 0.f };
 
 	Camera::Camera(std::shared_ptr<InputManager> inputManager)
 		: inputManager{ inputManager }
@@ -33,55 +35,52 @@ namespace gg
 		using namespace std::chrono_literals;
 
 		double const deltaTimeSeconds{ deltaTime / 1.0s };
-		float const cameraMoveAmount = static_cast<float>(cameraMoveSpeed * deltaTimeSeconds);
-		{
-			glm::vec3 const moveFB{ forward * cameraMoveAmount };
-			if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
-				cameraPosition += moveFB;
-			if (inputManager->IsKeyDown(InputAction::MoveCameraBack))
-				cameraPosition -= moveFB;
-		}
-		{
-			glm::vec3 const moveLR{ right * cameraMoveAmount };
-			if (inputManager->IsKeyDown(InputAction::MoveCameraRight))
-			{
-				focusPoint += moveLR;
-				cameraPosition += moveLR;
-			}
-			if (inputManager->IsKeyDown(InputAction::MoveCameraLeft))
-			{
-				focusPoint -= moveLR;
-				cameraPosition -= moveLR;
-			}
-		}
-		{
-			glm::vec3 const moveUD{ up * cameraMoveAmount };
-			if (inputManager->IsKeyDown(InputAction::RaiseCamera))
-			{
-				cameraPosition += moveUD;
-				focusPoint += moveUD;
-			}
-			if (inputManager->IsKeyDown(InputAction::LowerCamera))
-			{
-				cameraPosition -= moveUD;
-				focusPoint -= moveUD;
-			}
-		}
-		{
-			float const cameraTurnAmount = static_cast<float>(cameraTurnSpeed * deltaTimeSeconds);
-			glm::vec3 const moveLR{ right * cameraTurnAmount };
-			if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
-				focusPoint += moveLR;
-			if (inputManager->IsKeyDown(InputAction::TurnCameraLeft))
-				focusPoint -= moveLR;
 
-			glm::vec3 const moveUP{ up * cameraTurnAmount };
+		{	/* look: mouse motion (not scaled by frame time) plus arrow keys (scaled by frame time) */
+			MouseDelta const mouse{ inputManager->ConsumeMouseDelta() };
+			yaw += mouse.x * mouseSensitivity;
+			pitch -= mouse.y * mouseSensitivity; // screen y grows downwards
+
+			float const cameraTurnAmount = static_cast<float>(cameraTurnSpeed * deltaTimeSeconds);
+			if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
+				yaw += cameraTurnAmount;
+			if (inputManager->IsKeyDown(InputAction::TurnCameraLeft))
+				yaw -= cameraTurnAmount;
 			if (inputManager->IsKeyDown(InputAction::LookCameraUp))
-				focusPoint += moveUP;
+				pitch += cameraTurnAmount;
 			if (inputManager->IsKeyDown(InputAction::LookCameraDown))
-				focusPoint -= moveUP;
+				pitch -= cameraTurnAmount;
+
+			yaw = std::remainder(yaw, 2.f * std::numbers::pi_v<float>); // keep in [-pi, pi]
+			pitch = std::clamp(pitch, -maxPitch, maxPitch);
 		}
-		viewMatrix = glm::lookAtLH(cameraPosition, focusPoint, up);
+
+		/* left-handed: +X right, +Y up, +Z forward */
+		float const sinYaw{ std::sin(yaw) };
+		float const cosYaw{ std::cos(yaw) };
+		float const cosPitch{ std::cos(pitch) };
+		glm::vec3 const lookDirection{ sinYaw * cosPitch, std::sin(pitch), cosYaw * cosPitch };
+
+		{	/* move: forward/back and strafe stay on the horizontal plane; Q/E move along world up */
+			glm::vec3 const moveForward{ sinYaw, 0.f, cosYaw };
+			glm::vec3 const moveRight{ cosYaw, 0.f, -sinYaw };
+
+			float const cameraMoveAmount = static_cast<float>(cameraMoveSpeed * deltaTimeSeconds);
+			if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
+				cameraPosition += moveForward * cameraMoveAmount;
+			if (inputManager->IsKeyDown(InputAction::MoveCameraBack))
+				cameraPosition -= moveForward * cameraMoveAmount;
+			if (inputManager->IsKeyDown(InputAction::MoveCameraRight))
+				cameraPosition += moveRight * cameraMoveAmount;
+			if (inputManager->IsKeyDown(InputAction::MoveCameraLeft))
+				cameraPosition -= moveRight * cameraMoveAmount;
+			if (inputManager->IsKeyDown(InputAction::RaiseCamera))
+				cameraPosition += up * cameraMoveAmount;
+			if (inputManager->IsKeyDown(InputAction::LowerCamera))
+				cameraPosition -= up * cameraMoveAmount;
+		}
+
+		viewMatrix = glm::lookAtLH(cameraPosition, cameraPosition + lookDirection, up);
 	}
 
 	void Camera::UpdateProjectionMatrix(uint32_t width, uint32_t height)
@@ -96,6 +95,7 @@ namespace gg
 	glm::vec4 Camera::GetPositionVec4() const { return glm::vec4(cameraPosition, 1.0f); }
 
 	glm::vec3* Camera::GetPosition() { return &cameraPosition; }
-	glm::vec3* Camera::GetFocusPoint() { return &focusPoint; }
+	float* Camera::GetYaw() { return &yaw; }
+	float* Camera::GetPitch() { return &pitch; }
 
 } // namespace gg
