@@ -24,11 +24,14 @@ export namespace gg
 
 	private:
 		std::expected<void, Error> CreateCubeTexture();
+		std::expected<void, Error> CreateRootSignature();
 
 		std::string name;
 		ComPtr<ID3D12Device> device;
 
 		ComPtr<ID3D12DescriptorHeap> srvHeap; /* shader-visible, holds the cube map SRV */
 		ComPtr<ID3D12Resource> cubeTexture;   /* 2D texture array with one slice per face */
+
+		ComPtr<ID3D12RootSignature> rootSignature;
 	};
 } // namespace gg
