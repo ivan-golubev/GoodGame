@@ -22,4 +22,10 @@ export namespace gg
 		glm::vec4 ViewPosition;
 	};
 
+	struct SkyboxCameraCB
+	{
+		glm::mat4x4 InvProjection;
+		glm::mat4x4 InvViewRotation;
+	};
+
 } // namespace gg

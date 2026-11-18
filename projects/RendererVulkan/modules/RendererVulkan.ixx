@@ -101,6 +101,8 @@ namespace gg
 		std::expected<void, Error> CreateImageViews();
 
 		std::expected<void, Error> CreateGraphicsPipeline(SkyboxVulkan&);
+		std::expected<void, Error> CreateUniformBuffers(SkyboxVulkan&);
+		std::expected<void, Error> CreateDescriptorSets(SkyboxVulkan&);
 
 		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
 		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);

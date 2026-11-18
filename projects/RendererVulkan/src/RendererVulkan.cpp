@@ -415,13 +415,11 @@ namespace gg
 		// One triangle that always faces the viewer; culling has nothing to remove.
 		VkCullModeFlags const cullMode{ VK_CULL_MODE_NONE };
 
-		// TODO(skybox): the descriptor pool needs room for the skybox descriptor sets.
-
 		// TODO(skybox): depth state. The render pass has no depth attachment yet, so record the skybox draw before the models.
 		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL (the shader already writes z = 1).
 
-		// TODO(skybox): per-frame UBO SkyboxCamera { inverse(projection), transpose(mat3(view)) as a mat4 },
-		// descriptor sets, and the draw call in the command buffer.
+		// TODO(skybox): fill the per-frame SkyboxCameraCB { inverse(projection), transpose(mat3(view)) as a mat4 }
+		// and record the draw call in the command buffer.
 
 		auto result{ CreateGraphicsPipeline(
 			shaderProgram->GetVertexShader()
@@ -907,12 +905,24 @@ namespace gg
 		return {};
 	}
 
+	std::expected<void, Error> RendererVulkan::CreateUniformBuffers(SkyboxVulkan& skybox)
+	{
+		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
+		{
+			if (auto result{ CreateBuffer(skybox.uniformBuffersCamera[i], skybox.uniformBuffersMemoryCamera[i], sizeof(SkyboxCameraCB), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
+				return std::unexpected(result.error());
+		}
+		return {};
+	}
+
 	std::expected<void, Error> RendererVulkan::CreateDescriptorPool()
 	{
-		std::array<VkDescriptorPoolSize, 3> poolSizes{
-			VkDescriptorPoolSize{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = maxFramesInFlight },
-			VkDescriptorPoolSize{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = maxFramesInFlight },
-			VkDescriptorPoolSize{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = maxFramesInFlight },
+		// Per frame in flight, a model set uses 2 uniform buffers + 1 combined image sampler,
+		// and the skybox set uses 1 uniform buffer + 1 combined image sampler.
+		// Budget for up to maxDescriptorSets sets of either kind.
+		std::array<VkDescriptorPoolSize, 2> poolSizes{
+			VkDescriptorPoolSize{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = maxFramesInFlight * maxDescriptorSets * 2 },
+			VkDescriptorPoolSize{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = maxFramesInFlight * maxDescriptorSets },
 		};
 
 		VkDescriptorPoolCreateInfo poolInfo{
@@ -967,6 +977,44 @@ namespace gg
 				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = model->descriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &bufferInfoMVP },
 				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = model->descriptorSets[i], .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &bufferInfoDirLight },
 				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = model->descriptorSets[i], .dstBinding = 2, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .pImageInfo = &imageInfo },
+			};
+
+			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		}
+		return {};
+	}
+
+	std::expected<void, Error> RendererVulkan::CreateDescriptorSets(SkyboxVulkan& skybox)
+	{
+		std::array<VkDescriptorSetLayout, maxFramesInFlight> layouts{};
+		layouts.fill(skyboxDescriptorSetLayout);
+		VkDescriptorSetAllocateInfo const allocInfo{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool = descriptorPool,
+			.descriptorSetCount = maxFramesInFlight,
+			.pSetLayouts = layouts.data(),
+		};
+
+		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, skybox.descriptorSets.data()))
+			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan descriptor sets for skybox." });
+
+		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
+		{
+			VkDescriptorBufferInfo const cameraInfo{
+				.buffer = skybox.uniformBuffersCamera[i],
+				.offset = 0,
+				.range = sizeof(SkyboxCameraCB),
+			};
+
+			VkDescriptorImageInfo const cubeMapInfo{
+				.sampler = skybox.textureSampler,
+				.imageView = skybox.textureImageView,
+				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			};
+
+			std::array<VkWriteDescriptorSet, 2> const descriptorWrites{
+				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = skybox.descriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &cameraInfo },
+				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = skybox.descriptorSets[i], .dstBinding = 2, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .pImageInfo = &cubeMapInfo },
 			};
 
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -1249,6 +1297,10 @@ namespace gg
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
 		skybox = std::make_unique<SkyboxVulkan>(name, shader, device);
 		if (auto result{ skybox->Initialize() }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ CreateUniformBuffers(*skybox) }; !result)
+			return std::unexpected(result.error());
+		if (auto result{ CreateDescriptorSets(*skybox) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}

@@ -38,6 +38,11 @@ namespace gg
 		if (textureImageMemory) vkFreeMemory(device, textureImageMemory, nullptr);
 		if (graphicsPipeline.pipeline) vkDestroyPipeline(device, graphicsPipeline.pipeline, nullptr);
 		if (graphicsPipeline.layout) vkDestroyPipelineLayout(device, graphicsPipeline.layout, nullptr);
+		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
+		{
+			if (uniformBuffersCamera[i]) vkDestroyBuffer(device, uniformBuffersCamera[i], nullptr);
+			if (uniformBuffersMemoryCamera[i]) vkFreeMemory(device, uniformBuffersMemoryCamera[i], nullptr);
+		}
 	}
 
 	std::expected<void, Error> SkyboxVulkan::Initialize()

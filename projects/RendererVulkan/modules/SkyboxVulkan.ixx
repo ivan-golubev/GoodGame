@@ -9,6 +9,7 @@ export module SkyboxVulkan;
 
 import ErrorHandling;
 import GraphicsPipelineVulkan;
+import SettingsRenderer;
 import ShaderProgram;
 import Texture;
 
@@ -40,6 +41,11 @@ export namespace gg
 		VkDeviceMemory textureImageMemory{};
 
 		GraphicsPipeline graphicsPipeline{};
+
+		std::array<VkBuffer, maxFramesInFlight> uniformBuffersCamera{};
+		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryCamera{};
+
+		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets{};
 
 		friend class RendererVulkan;
 	};
