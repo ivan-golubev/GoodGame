@@ -70,7 +70,9 @@ namespace gg
 		if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_CollapsingHeader | ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImguiFloat3("Position", camera->GetPosition());
-			ImguiFloat3("Focus point", camera->GetFocusPoint());
+			ImGui::SliderAngle("Yaw", camera->GetYaw(), -180.f, 180.f);
+			ImGui::SliderAngle("Pitch", camera->GetPitch(), -89.f, 89.f);
+			ImGui::TextUnformatted("Tab: toggle mouse look / cursor");
 		}
 
 		ImGui::End();

@@ -96,4 +96,9 @@ namespace gg
 		inputManager->OnKeyPressed(key, isDown);
 	}
 
+	void Application::OnMouseMoved(int32_t deltaX, int32_t deltaY)
+	{
+		inputManager->OnMouseMoved(deltaX, deltaY);
+	}
+
 } // namespace gg 

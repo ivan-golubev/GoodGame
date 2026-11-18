@@ -22,13 +22,15 @@ export namespace gg
 
 		/* direct accessors */
 		glm::vec3* GetPosition();
-		glm::vec3* GetFocusPoint();
+		float* GetYaw();   /* radians, 0 = looking along +Z, positive = turned right */
+		float* GetPitch(); /* radians, 0 = level, positive = looking up */
 	private:
 		glm::mat4x4 projectionMatrix{};
 		glm::mat4x4 viewMatrix{};
 
 		glm::vec3 cameraPosition{ 0.f, 0.f, -4.f };
-		glm::vec3 focusPoint{ 0.f, 0.f, 0.f };
+		float yaw{ 0.f };
+		float pitch{ 0.f };
 
 		std::shared_ptr<InputManager> inputManager;
 	};
