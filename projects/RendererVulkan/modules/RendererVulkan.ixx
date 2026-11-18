@@ -15,6 +15,7 @@ export module RendererVulkan;
 
 import Camera;
 import DebugUI_Vulkan;
+import DepthBufferVulkan;
 import GlobalSettings;
 import GraphicsPipelineVulkan;
 import Input;
@@ -75,7 +76,7 @@ namespace gg
 		std::expected<void, Error> CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 		std::expected<GraphicsPipeline, Error> CreateGraphicsPipeline(VkShaderModule vertexShader, VkShaderModule fragmentShader
-			, VkPipelineVertexInputStateCreateInfo const&, VkCullModeFlags, VkDescriptorSetLayout const&);
+			, VkPipelineVertexInputStateCreateInfo const&, VkCullModeFlags, VkPipelineDepthStencilStateCreateInfo const&, VkDescriptorSetLayout const&);
 
 		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 
@@ -144,6 +145,8 @@ namespace gg
 		std::vector<VkFramebuffer> frameBuffers;
 		VkFormat swapChainImageFormat{};
 		VkExtent2D swapChainExtent{};
+
+		std::unique_ptr<DepthBufferVulkan> depthBuffer;
 
 		uint32_t currentFrame{ 0 };
 

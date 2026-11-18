@@ -190,11 +190,22 @@ namespace gg
 			.pVertexAttributeDescriptions = attributeDescriptions.data(),
 		};
 
+		/* Opaque geometry: nearer surfaces win and write their depth. */
+		VkPipelineDepthStencilStateCreateInfo const depthStencil{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+			.depthTestEnable = VK_TRUE,
+			.depthWriteEnable = VK_TRUE,
+			.depthCompareOp = VK_COMPARE_OP_LESS,
+			.depthBoundsTestEnable = VK_FALSE,
+			.stencilTestEnable = VK_FALSE,
+		};
+
 		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
 			shader->GetVertexShader()
 			, shader->GetFragmentShader()
 			, vertexInputInfo
 			, VK_CULL_MODE_BACK_BIT
+			, depthStencil
 			, descriptorSetLayout) };
 		if (!result)
 			return std::unexpected(std::move(result.error()));

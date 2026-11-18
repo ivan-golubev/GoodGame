@@ -35,5 +35,5 @@ export namespace gg
 		VkDeviceMemory textureImageMemory{};
 	};
 
-	std::expected<VkImageView, Error> CreateImageView(VkDevice, VkImage, VkFormat, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
+	std::expected<VkImageView, Error> CreateImageView(VkDevice, VkImage, VkFormat, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D, VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT);
 }

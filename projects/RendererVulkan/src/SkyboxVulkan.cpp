@@ -169,14 +169,24 @@ namespace gg
 		// One triangle that always faces the viewer; culling has nothing to remove.
 		VkCullModeFlags const cullMode{ VK_CULL_MODE_NONE };
 
-		// TODO(skybox): depth state. The render pass has no depth attachment yet, so the skybox is drawn before the models.
-		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL (the shader already writes z = 1).
+		// The shader writes z = 1 (far plane). Test against the depth buffer so models cover the sky,
+		// with LESS_OR_EQUAL so the sky passes where the buffer is still at its cleared value of 1.
+		// No depth writes: the sky never occludes anything.
+		VkPipelineDepthStencilStateCreateInfo const depthStencil{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+			.depthTestEnable = VK_TRUE,
+			.depthWriteEnable = VK_FALSE,
+			.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+			.depthBoundsTestEnable = VK_FALSE,
+			.stencilTestEnable = VK_FALSE,
+		};
 
 		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
 			shader->GetVertexShader()
 			, shader->GetFragmentShader()
 			, vertexInputInfo
 			, cullMode
+			, depthStencil
 			, descriptorSetLayout) };
 		if (!result)
 			return std::unexpected(std::move(result.error()));

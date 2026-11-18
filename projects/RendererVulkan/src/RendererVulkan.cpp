@@ -119,7 +119,13 @@ namespace gg
 		if (auto result{ CreateLogicalDevice() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateSwapChain() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
+		{
+			auto depthFormatResult{ DepthBufferVulkan::FindFormat(physicalDevice) };
+			if (!depthFormatResult) return std::unexpected(depthFormatResult.error());
+			depthBuffer = std::make_unique<DepthBufferVulkan>(device, physicalDevice, *depthFormatResult);
+		}
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
+		if (auto result{ depthBuffer->Create(swapChainExtent) }; !result) return std::unexpected(result.error());
 
 		if (auto result{ CreateDescriptorPool() }; !result) return std::unexpected(result.error());
 
@@ -283,29 +289,51 @@ namespace gg
 			.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		};
 
+		/* Cleared to 1.0 (far plane) every frame; the contents are not needed after the pass. */
+		VkAttachmentDescription depthAttachment{
+			.format = depthBuffer->GetFormat(),
+			.samples = VK_SAMPLE_COUNT_1_BIT,
+			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		};
+
 		VkAttachmentReference colorAttachmentRef{
 			.attachment = 0,
 			.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		};
 
+		VkAttachmentReference depthAttachmentRef{
+			.attachment = 1,
+			.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		};
+
+		/* The previous frame may still be testing against the shared depth image: wait for its depth tests
+		   before this frame clears it, in addition to the existing colour output dependency. */
 		VkSubpassDependency dependency{
 			.srcSubpass = VK_SUBPASS_EXTERNAL,
 			.dstSubpass = 0,
-			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.srcAccessMask = 0,
+			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 		};
 
 		VkSubpassDescription subpass{
 			.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
 			.colorAttachmentCount = 1,
 			.pColorAttachments = &colorAttachmentRef,
+			.pDepthStencilAttachment = &depthAttachmentRef,
 		};
 
+		std::array<VkAttachmentDescription, 2> const attachments{ colorAttachment, depthAttachment };
 		VkRenderPassCreateInfo renderPassInfo{
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-			.attachmentCount = 1,
-			.pAttachments = &colorAttachment,
+			.attachmentCount = static_cast<uint32_t>(attachments.size()),
+			.pAttachments = attachments.data(),
 			.subpassCount = 1,
 			.pSubpasses = &subpass,
 			.dependencyCount = 1,
@@ -324,6 +352,7 @@ namespace gg
 		, VkShaderModule fragmentShader
 		, VkPipelineVertexInputStateCreateInfo const& vertexInputInfo
 		, VkCullModeFlags cullMode
+		, VkPipelineDepthStencilStateCreateInfo const& depthStencil
 		, VkDescriptorSetLayout const& setLayout)
 	{
 		std::expected<GraphicsPipeline, Error> result{ std::in_place };
@@ -431,6 +460,7 @@ namespace gg
 			.pViewportState = &viewportState,
 			.pRasterizationState = &rasterizer,
 			.pMultisampleState = &multisampling,
+			.pDepthStencilState = &depthStencil,
 			.pColorBlendState = &colorBlending,
 			.layout = result->layout,
 			.renderPass = renderPass,
@@ -450,12 +480,13 @@ namespace gg
 		frameBuffers.resize(swapChainImageViews.size());
 		for (size_t i{ 0 }; i < swapChainImageViews.size(); ++i)
 		{
-			VkImageView attachments[]{ swapChainImageViews[i] };
+			/* Every framebuffer shares the one depth image; the render pass dependency orders its use across frames. */
+			std::array<VkImageView, 2> const attachments{ swapChainImageViews[i], depthBuffer->GetView() };
 			VkFramebufferCreateInfo framebufferInfo{
 				.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 				.renderPass = renderPass,
-				.attachmentCount = 1,
-				.pAttachments = attachments,
+				.attachmentCount = static_cast<uint32_t>(attachments.size()),
+				.pAttachments = attachments.data(),
 				.width = swapChainExtent.width,
 				.height = swapChainExtent.height,
 				.layers = 1,
@@ -807,6 +838,7 @@ namespace gg
 		if (auto result{ CreateRenderFinishedSemaphores() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
+		if (auto result{ depthBuffer->Create(swapChainExtent) }; !result) return std::unexpected(result.error());
 		if (skybox)
 			if (auto result{ skybox->CreatePipeline() }; !result) return std::unexpected(result.error());
 		for (auto model : models)
@@ -900,6 +932,7 @@ namespace gg
 			vkDeviceWaitIdle(device);
 
 			CleanupSwapChain();
+			depthBuffer.reset();
 
 			for (size_t i = 0; i < maxFramesInFlight; ++i)
 			{
@@ -1061,27 +1094,29 @@ namespace gg
 		if (VK_SUCCESS != vkBeginCommandBuffer(commandBuffer, &beginInfo))
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererFrameFailed, .message = "Failed to begin recording Vulkan command buffer." });
 
-		VkClearValue clearColor{
-			.color = { .float32 = { 0.0f, 0.2f, 0.4f, 1.0f } },
+		/* Same order as the render pass attachments: colour, then depth (cleared to the far plane). */
+		std::array<VkClearValue, 2> const clearValues{
+			VkClearValue{ .color = { .float32 = { 0.0f, 0.2f, 0.4f, 1.0f } } },
+			VkClearValue{ .depthStencil = { .depth = 1.0f, .stencil = 0 } },
 		};
 		VkRenderPassBeginInfo renderPassInfo{
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 			.renderPass = renderPass,
 			.framebuffer = frameBuffers[imageIndex],
 			.renderArea = { .offset = { .x = 0, .y = 0 }, .extent = swapChainExtent },
-			.clearValueCount = 1,
-			.pClearValues = &clearColor,
+			.clearValueCount = static_cast<uint32_t>(clearValues.size()),
+			.pClearValues = clearValues.data(),
 		};
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		/* No depth buffer yet: draw the sky first so the models are drawn over it. */
-		if (skybox)
-			skybox->Draw(commandBuffer, currentFrame, *camera);
-
 		double const currentTimeSec{ timeManager->GetCurrentTimeSec() };
 		for (std::shared_ptr<ModelVulkan> model : models)
 			model->Draw(commandBuffer, currentFrame, *camera, currentTimeSec);
+
+		/* After the models: the sky only fills pixels the depth test leaves at the far plane. */
+		if (skybox)
+			skybox->Draw(commandBuffer, currentFrame, *camera);
 
 		debugUI->Render(commandBuffer);
 

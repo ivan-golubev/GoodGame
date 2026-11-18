@@ -58,7 +58,13 @@
     <ClCompile Include="modules\DebugUI_Vulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\DepthBufferVulkan.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
     <ClCompile Include="src\DebugUI_Vulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DepthBufferVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

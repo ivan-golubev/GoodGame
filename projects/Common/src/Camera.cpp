@@ -86,6 +86,7 @@ namespace gg
 	void Camera::UpdateProjectionMatrix(uint32_t width, uint32_t height)
 	{
 
+		/* Depth maps to 0 (near) .. 1 (far), the Vulkan/D3D12 convention: GLM_FORCE_DEPTH_ZERO_TO_ONE is set in props/GLM.props. */
 		projectionMatrix = glm::perspectiveFovLH(glm::radians(fieldOfView), static_cast<float>(width), static_cast<float>(height), nearPlane, farPlane);
 	}
 

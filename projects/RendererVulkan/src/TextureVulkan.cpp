@@ -268,7 +268,7 @@ namespace gg
 		return renderer->EndSingleTimeCommands(commandBuffer);
 	}
 
-	std::expected<VkImageView, Error> CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType)
+	std::expected<VkImageView, Error> CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType, VkImageAspectFlags aspect)
 	{
 		// A cube view must cover all 6 faces; the image must be created with VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT.
 		uint32_t const layerCount{ viewType == VK_IMAGE_VIEW_TYPE_CUBE ? 6u : 1u };
@@ -277,7 +277,7 @@ namespace gg
 			.image = image,
 			.viewType = viewType,
 			.format = format,
-			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = layerCount },
+			.subresourceRange = { .aspectMask = aspect, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = layerCount },
 		};
 
 		VkImageView imageView{};
