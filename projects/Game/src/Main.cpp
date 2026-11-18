@@ -160,8 +160,8 @@ namespace
 			{
 				DebugLog(DebugLevel::Error, error.message);
 			};
-			if (auto const skyboxResult{ renderer->LoadSkybox("water", "skybox")}; !skyboxResult)
-				handleAssetLoadError(skyboxResult.error());
+		/*	if (auto const skyboxResult{ renderer->LoadSkybox("water", "skybox")}; !skyboxResult)
+				handleAssetLoadError(skyboxResult.error());*/
 			{
 				glm::vec3 position{ -2.f, 0.f, 0.f };
 				if (auto const result{ renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position) }; !result)
@@ -202,7 +202,7 @@ int main()
 
 	constexpr uint32_t width{ 1920 };
 	constexpr uint32_t height{ 1080 };
-	RendererType rendererType{ RendererType::Vulkan };
+	RendererType rendererType{ RendererType::D3D12 };
 	uint32_t status{ 0 };
 	while (status = RunApplication(width, height, rendererType) == rendererChangeRequested) {}
 	return status;

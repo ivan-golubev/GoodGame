@@ -300,6 +300,34 @@ namespace gg
 			{ .SemanticName = "TEXCOORD", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 }
 		};
 
+		std::string const psoName{ std::format("PSO_{}", model->name) };
+		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
+
+		auto result{ CreateGraphicsPipeline(
+			CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get())
+			, CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get())
+			, D3D12_INPUT_LAYOUT_DESC{ .pInputElementDescs = inputLayout, .NumElements = _countof(inputLayout) }
+			, D3D12_CULL_MODE_BACK
+			, CD3DX12_DEPTH_STENCIL_DESC1{ D3D12_DEFAULT }
+			, rootSignature.Get()
+			, psoNameW) };
+		if (!result)
+			return std::unexpected(std::move(result.error()));
+		model->pipelineState = std::move(*result);
+		return {};
+	}
+
+	std::expected<ComPtr<ID3D12PipelineState>, Error> RendererD3D12::CreateGraphicsPipeline(
+		D3D12_SHADER_BYTECODE const& vertexShader
+		, D3D12_SHADER_BYTECODE const& pixelShader
+		, D3D12_INPUT_LAYOUT_DESC const& inputLayout
+		, D3D12_CULL_MODE cullMode
+		, CD3DX12_DEPTH_STENCIL_DESC1 const& depthStencil
+		, ID3D12RootSignature* pipelineRootSignature
+		, std::wstring const& name)
+	{
+		std::expected<ComPtr<ID3D12PipelineState>, Error> result{ std::in_place };
+
 		D3D12_RT_FORMAT_ARRAY rtvFormats{
 			.RTFormats = { rtvFormat },
 			.NumRenderTargets = 1,
@@ -307,18 +335,17 @@ namespace gg
 
 		CD3DX12_BLEND_DESC blendDesc{ D3D12_DEFAULT };
 		CD3DX12_RASTERIZER_DESC rasterizerDesc{ D3D12_DEFAULT };
+		rasterizerDesc.CullMode = cullMode;
 
 		PipelineStateStream pipelineStateStream{
-			.pRootSignature = rootSignature.Get(),
-			.InputLayout = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(D3D12_INPUT_LAYOUT_DESC{
-				.pInputElementDescs = inputLayout,
-				.NumElements = _countof(inputLayout),
-			}),
+			.pRootSignature = pipelineRootSignature,
+			.InputLayout = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(inputLayout),
 			.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
 			.BlendState = blendDesc,
 			.RasterizerState = rasterizerDesc,
-			.VS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get()),
-			.PS = CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get()),
+			.DepthStencilState = depthStencil,
+			.VS = vertexShader,
+			.PS = pixelShader,
 			.DSVFormat = DXGI_FORMAT_D32_FLOAT,
 			.RTVFormats = rtvFormats,
 		};
@@ -327,12 +354,10 @@ namespace gg
 			.SizeInBytes = sizeof(PipelineStateStream),
 			.pPipelineStateSubobjectStream = &pipelineStateStream,
 		};
-		HRESULT const d3d12CreateGraphicsPipelineStateResult{ device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&model->pipelineState)) };
+		HRESULT const d3d12CreateGraphicsPipelineStateResult{ device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&*result)) };
 		D3D12_CHECK_HRESULT(d3d12CreateGraphicsPipelineStateResult, ErrorCode::D3D12PipelineCreationFailed, "create graphics pipeline state");
-		std::string const psoName{ std::format("PSO_{}", model->name) };
-		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
-		SetName(model->pipelineState.Get(), psoNameW);
-		return {};
+		SetName(result->Get(), name);
+		return result;
 	}
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)

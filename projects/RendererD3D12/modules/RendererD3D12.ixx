@@ -56,6 +56,15 @@ namespace gg
 		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
 		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
 
+		std::expected<ComPtr<ID3D12PipelineState>, Error> CreateGraphicsPipeline(
+			D3D12_SHADER_BYTECODE const& vertexShader
+			, D3D12_SHADER_BYTECODE const& pixelShader
+			, D3D12_INPUT_LAYOUT_DESC const&
+			, D3D12_CULL_MODE
+			, CD3DX12_DEPTH_STENCIL_DESC1 const&
+			, ID3D12RootSignature*
+			, std::wstring const& name);
+
 	private:
 		std::expected<void, Error> PopulateCommandList();
 		std::expected<void, Error> WaitForPreviousFrame();
