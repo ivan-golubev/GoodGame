@@ -538,7 +538,7 @@ namespace gg
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 
-		std::unique_ptr<SkyboxD3D12> newSkybox{ std::make_unique<SkyboxD3D12>(name, std::move(*shaderResult)) };
+		std::unique_ptr<SkyboxD3D12> newSkybox{ std::make_unique<SkyboxD3D12>(name, std::move(*shaderResult), device.Get()) };
 		if (auto result{ newSkybox->Initialize() }; !result)
 			return std::unexpected(result.error());
 		skybox = std::move(newSkybox);
