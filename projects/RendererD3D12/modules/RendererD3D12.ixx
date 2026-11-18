@@ -9,6 +9,7 @@ module;
 #include <glm/vec4.hpp>
 #include <memory>
 #include <SDL2/SDL_video.h>
+#include <span>
 #include <string>
 #include <wrl.h>
 export module RendererD3D12;
@@ -64,6 +65,15 @@ namespace gg
 			, CD3DX12_DEPTH_STENCIL_DESC1 const&
 			, ID3D12RootSignature*
 			, std::wstring const& name);
+
+		/* Uploads one image per array slice into a new default-heap texture and writes its SRV to srvHandle.
+		   srvDimension: D3D12_SRV_DIMENSION_TEXTURE2D (1 image) or D3D12_SRV_DIMENSION_TEXTURECUBE (6 images, +X, -X, +Y, -Y, +Z, -Z). */
+		std::expected<ComPtr<ID3D12Resource>, Error> UploadTexture(
+			std::span<Texture const* const> images
+			, D3D12_SRV_DIMENSION srvDimension
+			, D3D12_CPU_DESCRIPTOR_HANDLE srvHandle
+			, std::wstring const& resourceName
+			, std::string const& sourceName);
 
 	private:
 		std::expected<void, Error> PopulateCommandList();

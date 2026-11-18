@@ -19,7 +19,6 @@ export namespace gg
 		std::expected<void, Error> Initialize();
 
 	private:
-		ComPtr<ID3D12Resource> texture_CPU_Resource;
 		ComPtr<ID3D12Resource> texture_GPU_Resource;
 
 		friend class RendererD3D12;

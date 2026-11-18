@@ -1,5 +1,6 @@
 module;
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <chrono>
 #include <directx/d3d12.h>
@@ -10,6 +11,7 @@ module;
 #include <glm/vec4.hpp>
 #include <memory>
 #include <numbers>
+#include <span>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #include <vector>
@@ -385,26 +387,53 @@ namespace gg
 	std::expected<std::shared_ptr<Texture>, Error> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
 	{
 		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
-		auto makeUploadError = [&textureRelativePath](char const* operation, HRESULT result)
-		{
-			return Error{
-				.code = ErrorCode::D3D12TextureUploadFailed,
-				.message = std::format("Failed to {} for texture '{}': HRESULT 0x{:08X}", operation, textureRelativePath, static_cast<uint32_t>(result)),
-			};
-		};
 		std::unique_ptr<TextureD3D12> texture{ std::make_unique<TextureD3D12>(textureRelativePath) };
 		std::wstring const textureName{ texture->GetName() };
 		if (auto const result{ texture->Initialize() }; !result)
 			return std::unexpected(result.error());
 
+		std::array<Texture const*, 1> const images{ texture.get() };
+		auto uploadResult{ UploadTexture(images, D3D12_SRV_DIMENSION_TEXTURE2D, srvHeap->GetCPUDescriptorHandleForHeapStart(), textureName, textureRelativePath) };
+		if (!uploadResult)
+			return std::unexpected(std::move(uploadResult.error()));
+		texture->texture_GPU_Resource = std::move(*uploadResult);
+
+		return std::shared_ptr<Texture>{ std::move(texture) };
+	}
+
+	std::expected<ComPtr<ID3D12Resource>, Error> RendererD3D12::UploadTexture(
+		std::span<Texture const* const> images
+		, D3D12_SRV_DIMENSION srvDimension
+		, D3D12_CPU_DESCRIPTOR_HANDLE srvHandle
+		, std::wstring const& resourceName
+		, std::string const& sourceName)
+	{
+		auto makeUploadError = [&sourceName](char const* operation, HRESULT result)
+		{
+			return Error{
+				.code = ErrorCode::D3D12TextureUploadFailed,
+				.message = std::format("Failed to {} for texture '{}': HRESULT 0x{:08X}", operation, sourceName, static_cast<uint32_t>(result)),
+			};
+		};
+
+		BreakIfFalse(!images.empty());
+		BreakIfFalse(srvDimension == D3D12_SRV_DIMENSION_TEXTURE2D ? images.size() == 1 : true);
+		BreakIfFalse(srvDimension == D3D12_SRV_DIMENSION_TEXTURECUBE ? images.size() == 6 : true);
+		uint32_t const width{ images[0]->width };
+		uint32_t const height{ images[0]->height };
+		for (Texture const* image : images)
+			BreakIfFalse(image->width == width && image->height == height);
+		uint32_t const subresourceCount{ static_cast<uint32_t>(images.size()) };
+
+		std::expected<ComPtr<ID3D12Resource>, Error> gpuResource{ std::in_place };
 		HRESULT result{};
-		// Describe and create a Texture2D.
+		// Describe and create a Texture2D (array) with one slice per image.
 		D3D12_RESOURCE_DESC textureDesc{
 			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
 			.Alignment = 0,
-			.Width = texture->width,
-			.Height = texture->height,
-			.DepthOrArraySize = 1,
+			.Width = width,
+			.Height = height,
+			.DepthOrArraySize = static_cast<UINT16>(subresourceCount),
 			.MipLevels = 1,
 			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
 			.SampleDesc = { .Count = 1, .Quality = 0 },
@@ -419,13 +448,15 @@ namespace gg
 			&textureDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			nullptr,
-			IID_PPV_ARGS(&texture->texture_GPU_Resource)
+			IID_PPV_ARGS(&*gpuResource)
 		);
 		if (FAILED(result))
 			return std::unexpected(makeUploadError("create the GPU texture resource", result));
-		SetName(texture->texture_GPU_Resource.Get(), textureName);
-		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(texture->texture_GPU_Resource.Get(), 0, 1);
+		SetName(gpuResource->Get(), resourceName);
+		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(gpuResource->Get(), 0, subresourceCount);
 
+		/* Intermediate upload buffer; only needed until the copy has executed. */
+		ComPtr<ID3D12Resource> uploadResource;
 		CD3DX12_HEAP_PROPERTIES const uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
 		CD3DX12_RESOURCE_DESC const bufferResDesc{ CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize) };
 		result = device->CreateCommittedResource(
@@ -434,7 +465,7 @@ namespace gg
 			&bufferResDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&texture->texture_CPU_Resource));
+			IID_PPV_ARGS(&uploadResource));
 		if (FAILED(result))
 			return std::unexpected(makeUploadError("create the texture upload resource", result));
 
@@ -447,16 +478,19 @@ namespace gg
 			return std::unexpected(makeUploadError("reset the command list", result));
 
 		/* Copy data to the intermediate upload heap and then schedule a copy
-		   from the upload heap to the Texture2D. */
-		LONG_PTR const textureRowPitch = texture->width * Texture::bytesPerPixel;
-		LONG_PTR const textureSlicePitch = textureRowPitch * texture->height;
-		D3D12_SUBRESOURCE_DATA textureData{
-			.pData = texture->pixels,
-			.RowPitch = textureRowPitch,
-			.SlicePitch = textureSlicePitch,
-		};
+		   from the upload heap to the texture, one subresource per image. */
+		LONG_PTR const textureRowPitch = width * Texture::bytesPerPixel;
+		LONG_PTR const textureSlicePitch = textureRowPitch * height;
+		std::vector<D3D12_SUBRESOURCE_DATA> textureData;
+		textureData.reserve(subresourceCount);
+		for (Texture const* image : images)
+			textureData.push_back(D3D12_SUBRESOURCE_DATA{
+				.pData = image->pixels,
+				.RowPitch = textureRowPitch,
+				.SlicePitch = textureSlicePitch,
+			});
 
-		UINT64 const uploadedBytes{ UpdateSubresources(commandList.Get(), texture->texture_GPU_Resource.Get(), texture->texture_CPU_Resource.Get(), 0, 0, 1, &textureData) };
+		UINT64 const uploadedBytes{ UpdateSubresources(commandList.Get(), gpuResource->Get(), uploadResource.Get(), 0, 0, subresourceCount, textureData.data()) };
 		if (uploadedBytes == 0)
 		{
 			HRESULT const closeResult{ commandList->Close() };
@@ -464,21 +498,24 @@ namespace gg
 				return std::unexpected(makeUploadError("close the command list after texture upload failed", closeResult));
 			return std::unexpected(Error{
 				.code = ErrorCode::D3D12TextureUploadFailed,
-				.message = std::format("Failed to copy texture '{}' into the D3D12 upload resource", textureRelativePath),
+				.message = std::format("Failed to copy texture '{}' into the D3D12 upload resource", sourceName),
 			});
 		}
 
-		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(texture->texture_GPU_Resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) };
+		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(gpuResource->Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) };
 		commandList->ResourceBarrier(1, &barrier);
 		{
 			/* Describe and create a SRV for the texture. */
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{
 				.Format = textureDesc.Format,
-				.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+				.ViewDimension = srvDimension,
 				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-				.Texture2D = { .MostDetailedMip = 0, .MipLevels = 1, .PlaneSlice = 0, .ResourceMinLODClamp = 0.0f },
 			};
-			device->CreateShaderResourceView(texture->texture_GPU_Resource.Get(), &srvDesc, srvHeap->GetCPUDescriptorHandleForHeapStart());
+			if (srvDimension == D3D12_SRV_DIMENSION_TEXTURECUBE)
+				srvDesc.TextureCube = { .MostDetailedMip = 0, .MipLevels = 1, .ResourceMinLODClamp = 0.0f };
+			else
+				srvDesc.Texture2D = { .MostDetailedMip = 0, .MipLevels = 1, .PlaneSlice = 0, .ResourceMinLODClamp = 0.0f };
+			device->CreateShaderResourceView(gpuResource->Get(), &srvDesc, srvHandle);
 		}
 
 		result = commandList->Close();
@@ -487,10 +524,11 @@ namespace gg
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
 		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
+		/* Wait for the copy to finish before the upload buffer is released. */
 		if (auto const waitResult{ WaitForPreviousFrame() }; !waitResult)
 			return std::unexpected(waitResult.error());
 
-		return std::shared_ptr<Texture>{ std::move(texture) };
+		return gpuResource;
 	}
 
 	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const& name, std::string const& shaderName)
