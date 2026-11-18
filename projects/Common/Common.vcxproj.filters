@@ -31,6 +31,9 @@
     <ClCompile Include="modules\Model.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\Skybox.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
     <ClCompile Include="modules\ShaderProgram.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -56,6 +59,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Skybox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\TimeManager.cpp">

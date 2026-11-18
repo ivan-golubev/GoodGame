@@ -12,15 +12,15 @@ import ErrorHandling;
 import GraphicsPipelineVulkan;
 import SettingsRenderer;
 import ShaderProgram;
-import Texture;
+import Skybox;
 
 export namespace gg
 {
-	class SkyboxVulkan
+	class SkyboxVulkan : public Skybox
 	{
 	public:
 		SkyboxVulkan(std::string const& name, std::shared_ptr<ShaderProgram>, VkDevice);
-		~SkyboxVulkan() noexcept;
+		~SkyboxVulkan() noexcept override;
 		std::expected<void, Error> Initialize(VkDescriptorPool);
 		std::expected<void, Error> CreatePipeline();
 		void Draw(VkCommandBuffer, uint32_t frame, Camera const&);
@@ -35,10 +35,6 @@ export namespace gg
 		std::expected<void, Error> CreateDescriptorSets(VkDescriptorPool);
 		void DestroyPipeline();
 		void UpdateCamera(uint32_t frame, Camera const&);
-
-		std::shared_ptr<ShaderProgram> shaderProgram;
-
-		std::array<std::unique_ptr<Texture>, 6> textures{};
 
 		VkDevice device{};
 		VkImage textureImage{};

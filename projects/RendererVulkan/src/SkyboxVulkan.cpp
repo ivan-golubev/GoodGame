@@ -13,23 +13,16 @@ import RendererVulkan;
 import SettingsRenderer;
 import ShaderProgram;
 import ShaderProgramVulkan;
+import Skybox;
 import Texture;
 import TextureVulkan;
 
 namespace gg
 {
-	namespace
-	{
-		// according to the VkImageSubresourceRange in the Vulkan specification for cube image views, the faces should be in the order +X, -X, +Y, -Y, +Z, -Z
-		constexpr std::array<char const*, 6> skyboxFaceNames{ "right", "left", "top", "bottom", "front", "back" };
-	}
-
 	SkyboxVulkan::SkyboxVulkan(std::string const& name, std::shared_ptr<ShaderProgram> s, VkDevice device)
-		: shaderProgram{ s }
+		: Skybox{ name, s }
 		, device{ device }
 	{
-		for (size_t i{}; i < textures.size(); ++i)
-			textures[i] = std::make_unique<Texture>(std::format("{}/skybox/{}/{}.{}", texturesLocation, name, skyboxFaceNames[i], texturesExtension));
 	}
 
 	SkyboxVulkan::~SkyboxVulkan() noexcept
@@ -51,18 +44,8 @@ namespace gg
 
 	std::expected<void, Error> SkyboxVulkan::Initialize(VkDescriptorPool descriptorPool)
 	{
-		for (auto& texture : textures)
-		{
-			if (auto result{ texture->Initialize() }; !result)
-				return std::unexpected(result.error());
-		}
-		for (size_t i{ 1 }; i < textures.size(); ++i)
-		{
-			if (textures[i]->width != textures[0]->width || textures[i]->height != textures[0]->height)
-				return std::unexpected(Error{ .code = ErrorCode::TextureLoadFailed, .message = "Skybox faces must all have the same dimensions." });
-		}
-		if (textures[0]->width != textures[0]->height)
-			return std::unexpected(Error{ .code = ErrorCode::TextureLoadFailed, .message = "Skybox face textures must be square." });
+		if (auto result{ Skybox::Initialize() }; !result)
+			return std::unexpected(result.error());
 
 		if (auto result{ CreateTextureImage() }; !result)
 			return std::unexpected(result.error());
