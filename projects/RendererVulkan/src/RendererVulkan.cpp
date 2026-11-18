@@ -418,8 +418,6 @@ namespace gg
 		// TODO(skybox): depth state. The render pass has no depth attachment yet, so record the skybox draw before the models.
 		// Once depth exists: depthTest = TRUE, depthWrite = FALSE, compare = LESS_OR_EQUAL (the shader already writes z = 1).
 
-		// TODO(skybox): fill the per-frame SkyboxCameraCB { inverse(projection), transpose(mat3(view)) as a mat4 }
-		// and record the draw call in the command buffer.
 
 		auto result{ CreateGraphicsPipeline(
 			shaderProgram->GetVertexShader()
@@ -1067,7 +1065,8 @@ namespace gg
 		if (auto result{ CreateRenderFinishedSemaphores() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
-		if (auto result{ CreateGraphicsPipeline(*skybox) }; !result) return std::unexpected(result.error());
+		if (skybox)
+			if (auto result{ CreateGraphicsPipeline(*skybox) }; !result) return std::unexpected(result.error());
 		for (auto model : models)
 			if (auto result{ CreateGraphicsPipeline(model) }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
@@ -1302,6 +1301,8 @@ namespace gg
 			return std::unexpected(result.error());
 		if (auto result{ CreateDescriptorSets(*skybox) }; !result)
 			return std::unexpected(result.error());
+		if (auto result{ CreateGraphicsPipeline(*skybox) }; !result)
+			return std::unexpected(result.error());
 		return {};
 	}
 
@@ -1404,6 +1405,27 @@ namespace gg
 		};
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		if (skybox)
+		{  /* submit the UBO data - skybox camera */
+			SkyboxCameraCB const skyboxCamera{
+				/* screen position -> view-space point, used to rebuild the view ray per pixel */
+				.InvProjection = glm::inverse(camera->GetProjectionMatrix()),
+				/* view-space ray -> world space; rotation only, so the sky ignores the camera position.
+				   The inverse of a pure rotation is its transpose. */
+				.InvViewRotation = glm::mat4x4{ glm::transpose(glm::mat3x3{ camera->GetViewMatrix() }) },
+			};
+			void* data;
+			vkMapMemory(device, skybox->uniformBuffersMemoryCamera[currentFrame], 0, sizeof(SkyboxCameraCB), 0, &data);
+			memcpy(data, &skyboxCamera, sizeof(SkyboxCameraCB));
+			vkUnmapMemory(device, skybox->uniformBuffersMemoryCamera[currentFrame]);
+
+			/* No depth buffer yet: draw the sky first so the models are drawn over it. */
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox->graphicsPipeline.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox->graphicsPipeline.layout, 0, 1, &skybox->descriptorSets[currentFrame], 0, nullptr);
+			/* One fullscreen triangle generated from SV_VertexID: no vertex buffer to bind. */
+			vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+		}
 
 		for (std::shared_ptr<ModelVulkan> model : models)
 		{
