@@ -122,7 +122,6 @@ namespace gg
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
 
 		if (auto result{ CreateDescriptorPool() }; !result) return std::unexpected(result.error());
-		if (auto result{ CreateDescriptorSetLayout() }; !result) return std::unexpected(result.error());
 
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateCommandPool() }; !result) return std::unexpected(result.error());
@@ -317,71 +316,6 @@ namespace gg
 		{
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan render pass." });
 		}
-		return {};
-	}
-
-	std::expected<void, Error> RendererVulkan::CreateDescriptorSetLayout()
-	{
-		VkDescriptorSetLayoutBinding uboLayoutBindingMVP{
-			.binding = 0,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		};
-
-		VkDescriptorSetLayoutBinding uboLayoutBindingDirLight{
-			.binding = 1,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-		};
-
-		VkDescriptorSetLayoutBinding samplerLayoutBinding{
-			.binding = 2,
-			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-		};
-
-		std::array<VkDescriptorSetLayoutBinding, 3> bindings{
-			uboLayoutBindingMVP, uboLayoutBindingDirLight, samplerLayoutBinding
-		};
-		VkDescriptorSetLayoutCreateInfo layoutInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-			.bindingCount = static_cast<uint32_t>(bindings.size()),
-			.pBindings = bindings.data(),
-		};
-
-		if (VK_SUCCESS != vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout))
-			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan descriptor set layout." });
-		return {};
-	}
-
-	std::expected<void, Error> RendererVulkan::CreateGraphicsPipeline(std::shared_ptr<ModelVulkan> model)
-	{
-		BreakIfFalse(model->shaderProgram.get());
-		ShaderProgramVulkan* shaderProgram = dynamic_cast<ShaderProgramVulkan*>(model->shaderProgram.get());
-
-		auto bindingDescription = GetVertexBindingDescription();
-		auto attributeDescriptions = GetVertexAttributeDescriptions();
-
-		VkPipelineVertexInputStateCreateInfo vertexInputInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			.vertexBindingDescriptionCount = 1,
-			.pVertexBindingDescriptions = &bindingDescription,
-			.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
-			.pVertexAttributeDescriptions = attributeDescriptions.data(),
-		};
-
-		auto result{ CreateGraphicsPipeline(
-			shaderProgram->GetVertexShader()
-			, shaderProgram->GetFragmentShader()
-			, vertexInputInfo
-			, VK_CULL_MODE_BACK_BIT
-			, descriptorSetLayout) };
-		if (!result)
-			return std::unexpected(std::move(result.error()));
-		model->graphicsPipeline = *result;
 		return {};
 	}
 
@@ -814,21 +748,6 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::CreateUniformBuffers(std::shared_ptr<ModelVulkan> model)
-	{
-		VkDeviceSize const bufferSizeMVP = sizeof(ModelViewProjectionCB);
-		VkDeviceSize const bufferSizeDirLight = sizeof(DirectionalLight);
-
-		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
-		{
-			if (auto result{ CreateBuffer(model->uniformBuffersMVP[i], model->uniformBuffersMemoryMVP[i], bufferSizeMVP, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-				return std::unexpected(result.error());
-			if (auto result{ CreateBuffer(model->uniformBuffersDirLight[i], model->uniformBuffersMemoryDirLight[i], bufferSizeDirLight, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-				return std::unexpected(result.error());
-		}
-		return {};
-	}
-
 	std::expected<void, Error> RendererVulkan::CreateDescriptorPool()
 	{
 		// Per frame in flight, a model set uses 2 uniform buffers + 1 combined image sampler,
@@ -851,53 +770,6 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::CreateDescriptorSets(std::shared_ptr<ModelVulkan> model)
-	{
-		std::array<VkDescriptorSetLayout, maxFramesInFlight> const layouts{ descriptorSetLayout, descriptorSetLayout };
-		VkDescriptorSetAllocateInfo allocInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = descriptorPool,
-			.descriptorSetCount = maxFramesInFlight,
-			.pSetLayouts = layouts.data(),
-		};
-
-		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, model->descriptorSets.data()))
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan descriptor sets for model." });
-
-		BreakIfFalse(model->textures.size() > 0);
-		std::shared_ptr<TextureVulkan> texture{ dynamic_pointer_cast<TextureVulkan>(model->textures[0]) };
-
-		for (size_t i = 0; i < maxFramesInFlight; ++i)
-		{
-			VkDescriptorBufferInfo bufferInfoMVP{
-				.buffer = model->uniformBuffersMVP[i],
-				.offset = 0,
-				.range = sizeof(ModelViewProjectionCB),
-			};
-
-			VkDescriptorBufferInfo bufferInfoDirLight{
-				.buffer = model->uniformBuffersDirLight[i],
-				.offset = 0,
-				.range = sizeof(DirectionalLight),
-			};
-
-			VkDescriptorImageInfo imageInfo{
-				.sampler = texture->textureSampler,
-				.imageView = texture->textureImageView,
-				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			};
-
-			std::array<VkWriteDescriptorSet, 3> descriptorWrites{
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = model->descriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &bufferInfoMVP },
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = model->descriptorSets[i], .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &bufferInfoDirLight },
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = model->descriptorSets[i], .dstBinding = 2, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .pImageInfo = &imageInfo },
-			};
-
-			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-		}
-		return {};
-	}
-
 	std::expected<void, Error> RendererVulkan::ResizeWindow()
 	{
 		if (auto result{ RecreateSwapChain() }; !result)
@@ -917,14 +789,6 @@ namespace gg
 		for (auto imageView : swapChainImageViews)
 			if (imageView) vkDestroyImageView(device, imageView, nullptr);
 		swapChainImageViews.clear();
-		for (auto model : models)
-		{
-			if (model->graphicsPipeline.pipeline)
-				vkDestroyPipeline(device, model->graphicsPipeline.pipeline, nullptr);
-			if (model->graphicsPipeline.layout)
-				vkDestroyPipelineLayout(device, model->graphicsPipeline.layout, nullptr);
-			model->graphicsPipeline = {};
-		}
 		if (renderPass) vkDestroyRenderPass(device, renderPass, nullptr);
 		renderPass = VK_NULL_HANDLE;
 		if (swapChain) vkDestroySwapchainKHR(device, swapChain, nullptr);
@@ -946,7 +810,7 @@ namespace gg
 		if (skybox)
 			if (auto result{ skybox->CreatePipeline() }; !result) return std::unexpected(result.error());
 		for (auto model : models)
-			if (auto result{ CreateGraphicsPipeline(model) }; !result) return std::unexpected(result.error());
+			if (auto result{ model->CreatePipeline() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
 		return {};
 	}
@@ -1053,7 +917,6 @@ namespace gg
 
 		debugUI.reset();
 		if (device && descriptorPool) vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-		if (device && descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
 		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
 		if (device) vkDestroyDevice(device, nullptr);
@@ -1118,18 +981,6 @@ namespace gg
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
-	std::expected<void, Error> RendererVulkan::LoadTextures(std::shared_ptr<ModelVulkan> model)
-	{
-		for (std::string const& textureName : model->textureNames)
-		{
-			auto textureResult{ LoadTexture(textureName) };
-			if (!textureResult)
-				return std::unexpected(textureResult.error());
-			model->textures.emplace_back(std::move(*textureResult));
-		}
-		return {};
-	}
-
 	std::expected<std::shared_ptr<Texture>, Error> RendererVulkan::LoadTexture(std::string const& name)
 	{
 		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
@@ -1146,21 +997,8 @@ namespace gg
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
 		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
-		if (auto const result{ model->Initialize() }; !result)
+		if (auto const result{ model->Initialize(descriptorPool) }; !result)
 			return std::unexpected(result.error());
-
-		if (auto result{ CreateVertexBuffer(model) }; !result)
-			return std::unexpected(result.error());
-		if (auto result{ CreateGraphicsPipeline(model) }; !result)
-			return std::unexpected(result.error());
-		if (auto const result{ LoadTextures(model) }; !result)
-			return std::unexpected(result.error());
-
-		if (auto result{ CreateUniformBuffers(model) }; !result)
-			return std::unexpected(result.error());
-		if (auto result{ CreateDescriptorSets(model) }; !result)
-			return std::unexpected(result.error());
-
 		models.push_back(model);
 		return {};
 	}
@@ -1173,46 +1011,6 @@ namespace gg
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
 		skybox = std::make_unique<SkyboxVulkan>(name, shader, device);
 		if (auto result{ skybox->Initialize(descriptorPool) }; !result)
-			return std::unexpected(result.error());
-		return {};
-	}
-
-	std::expected<void, Error> RendererVulkan::CreateVertexBuffer(std::shared_ptr<ModelVulkan> inputModel)
-	{
-		// TODO: handle multiple meshes properly, need to create multiple Vertex Buffers
-		BreakIfFalse(inputModel->meshes.size() < 2);
-		Mesh const& mesh{ inputModel->meshes[0] };
-
-		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
-
-		struct StagingResources
-		{
-			VkDevice device;
-			VkBuffer buffer{};
-			VkDeviceMemory memory{};
-
-			~StagingResources() noexcept
-			{
-				if (buffer)
-					vkDestroyBuffer(device, buffer, nullptr);
-				if (memory)
-					vkFreeMemory(device, memory, nullptr);
-			}
-		} staging{ device };
-		if (auto result{ CreateBuffer(staging.buffer, staging.memory, VB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-			return std::unexpected(result.error());
-
-		void* mappedData{};
-		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, VB_sizeBytes, 0, &mappedData) };
-		if (mapResult != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to map staging buffer for vertex data (VkResult {})", static_cast<int>(mapResult)) });
-		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(VB_sizeBytes));
-		vkUnmapMemory(device, staging.memory);
-
-		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-		if (auto result{ CreateBuffer(inputModel->VB, inputModel->vertexBufferMemory, VB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) }; !result)
-			return std::unexpected(result.error());
-		if (auto result{ CopyBuffer(staging.buffer, inputModel->VB, VB_sizeBytes) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -1281,36 +1079,9 @@ namespace gg
 		if (skybox)
 			skybox->Draw(commandBuffer, currentFrame, *camera);
 
+		double const currentTimeSec{ timeManager->GetCurrentTimeSec() };
 		for (std::shared_ptr<ModelVulkan> model : models)
-		{
-			{  /* submit the UBO data - MVP matrix */
-				ModelViewProjectionCB mvpMatrices{
-					.MVP = CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					.ViewPosition = camera->GetPositionVec4(),
-				};
-				void* data;
-				vkMapMemory(device, model->uniformBuffersMemoryMVP[currentFrame], 0, sizeof(ModelViewProjectionCB), 0, &data);
-				memcpy(data, &mvpMatrices, sizeof(ModelViewProjectionCB));
-				vkUnmapMemory(device, model->uniformBuffersMemoryMVP[currentFrame]);
-			}
-			{  /* submit the UBO data - Directional Light */
-				void* data;
-				vkMapMemory(device, model->uniformBuffersMemoryDirLight[currentFrame], 0, sizeof(DirectionalLight), 0, &data);
-				memcpy(data, &globalDirectionalLight, sizeof(DirectionalLight));
-				vkUnmapMemory(device, model->uniformBuffersMemoryDirLight[currentFrame]);
-			}
-
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline.pipeline);
-			/* bind a desciptor for the UBO */
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphicsPipeline.layout, 0, 1, &model->descriptorSets[currentFrame], 0, nullptr);
-
-			VkBuffer vertexBuffers[]{ model->VB };
-			VkDeviceSize offsets[]{ 0 };
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-			for (auto& m : model->meshes)
-				vkCmdDraw(commandBuffer, m.GetVertexCount(), 1, 0, 0);
-		}
+			model->Draw(commandBuffer, currentFrame, *camera, currentTimeSec);
 
 		debugUI->Render(commandBuffer);
 

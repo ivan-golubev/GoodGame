@@ -77,6 +77,8 @@ namespace gg
 		std::expected<GraphicsPipeline, Error> CreateGraphicsPipeline(VkShaderModule vertexShader, VkShaderModule fragmentShader
 			, VkPipelineVertexInputStateCreateInfo const&, VkCullModeFlags, VkDescriptorSetLayout const&);
 
+		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
+
 	private:
 		struct QueueFamilyIndices
 		{
@@ -97,18 +99,9 @@ namespace gg
 		std::expected<void, Error> CreateLogicalDevice();
 		std::expected<void, Error> CreateSwapChain();
 		std::expected<void, Error> CreateRenderPass();
-		std::expected<void, Error> CreateDescriptorSetLayout();
 		std::expected<void, Error> CreateCommandPool();
 
 		std::expected<void, Error> CreateImageViews();
-
-		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> CreateUniformBuffers(std::shared_ptr<ModelVulkan>);
-		std::expected<void, Error> CreateDescriptorSets(std::shared_ptr<ModelVulkan>);
-
-		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 
 		std::expected<void, Error> CreateFrameBuffers();
 
@@ -144,7 +137,6 @@ namespace gg
 		VkCommandPool commandPool{};
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers{};
 		VkRenderPass renderPass{};
-		VkDescriptorSetLayout descriptorSetLayout{};
 
 		/* Render Targets */
 		std::vector<VkImage> swapChainImages;
