@@ -167,7 +167,7 @@ namespace gg
 			.pBindings = bindings.data(),
 		};
 
-		if (VK_SUCCESS != vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout))
+		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan model descriptor set layout." });
 		return {};
 	}
@@ -246,7 +246,7 @@ namespace gg
 			.pSetLayouts = layouts.data(),
 		};
 
-		if (VK_SUCCESS != vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()))
+		if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan descriptor sets for model." });
 
 		BreakIfFalse(textures.size() > 0);

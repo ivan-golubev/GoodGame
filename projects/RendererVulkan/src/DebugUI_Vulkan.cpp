@@ -51,7 +51,7 @@ namespace gg
 				.pPoolSizes = pool_sizes,
 			};
 
-			if (VK_SUCCESS != vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool))
+			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
 				return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create the ImGui Vulkan descriptor pool." });
 		}
 
@@ -74,7 +74,7 @@ namespace gg
 				.MSAASamples = VK_SAMPLE_COUNT_1_BIT,
 				.Allocator = VK_NULL_HANDLE,
 				.CheckVkResultFn = [](VkResult err) {
-					if (VK_SUCCESS != err)
+					if (err != VK_SUCCESS)
 						imguiVulkanInitResult = err;
 				},
 			};

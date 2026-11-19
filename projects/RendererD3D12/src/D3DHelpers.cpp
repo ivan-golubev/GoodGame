@@ -53,7 +53,7 @@ namespace gg
 			}
 		}
 
-		if (nullptr == adapter.Get())
+		if (adapter.Get() == nullptr)
 		{
 			for (UINT adapterIndex{ 0 }; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
 			{

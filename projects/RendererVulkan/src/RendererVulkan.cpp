@@ -54,7 +54,7 @@ namespace
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
 	{
 		for (auto const& availableFormat : availableFormats)
-			if (VK_FORMAT_B8G8R8A8_UNORM == availableFormat.format && VK_COLOR_SPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace)
+			if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 				return availableFormat;
 		return availableFormats[0];
 	}
@@ -62,7 +62,7 @@ namespace
 	VkPresentModeKHR ChooseSwapPresentMode(std::vector<VkPresentModeKHR> const& availablePresentModes)
 	{
 		for (auto const& m : availablePresentModes)
-			if (VK_PRESENT_MODE_MAILBOX_KHR == m)
+			if (m == VK_PRESENT_MODE_MAILBOX_KHR)
 				return m;
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
@@ -197,7 +197,7 @@ namespace gg
 		};
 
 		VkResult const result = vkCreateInstance(&instInfo, nullptr, &instance);
-		if (VK_ERROR_INCOMPATIBLE_DRIVER == result)
+		if (result == VK_ERROR_INCOMPATIBLE_DRIVER)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Unable to find a compatible Vulkan Driver." });
 		else if (result)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = std::format("Could not create a Vulkan instance (VkResult {}).", static_cast<int>(result)) });
@@ -251,7 +251,7 @@ namespace gg
 			.presentMode = presentMode,
 			.clipped = VK_TRUE,
 		};
-		if (VK_SUCCESS != vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain))
+		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create swap chain." });
 		/* Retrieve the swap chain images to render to */
 		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -340,7 +340,7 @@ namespace gg
 			.pDependencies = &dependency,
 		};
 
-		if (VK_SUCCESS != vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass))
+		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		{
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan render pass." });
 		}
@@ -448,7 +448,7 @@ namespace gg
 			.pSetLayouts = &setLayout,
 		};
 
-		if (VK_SUCCESS != vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &result->layout))
+		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &result->layout) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan graphics pipeline layout." });
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{
@@ -467,7 +467,7 @@ namespace gg
 			.subpass = 0,
 		};
 
-		if (VK_SUCCESS != vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &result->pipeline))
+		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &result->pipeline) != VK_SUCCESS)
 		{
 			vkDestroyPipelineLayout(device, result->layout, nullptr);
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan graphics pipeline." });
@@ -491,7 +491,7 @@ namespace gg
 				.height = swapChainExtent.height,
 				.layers = 1,
 			};
-			if (VK_SUCCESS != vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffers[i]))
+			if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS)
 				return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan framebuffer." });
 		}
 		return {};
@@ -507,7 +507,7 @@ namespace gg
 			.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 			.queueFamilyIndex = *queueFamilyIndices.graphicsFamily,
 		};
-		if (VK_SUCCESS != vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool))
+		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
 		{
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan command pool." });
 		}
@@ -522,7 +522,7 @@ namespace gg
 			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 			.commandBufferCount = static_cast<uint32_t>(commandBuffers.size()),
 		};
-		if (VK_SUCCESS != vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()))
+		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to allocate Vulkan command buffers." });
 		return {};
 	}
@@ -620,7 +620,7 @@ namespace gg
 		uint32_t formatCount;
 		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
 
-		if (0 != formatCount)
+		if (formatCount != 0)
 		{
 			details.formats.resize(formatCount);
 			vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
@@ -629,7 +629,7 @@ namespace gg
 		uint32_t presentModeCount;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 
-		if (0 != presentModeCount)
+		if (presentModeCount != 0)
 		{
 			details.presentModes.resize(presentModeCount);
 			vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
@@ -652,7 +652,7 @@ namespace gg
 		VkPhysicalDeviceFeatures supportedFeatures;
 		vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-		return VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == deviceProperties.deviceType
+		return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
 			&& CheckDeviceExtensionSupport(device)
 			&& SwapChainRequirementsSatisfied(device)
 			&& FindQueueFamilies(device).IsComplete()
@@ -663,7 +663,7 @@ namespace gg
 	{
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-		if (0 == deviceCount)
+		if (deviceCount == 0)
 		{
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to find GPUs with Vulkan support." });
 		}
@@ -677,7 +677,7 @@ namespace gg
 				break;
 			}
 		}
-		if (VK_NULL_HANDLE == physicalDevice)
+		if (physicalDevice == VK_NULL_HANDLE)
 		{
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to find a suitable GPU." });
 		}
@@ -730,7 +730,7 @@ namespace gg
 			.pEnabledFeatures = &enabledVk10Features,
 		};
 		VkResult const result{ vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) };
-		if (VK_SUCCESS != result)
+		if (result != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = std::format("Failed to create Vulkan logical device (VkResult {}).", static_cast<int>(result)) });
 		vkGetDeviceQueue(device, *indices.graphicsFamily, 0, &graphicsQueue);
 		return {};
@@ -796,7 +796,7 @@ namespace gg
 			.pPoolSizes = poolSizes.data(),
 		};
 
-		if (VK_SUCCESS != vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool))
+		if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan descriptor pool." });
 		return {};
 	}
@@ -1079,7 +1079,7 @@ namespace gg
 			.pSignalSemaphores = signalSemaphores,
 		};
 		VkResult const result{ vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) };
-		if (VK_SUCCESS != result)
+		if (result != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererFrameFailed, .message = std::format("Failed to submit a command buffer (VkResult {}).", static_cast<int>(result)) });
 		return {};
 	}
@@ -1091,7 +1091,7 @@ namespace gg
 		VkCommandBufferBeginInfo beginInfo{
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 		};
-		if (VK_SUCCESS != vkBeginCommandBuffer(commandBuffer, &beginInfo))
+		if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererFrameFailed, .message = "Failed to begin recording Vulkan command buffer." });
 
 		/* Same order as the render pass attachments: colour, then depth (cleared to the far plane). */
@@ -1121,7 +1121,7 @@ namespace gg
 		debugUI->Render(commandBuffer);
 
 		vkCmdEndRenderPass(commandBuffer);
-		if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer))
+		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererFrameFailed, .message = "Failed to finish recording Vulkan command buffer." });
 		return {};
 	}
