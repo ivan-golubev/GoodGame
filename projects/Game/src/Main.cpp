@@ -207,6 +207,9 @@ int main()
 	constexpr uint32_t height{ 1080 };
 	RendererType rendererType{ RendererType::Vulkan };
 	uint32_t status{ 0 };
-	while (status = RunApplication(width, height, rendererType) == rendererChangeRequested) {}
+	do
+	{
+		status = RunApplication(width, height, rendererType);
+	} while (status == rendererChangeRequested);
 	return status;
 }

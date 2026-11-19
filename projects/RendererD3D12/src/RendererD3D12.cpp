@@ -204,7 +204,7 @@ namespace gg
 			HRESULT const d3d12CreateDepthStencilDescriptorHeapResult{ device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&depthStencilHeap)) };
 			D3D12_CHECK_HRESULT(d3d12CreateDepthStencilDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create depth stencil descriptor heap");
 
-			dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		}
 		/* Create depth buffer */
 		if (auto result{ ResizeDepthBuffer() }; !result)
