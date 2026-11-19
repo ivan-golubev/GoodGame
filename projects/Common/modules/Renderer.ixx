@@ -55,5 +55,5 @@ export namespace gg
 	};
 
 	glm::mat4x4 CalculateMVP(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);
-	SkyboxCameraCB CalculateSkyboxCamera(Camera const&);
+	SkyboxCamera CalculateSkyboxCamera(Camera const&);
 } // namespace gg

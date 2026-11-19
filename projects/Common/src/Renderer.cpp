@@ -23,9 +23,9 @@ namespace gg
 		return camera.GetProjectionMatrix() * camera.GetViewMatrix() * modelMatrix;
 	}
 
-	SkyboxCameraCB CalculateSkyboxCamera(Camera const& camera)
+	SkyboxCamera CalculateSkyboxCamera(Camera const& camera)
 	{
-		return SkyboxCameraCB{
+		return SkyboxCamera{
 			/* screen position -> view-space point, used to rebuild the view ray per pixel */
 			.InvProjection = glm::inverse(camera.GetProjectionMatrix()),
 			/* view-space ray -> world space; rotation only, so the sky ignores the camera position.

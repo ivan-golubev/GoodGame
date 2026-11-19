@@ -16,13 +16,13 @@ export namespace gg
 		virtual ~ShaderProgram() noexcept = default;
 	};
 
-	struct ModelViewProjectionCB
+	struct ModelViewProjection
 	{
 		glm::mat4x4 MVP;
 		glm::vec4 ViewPosition;
 	};
 
-	struct SkyboxCameraCB
+	struct SkyboxCamera
 	{
 		glm::mat4x4 InvProjection;
 		glm::mat4x4 InvViewRotation;

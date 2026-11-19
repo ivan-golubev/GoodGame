@@ -103,7 +103,7 @@ namespace gg
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			if (auto result{ renderer->CreateBuffer(uniformBuffersCamera[i], uniformBuffersMemoryCamera[i], sizeof(SkyboxCameraCB), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
+			if (auto result{ renderer->CreateBuffer(uniformBuffersCamera[i], uniformBuffersMemoryCamera[i], sizeof(SkyboxCamera), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 				return std::unexpected(result.error());
 		}
 		return {};
@@ -128,7 +128,7 @@ namespace gg
 			VkDescriptorBufferInfo const cameraInfo{
 				.buffer = uniformBuffersCamera[i],
 				.offset = 0,
-				.range = sizeof(SkyboxCameraCB),
+				.range = sizeof(SkyboxCamera),
 			};
 
 			VkDescriptorImageInfo const cubeMapInfo{
@@ -203,10 +203,10 @@ namespace gg
 
 	void SkyboxVulkan::UpdateCamera(uint32_t frame, Camera const& camera)
 	{
-		SkyboxCameraCB const skyboxCamera{ CalculateSkyboxCamera(camera) };
+		SkyboxCamera const skyboxCamera{ CalculateSkyboxCamera(camera) };
 		void* data;
-		vkMapMemory(device, uniformBuffersMemoryCamera[frame], 0, sizeof(SkyboxCameraCB), 0, &data);
-		memcpy(data, &skyboxCamera, sizeof(SkyboxCameraCB));
+		vkMapMemory(device, uniformBuffersMemoryCamera[frame], 0, sizeof(SkyboxCamera), 0, &data);
+		memcpy(data, &skyboxCamera, sizeof(SkyboxCamera));
 		vkUnmapMemory(device, uniformBuffersMemoryCamera[frame]);
 	}
 

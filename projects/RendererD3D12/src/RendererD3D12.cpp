@@ -53,7 +53,7 @@ using std::chrono::nanoseconds;
 
 namespace
 {
-	HWND getWindowHandle(SDL_Window* windowHandle)
+	HWND GetWindowHandle(SDL_Window* windowHandle)
 	{
 		SDL_SysWMinfo wmInfo;
 		SDL_VERSION(&wmInfo.version);
@@ -69,7 +69,7 @@ namespace gg
 		width = rs.width;
 		height = rs.height;
 		windowHandleSDL = rs.windowHandle;
-		windowHandle = getWindowHandle(rs.windowHandle);
+		windowHandle = GetWindowHandle(rs.windowHandle);
 		timeManager = rs.timeManager;
 		camera = std::make_shared<Camera>(rs.inputManager);
 		scissorRect = { D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX };
@@ -231,7 +231,7 @@ namespace gg
 			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 			CD3DX12_ROOT_PARAMETER1 rootParameters[3];
-			rootParameters[0].InitAsConstants(sizeof(ModelViewProjectionCB) / sizeof(float), 0, 0, D3D12_SHADER_VISIBILITY_ALL);
+			rootParameters[0].InitAsConstants(sizeof(ModelViewProjection) / sizeof(float), 0, 0, D3D12_SHADER_VISIBILITY_ALL);
 			rootParameters[1].InitAsConstants(sizeof(DirectionalLight) / sizeof(float), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 			rootParameters[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
@@ -849,11 +849,11 @@ namespace gg
 				ID3D12DescriptorHeap* ppHeaps[]{ model->srvHeap.Get() };
 				commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-				ModelViewProjectionCB mvpMatrices{
+				ModelViewProjection mvpMatrices{
 					.MVP = CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
 					.ViewPosition = camera->GetPositionVec4(),
 				};
-				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjectionCB) / sizeof(float), &mvpMatrices, 0);
+				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjection) / sizeof(float), &mvpMatrices, 0);
 				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);
 				commandList->SetGraphicsRootDescriptorTable(2, model->srvHeap->GetGPUDescriptorHandleForHeapStart());
 				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);

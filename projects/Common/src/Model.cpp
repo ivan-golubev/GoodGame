@@ -20,7 +20,7 @@ using gg::BreakIfFalse;
 
 namespace
 {
-	std::expected<aiScene const*, gg::Error> readScene(std::string const& modelAbsolutePath, Assimp::Importer& importer)
+	std::expected<aiScene const*, gg::Error> ReadScene(std::string const& modelAbsolutePath, Assimp::Importer& importer)
 	{
 		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
 		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
@@ -43,18 +43,18 @@ namespace
 		return scene;
 	}
 
-	std::expected<gg::Mesh, gg::Error> readMesh(aiMesh const* assimpMesh)
+	std::expected<gg::Mesh, gg::Error> ReadMesh(aiMesh const* assimpMesh)
 	{
-		constexpr uint32_t UVsetNumber{ 0 };
+		constexpr uint32_t uvSetNumber{ 0 };
 		if (!assimpMesh->HasPositions())
 			return std::unexpected(gg::Error{
 				.code = gg::ErrorCode::ModelMeshMissingPositions,
 				.message = std::format("Mesh '{}' is missing vertex positions", assimpMesh->mName.C_Str()),
 			});
-		if (!assimpMesh->HasTextureCoords(UVsetNumber))
+		if (!assimpMesh->HasTextureCoords(uvSetNumber))
 			return std::unexpected(gg::Error{
 				.code = gg::ErrorCode::ModelMeshMissingTextureCoordinates,
-				.message = std::format("Mesh '{}' is missing texture coordinates in UV set {}", assimpMesh->mName.C_Str(), UVsetNumber),
+				.message = std::format("Mesh '{}' is missing texture coordinates in UV set {}", assimpMesh->mName.C_Str(), uvSetNumber),
 			});
 		if (!assimpMesh->HasNormals())
 			return std::unexpected(gg::Error{
@@ -62,7 +62,7 @@ namespace
 				.message = std::format("Mesh '{}' is missing vertex normals", assimpMesh->mName.C_Str()),
 			});
 
-		bool const hasTextureCoords = assimpMesh->HasTextureCoords(UVsetNumber);
+		bool const hasTextureCoords = assimpMesh->HasTextureCoords(uvSetNumber);
 		gg::Mesh mesh{};
 		mesh.vertices.reserve(assimpMesh->mNumVertices);
 		mesh.indices.reserve(assimpMesh->mNumFaces * 3);
@@ -77,7 +77,7 @@ namespace
 				auto const& normal = assimpMesh->mNormals[vertexIndex];
 
 				auto const textureCoords = hasTextureCoords
-					? assimpMesh->mTextureCoords[UVsetNumber][vertexIndex]
+					? assimpMesh->mTextureCoords[uvSetNumber][vertexIndex]
 					: aiVector3D{ 0, 0, 0 };
 
 				mesh.vertices.emplace_back(
@@ -97,11 +97,11 @@ namespace
 		return mesh;
 	}
 
-	std::expected<void, gg::Error> loadMeshes(aiScene const& scene, std::vector<gg::Mesh>& meshes)
+	std::expected<void, gg::Error> LoadMeshes(aiScene const& scene, std::vector<gg::Mesh>& meshes)
 	{
 		for (unsigned int i{ 0 }; i < scene.mNumMeshes; ++i)
 		{
-			auto mesh{ readMesh(scene.mMeshes[i]) };
+			auto mesh{ ReadMesh(scene.mMeshes[i]) };
 			if (!mesh)
 				return std::unexpected(mesh.error());
 			meshes.emplace_back(std::move(*mesh));
@@ -109,7 +109,7 @@ namespace
 		return {};
 	}
 
-	void loadTextureNames(aiScene const& scene, std::vector<std::string>& textureNames)
+	void LoadTextureNames(aiScene const& scene, std::vector<std::string>& textureNames)
 	{
 		for (uint32_t i = 0; i < scene.mNumTextures; ++i)
 			textureNames.emplace_back(scene.mTextures[i]->mFilename.C_Str());
@@ -154,17 +154,17 @@ namespace gg
 		BreakIfFalse(sizeof(ai_real) == sizeof(float));
 
 		Assimp::Importer importer;
-		auto sceneResult{ readScene(modelAbsolutePath, importer) };
+		auto sceneResult{ ReadScene(modelAbsolutePath, importer) };
 		if (!sceneResult)
 			return std::unexpected(sceneResult.error());
 		aiScene const* scene{ *sceneResult };
 		std::string loadedName{ scene->mMeshes[0]->mName.C_Str() };
 		std::vector<Mesh> loadedMeshes{};
-		auto meshesResult{ loadMeshes(*scene, loadedMeshes) };
+		auto meshesResult{ LoadMeshes(*scene, loadedMeshes) };
 		if (!meshesResult)
 			return std::unexpected(meshesResult.error());
 		std::vector<std::string> loadedTextureNames{};
-		loadTextureNames(*scene, loadedTextureNames);
+		LoadTextureNames(*scene, loadedTextureNames);
 
 		name.swap(loadedName);
 		meshes.swap(loadedMeshes);

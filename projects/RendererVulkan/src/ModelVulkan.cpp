@@ -227,7 +227,7 @@ namespace gg
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			if (auto result{ renderer->CreateBuffer(uniformBuffersMVP[i], uniformBuffersMemoryMVP[i], sizeof(ModelViewProjectionCB), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
+			if (auto result{ renderer->CreateBuffer(uniformBuffersMVP[i], uniformBuffersMemoryMVP[i], sizeof(ModelViewProjection), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 				return std::unexpected(result.error());
 			if (auto result{ renderer->CreateBuffer(uniformBuffersDirLight[i], uniformBuffersMemoryDirLight[i], sizeof(DirectionalLight), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 				return std::unexpected(result.error());
@@ -257,7 +257,7 @@ namespace gg
 			VkDescriptorBufferInfo const bufferInfoMVP{
 				.buffer = uniformBuffersMVP[i],
 				.offset = 0,
-				.range = sizeof(ModelViewProjectionCB),
+				.range = sizeof(ModelViewProjection),
 			};
 
 			VkDescriptorBufferInfo const bufferInfoDirLight{
@@ -286,13 +286,13 @@ namespace gg
 	void ModelVulkan::UpdateUniformBuffers(uint32_t frame, Camera const& camera, double currentTimeSec)
 	{
 		{  /* MVP matrix */
-			ModelViewProjectionCB const mvpMatrices{
+			ModelViewProjection const mvpMatrices{
 				.MVP = CalculateMVP(translation, currentTimeSec, camera),
 				.ViewPosition = camera.GetPositionVec4(),
 			};
 			void* data;
-			vkMapMemory(device, uniformBuffersMemoryMVP[frame], 0, sizeof(ModelViewProjectionCB), 0, &data);
-			memcpy(data, &mvpMatrices, sizeof(ModelViewProjectionCB));
+			vkMapMemory(device, uniformBuffersMemoryMVP[frame], 0, sizeof(ModelViewProjection), 0, &data);
+			memcpy(data, &mvpMatrices, sizeof(ModelViewProjection));
 			vkUnmapMemory(device, uniformBuffersMemoryMVP[frame]);
 		}
 		{  /* Directional Light */

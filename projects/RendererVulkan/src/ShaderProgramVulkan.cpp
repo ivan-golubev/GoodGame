@@ -14,7 +14,7 @@ import RendererVulkan;
 
 namespace
 {
-	std::expected<VkShaderModule, gg::Error> createShaderModule(VkDevice device, std::string const& shaderBlob, std::string const& shaderPath)
+	std::expected<VkShaderModule, gg::Error> CreateShaderModule(VkDevice device, std::string const& shaderBlob, std::string const& shaderPath)
 	{
 		VkShaderModuleCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -31,7 +31,7 @@ namespace
 		return shaderModule;
 	}
 
-	std::expected<std::string, gg::Error> readFile(std::string const& filename)
+	std::expected<std::string, gg::Error> ReadFile(std::string const& filename)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -71,20 +71,20 @@ namespace gg
 	{
 		std::string const vertexShaderPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_string() };
 		std::string const fragmentShaderPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_string() };
-		auto vertexBlobResult{ readFile(vertexShaderPath) };
+		auto vertexBlobResult{ ReadFile(vertexShaderPath) };
 		if (!vertexBlobResult)
 			return std::unexpected(vertexBlobResult.error());
 		vertexShaderBlob = std::move(*vertexBlobResult);
-		auto fragmentBlobResult{ readFile(fragmentShaderPath) };
+		auto fragmentBlobResult{ ReadFile(fragmentShaderPath) };
 		if (!fragmentBlobResult)
 			return std::unexpected(fragmentBlobResult.error());
 		fragmentShaderBlob = std::move(*fragmentBlobResult);
 
-		auto vertexModuleResult{ createShaderModule(device, vertexShaderBlob, vertexShaderPath) };
+		auto vertexModuleResult{ CreateShaderModule(device, vertexShaderBlob, vertexShaderPath) };
 		if (!vertexModuleResult)
 			return std::unexpected(vertexModuleResult.error());
 		vertexShader = *vertexModuleResult;
-		auto fragmentModuleResult{ createShaderModule(device, fragmentShaderBlob, fragmentShaderPath) };
+		auto fragmentModuleResult{ CreateShaderModule(device, fragmentShaderBlob, fragmentShaderPath) };
 		if (!fragmentModuleResult)
 			return std::unexpected(fragmentModuleResult.error());
 		fragmentShader = *fragmentModuleResult;

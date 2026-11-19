@@ -99,8 +99,8 @@ namespace gg
 		cubeMapRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
 		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
-		/* b0: SkyboxCameraCB as root constants (32 DWORDs), used to rebuild the view ray */
-		rootParameters[0].InitAsConstants(sizeof(SkyboxCameraCB) / sizeof(uint32_t), 0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+		/* b0: SkyboxCamera as root constants (32 DWORDs), used to rebuild the view ray */
+		rootParameters[0].InitAsConstants(sizeof(SkyboxCamera) / sizeof(uint32_t), 0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 		rootParameters[1].InitAsDescriptorTable(1, &cubeMapRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 		/* s0: linear filtering; clamp so nothing wraps across a face edge */
@@ -191,8 +191,8 @@ namespace gg
 		commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
 		/* b0: camera data to rebuild the view ray per pixel */
-		SkyboxCameraCB const skyboxCamera{ CalculateSkyboxCamera(camera) };
-		commandList->SetGraphicsRoot32BitConstants(0, sizeof(SkyboxCameraCB) / sizeof(uint32_t), &skyboxCamera, 0);
+		SkyboxCamera const skyboxCamera{ CalculateSkyboxCamera(camera) };
+		commandList->SetGraphicsRoot32BitConstants(0, sizeof(SkyboxCamera) / sizeof(uint32_t), &skyboxCamera, 0);
 		/* t0: the cube map */
 		commandList->SetGraphicsRootDescriptorTable(1, srvHeap->GetGPUDescriptorHandleForHeapStart());
 

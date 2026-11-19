@@ -51,7 +51,7 @@ namespace
 		VK_KHR_MAINTENANCE1_EXTENSION_NAME // required for using negative viewport heights
 	};
 
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
+	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const& availableFormats)
 	{
 		for (auto const& availableFormat : availableFormats)
 			if (VK_FORMAT_B8G8R8A8_UNORM == availableFormat.format && VK_COLOR_SPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace)
@@ -59,7 +59,7 @@ namespace
 		return availableFormats[0];
 	}
 
-	VkPresentModeKHR chooseSwapPresentMode(std::vector<VkPresentModeKHR> const& availablePresentModes)
+	VkPresentModeKHR ChooseSwapPresentMode(std::vector<VkPresentModeKHR> const& availablePresentModes)
 	{
 		for (auto const& m : availablePresentModes)
 			if (VK_PRESENT_MODE_MAILBOX_KHR == m)
@@ -67,7 +67,7 @@ namespace
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
-	bool checkDeviceExtensionSupport(VkPhysicalDevice const device)
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice const device)
 	{
 		uint32_t extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -222,8 +222,8 @@ namespace gg
 	std::expected<void, Error> RendererVulkan::CreateSwapChain()
 	{
 		SwapChainSupportDetails swapChainSupport{ QuerySwapChainSupport(physicalDevice) };
-		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-		VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
 		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
 
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -653,7 +653,7 @@ namespace gg
 		vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
 		return VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == deviceProperties.deviceType
-			&& checkDeviceExtensionSupport(device)
+			&& CheckDeviceExtensionSupport(device)
 			&& SwapChainRequirementsSatisfied(device)
 			&& FindQueueFamilies(device).IsComplete()
 			&& supportedFeatures.samplerAnisotropy;
