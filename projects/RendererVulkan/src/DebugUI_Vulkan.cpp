@@ -73,7 +73,8 @@ namespace gg
 				.ImageCount = maxFramesInFlight,
 				.MSAASamples = VK_SAMPLE_COUNT_1_BIT,
 				.Allocator = VK_NULL_HANDLE,
-				.CheckVkResultFn = [](VkResult err) {
+				.CheckVkResultFn = [](VkResult err)
+				{
 					if (err != VK_SUCCESS)
 						imguiVulkanInitResult = err;
 				},
