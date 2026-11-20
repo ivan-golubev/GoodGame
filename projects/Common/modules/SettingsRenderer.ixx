@@ -25,16 +25,16 @@ export namespace gg
 	constexpr bool flipVulkanViewport{ true };
 
 	DirectionalLight globalDirectionalLight{
-		glm::vec3(1.0f, 1.0f, 1.0f), // specular color
+		glm::vec3(1.f, 1.f, 1.f), // specular color
 		0.5f, // specular strength
 
-		glm::vec3(1.0f, 1.0f, 1.0f), // ambient color
+		glm::vec3(1.f, 1.f, 1.f), // ambient color
 		0.1f, // ambient strength
 
-		glm::vec3(-1.0f, -1.0f, 1.0f), // light direction xyz
-		1.0f, // specular shininess // TODO: WTF, this value does not work as expected ?
+		glm::vec3(-1.f, -1.f, 1.f), // light direction xyz
+		1.f, // specular shininess // TODO: WTF, this value does not work as expected ?
 
-		glm::vec3(1.0f, 1.0f, 1.0f) // diffuse color, rgb
+		glm::vec3(1.f, 1.f, 1.f) // diffuse color, rgb
 	};
 
 	enum RendererType

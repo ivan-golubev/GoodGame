@@ -120,7 +120,7 @@ namespace gg
 			.MaxAnisotropy    = 0,
 			.ComparisonFunc   = D3D12_COMPARISON_FUNC_ALWAYS,
 			.BorderColor      = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
-			.MinLOD           = 0.0f,
+			.MinLOD           = 0.f,
 			.MaxLOD           = D3D12_FLOAT32_MAX,
 			.ShaderRegister   = 0,
 			.RegisterSpace    = 0,

@@ -413,17 +413,17 @@ namespace gg
 
 		float const viewportY      = flipVulkanViewport
 			? static_cast<float>(swapChainExtent.height)
-			: 0.0f;
+			: 0.f;
 		float const viewportHeight = flipVulkanViewport
 			? -static_cast<float>(swapChainExtent.height)
 			: static_cast<float>(swapChainExtent.height);
 		VkViewport  viewport{
-			.x        = 0.0f,
+			.x        = 0.f,
 			.y        = viewportY,
 			.width    = static_cast<float>(swapChainExtent.width),
 			.height   = viewportHeight,
-			.minDepth = 0.0f,
-			.maxDepth = 1.0f,
+			.minDepth = 0.f,
+			.maxDepth = 1.f,
 		};
 		VkRect2D scissor{
 			.offset = { .x = 0, .y = 0 },
@@ -446,7 +446,7 @@ namespace gg
 			.cullMode                = cullMode,
 			.frontFace               = VK_FRONT_FACE_CLOCKWISE,
 			.depthBiasEnable         = VK_FALSE,
-			.lineWidth               = 1.0f,
+			.lineWidth               = 1.f,
 		};
 
 		VkPipelineMultisampleStateCreateInfo multisampling{
@@ -763,7 +763,7 @@ namespace gg
 		std::set<uint32_t>                   uniqueQueueFamilies{ *indices.graphicsFamily, *indices.presentFamily };
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
 
-		float queuePriority{ 1.0f };
+		float queuePriority{ 1.f };
 		for (uint32_t queueFamily : uniqueQueueFamilies)
 		{
 			VkDeviceQueueCreateInfo queueCreateInfo{
@@ -1236,8 +1236,8 @@ namespace gg
 
 		/* Same order as the render pass attachments: colour, then depth (cleared to the far plane). */
 		std::array<VkClearValue, 2> const clearValues{
-			VkClearValue{ .color = { .float32 = { 0.0f, 0.2f, 0.4f, 1.0f } } },
-			VkClearValue{ .depthStencil = { .depth = 1.0f, .stencil = 0 } },
+			VkClearValue{ .color = { .float32 = { 0.f, 0.2f, 0.4f, 1.f } } },
+			VkClearValue{ .depthStencil = { .depth = 1.f, .stencil = 0 } },
 		};
 		VkRenderPassBeginInfo renderPassInfo{
 			.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -1360,13 +1360,13 @@ namespace gg
 			.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 			.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
 			.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.mipLodBias              = 0.0f,
+			.mipLodBias              = 0.f,
 			.anisotropyEnable        = VK_TRUE,
 			.maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
 			.compareEnable           = VK_FALSE,
 			.compareOp               = VK_COMPARE_OP_ALWAYS,
-			.minLod                  = 0.0f,
-			.maxLod                  = 0.0f,
+			.minLod                  = 0.f,
+			.maxLod                  = 0.f,
 			.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
 			.unnormalizedCoordinates = VK_FALSE,
 		};

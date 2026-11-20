@@ -99,7 +99,7 @@ namespace gg
 	glm::mat4x4 const& Camera::GetViewMatrix() const { return viewMatrix; }
 	glm::mat4x4 const& Camera::GetProjectionMatrix() const { return projectionMatrix; }
 
-	glm::vec4 Camera::GetPositionVec4() const { return glm::vec4(cameraPosition, 1.0f); }
+	glm::vec4 Camera::GetPositionVec4() const { return glm::vec4(cameraPosition, 1.f); }
 
 	glm::vec3* Camera::GetPosition() { return &cameraPosition; }
 	float*     Camera::GetYaw() { return &yaw; }

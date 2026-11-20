@@ -78,7 +78,7 @@ namespace gg
 			D3D12_VIEWPORT_BOUNDS_MAX,
 			D3D12_VIEWPORT_BOUNDS_MAX,
 		};
-		viewport = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f };
+		viewport = { 0.f, 0.f, static_cast<float>(width), static_cast<float>(height), 0.f, 1.f };
 		uint8_t dxgiFactoryFlags{ 0 };
 
 		if constexpr (IsDebug())
@@ -271,7 +271,7 @@ namespace gg
 				.MaxAnisotropy    = 0,
 				.ComparisonFunc   = D3D12_COMPARISON_FUNC_ALWAYS,
 				.BorderColor      = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
-				.MinLOD           = 0.0f,
+				.MinLOD           = 0.f,
 				.MaxLOD           = D3D12_FLOAT32_MAX,
 				.ShaderRegister   = 0,
 				.RegisterSpace    = 0,
@@ -608,9 +608,9 @@ namespace gg
 				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
 			};
 			if (srvDimension == D3D12_SRV_DIMENSION_TEXTURECUBE)
-				srvDesc.TextureCube = { .MostDetailedMip = 0, .MipLevels = 1, .ResourceMinLODClamp = 0.0f };
+				srvDesc.TextureCube = { .MostDetailedMip = 0, .MipLevels = 1, .ResourceMinLODClamp = 0.f };
 			else
-				srvDesc.Texture2D = { .MostDetailedMip = 0, .MipLevels = 1, .PlaneSlice = 0, .ResourceMinLODClamp = 0.0f };
+				srvDesc.Texture2D = { .MostDetailedMip = 0, .MipLevels = 1, .PlaneSlice = 0, .ResourceMinLODClamp = 0.f };
 			device->CreateShaderResourceView(texture->Get(), &srvDesc, srvHandle);
 		}
 
@@ -739,7 +739,7 @@ namespace gg
 
 	std::expected<void, Error> RendererD3D12::ResizeWindow()
 	{
-		viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+		viewport = CD3DX12_VIEWPORT(0.f, 0.f, static_cast<float>(width), static_cast<float>(height), 0.f, 1.f);
 		if (auto result{ ResizeRenderTargets() }; !result)
 			return std::unexpected(result.error());
 		if (auto result{ ResizeDepthBuffer() }; !result)
@@ -779,7 +779,7 @@ namespace gg
 
 		D3D12_CLEAR_VALUE optimizedClearValue{
 			.Format       = DXGI_FORMAT_D32_FLOAT,
-			.DepthStencil = { .Depth = 1.0f, .Stencil = 0 },
+			.DepthStencil = { .Depth = 1.f, .Stencil = 0 },
 		};
 
 		uint32_t const width{ std::max(this->width, 0U) };
@@ -973,9 +973,9 @@ namespace gg
 				frameIndex,
 				rtvDescriptorSize,
 			};
-			float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
+			float const clearColor[]{ 0.f, 0.2f, 0.4f, 1.f };
 			commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
 			/* Set per-model state and draw each */
 			for (std::shared_ptr<ModelD3D12> model : models)

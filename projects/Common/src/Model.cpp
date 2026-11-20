@@ -85,13 +85,13 @@ namespace
 					static_cast<float>(pos.x),
 					static_cast<float>(pos.y),
 					static_cast<float>(pos.z),
-					1.0f, // w
+					1.f, // w
 					static_cast<float>(textureCoords.x),
 					static_cast<float>(textureCoords.y),
 					static_cast<float>(normal.x),
 					static_cast<float>(normal.y),
 					static_cast<float>(normal.z),
-					0.0f
+					0.f
 				);
 			}
 		}
