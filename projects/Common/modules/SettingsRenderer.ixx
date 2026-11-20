@@ -40,7 +40,7 @@ export namespace gg
 	enum RendererType
 	{
 		Vulkan,
-		D3D12
+		D3D12,
 	};
 
 	std::string ToString(RendererType r)

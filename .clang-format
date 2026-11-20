@@ -31,3 +31,6 @@ AlignAfterOpenBracket: BlockIndent
 AlignOperands: DontAlign
 AlignTrailingComments: false
 AlignEscapedNewlines: Left
+InsertNewlineAtEOF: true
+EnumTrailingComma: Insert
+RemoveSemicolon: true

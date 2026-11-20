@@ -7,7 +7,7 @@ export namespace gg
 	enum class DebugLevel
 	{
 		Info,
-		Error
+		Error,
 	};
 
 	void DebugLog(DebugLevel level, std::string const&) noexcept;

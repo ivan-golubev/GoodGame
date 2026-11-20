@@ -20,7 +20,7 @@ export namespace gg
 		TurnCameraRight,
 		LookCameraUp,
 		LookCameraDown,
-		Count
+		Count,
 	};
 
 	struct MouseDelta
