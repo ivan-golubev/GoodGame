@@ -13,7 +13,7 @@ namespace
 	std::wstring ToWString(std::string const& str)
 	{
 		if (str.empty()) return {};
-		int          sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), NULL, 0);
+		int          sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), nullptr, 0);
 		std::wstring wstrTo(sizeNeeded, 0);
 		MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), &wstrTo[0], sizeNeeded);
 		return wstrTo;
