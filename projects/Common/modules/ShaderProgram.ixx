@@ -2,12 +2,13 @@ module;
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <string>
+#include <string_view>
 export module ShaderProgram;
 
 export namespace gg
 {
-	std::string const entryPointVertexShader{ "VSMain" };
-	std::string const entryPointFragmentShader{ "PSMain" };
+	constexpr std::string_view entryPointVertexShader{ "VSMain" };
+	constexpr std::string_view entryPointFragmentShader{ "PSMain" };
 
 	class ShaderProgram
 	{

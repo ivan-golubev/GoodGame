@@ -290,7 +290,7 @@ namespace gg
 			.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 			.stage  = VK_SHADER_STAGE_VERTEX_BIT,
 			.module = vertexShader,
-			.pName  = entryPointVertexShader.data(),
+			.pName  = entryPointVertexShader.data(), /* views a string literal, so null-terminated */
 		};
 
 		VkPipelineShaderStageCreateInfo fragShaderStageInfo{

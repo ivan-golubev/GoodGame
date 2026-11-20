@@ -14,6 +14,7 @@ module;
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_vulkan.h>
 #include <set>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -38,8 +39,8 @@ import VertexVulkan;
 
 namespace
 {
-	std::string const shaderExtensionVulkan{ "spv" };
-	std::string const shadersLocation{ "shaders/spirv" };
+	constexpr std::string_view shaderExtensionVulkan{ "spv" };
+	constexpr std::string_view shadersLocation{ "shaders/spirv" };
 
 	constexpr uint32_t maxDescriptorSets{ 1000 };
 

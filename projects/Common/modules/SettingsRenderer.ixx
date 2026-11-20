@@ -2,13 +2,14 @@ module;
 #include <cstdint>
 #include <glm/fwd.hpp>
 #include <string>
+#include <string_view>
 export module SettingsRenderer;
 
 import Lighting;
 
 namespace
 {
-	std::string const rendererName[2]{
+	constexpr std::string_view rendererName[2]{
 		"Vulkan",
 		"D3D12"
 	};
@@ -16,10 +17,10 @@ namespace
 
 export namespace gg
 {
-	constexpr char const* texturesLocation{ "assets/textures" };
-	constexpr char const* texturesExtension{ "tga" };
-	constexpr double      cubeRotationSpeed{ 0.2 }; // meters per seconds
-	constexpr int32_t     maxFramesInFlight{ 2 };
+	constexpr std::string_view texturesLocation{ "assets/textures" };
+	constexpr std::string_view texturesExtension{ "tga" };
+	constexpr double           cubeRotationSpeed{ 0.2 }; // meters per seconds
+	constexpr int32_t          maxFramesInFlight{ 2 };
 
 	/* Flip the sign of the viewport's height, Y goes up, just in D3D12 */
 	constexpr bool flipVulkanViewport{ true };
@@ -46,6 +47,6 @@ export namespace gg
 
 	std::string ToString(RendererType r)
 	{
-		return rendererName[r];
+		return std::string{ rendererName[r] };
 	}
 } // namespace gg
