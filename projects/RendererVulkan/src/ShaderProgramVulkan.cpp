@@ -35,7 +35,7 @@ namespace
 				static_cast<int>(result)
 			);
 			return std::unexpected(gg::Error{
-				.code    = gg::ErrorCode::ShaderModuleCreationFailed,
+				.code    = gg::ErrorCode::VulkanShaderModuleCreationFailed,
 				.message = message,
 			});
 		}
@@ -48,14 +48,14 @@ namespace
 
 		if (!file.is_open())
 			return std::unexpected(gg::Error{
-				.code    = gg::ErrorCode::ShaderFileReadFailed,
+				.code    = gg::ErrorCode::VulkanShaderFileReadFailed,
 				.message = std::format("Failed to open shader file '{}' for reading", filename),
 			});
 
 		std::streampos const fileSize{ file.tellg() };
 		if (fileSize <= 0)
 			return std::unexpected(gg::Error{
-				.code    = gg::ErrorCode::ShaderFileEmpty,
+				.code    = gg::ErrorCode::VulkanShaderFileEmpty,
 				.message = std::format("Shader file '{}' is empty or its size could not be read", filename),
 			});
 		std::string buffer{};
@@ -64,7 +64,7 @@ namespace
 		file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
 		if (!file)
 			return std::unexpected(gg::Error{
-				.code    = gg::ErrorCode::ShaderFileReadFailed,
+				.code    = gg::ErrorCode::VulkanShaderFileReadFailed,
 				.message = std::format("Failed while reading shader file '{}'", filename),
 			});
 		return buffer;
