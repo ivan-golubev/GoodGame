@@ -11,8 +11,8 @@ namespace gg
 	VkVertexInputBindingDescription GetVertexBindingDescription()
 	{
 		VkVertexInputBindingDescription bindingDescription{
-			.binding = 0,
-			.stride = sizeof(Vertex),
+			.binding   = 0,
+			.stride    = sizeof(Vertex),
 			.inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
 		};
 		return bindingDescription;

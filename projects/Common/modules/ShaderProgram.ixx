@@ -18,7 +18,7 @@ export namespace gg
 	struct ModelViewProjection
 	{
 		glm::mat4x4 MVP;
-		glm::vec4 viewPosition;
+		glm::vec4   viewPosition;
 	};
 
 	struct SkyboxCamera

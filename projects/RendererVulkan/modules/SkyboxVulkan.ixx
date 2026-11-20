@@ -23,7 +23,7 @@ export namespace gg
 		~SkyboxVulkan() noexcept override;
 		std::expected<void, Error> Initialize(VkDescriptorPool);
 		std::expected<void, Error> CreatePipeline();
-		void Draw(VkCommandBuffer, uint32_t frame, Camera const&);
+		void                       Draw(VkCommandBuffer, uint32_t frame, Camera const&);
 
 	private:
 		std::expected<void, Error> CreateTextureImage();
@@ -33,19 +33,19 @@ export namespace gg
 		std::expected<void, Error> CreateDescriptorSetLayout();
 		std::expected<void, Error> CreateUniformBuffers();
 		std::expected<void, Error> CreateDescriptorSets(VkDescriptorPool);
-		void DestroyPipeline();
-		void UpdateCamera(uint32_t frame, Camera const&);
+		void                       DestroyPipeline();
+		void                       UpdateCamera(uint32_t frame, Camera const&);
 
-		VkDevice device{};
-		VkImage textureImage{};
+		VkDevice       device{};
+		VkImage        textureImage{};
 		VkDeviceMemory textureImageMemory{};
-		VkImageView textureImageView{};
-		VkSampler textureSampler{};
+		VkImageView    textureImageView{};
+		VkSampler      textureSampler{};
 
 		VkDescriptorSetLayout descriptorSetLayout{};
-		GraphicsPipeline graphicsPipeline{};
+		GraphicsPipeline      graphicsPipeline{};
 
-		std::array<VkBuffer, maxFramesInFlight> uniformBuffersCamera{};
+		std::array<VkBuffer, maxFramesInFlight>       uniformBuffersCamera{};
 		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryCamera{};
 
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets{};

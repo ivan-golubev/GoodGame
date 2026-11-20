@@ -39,7 +39,7 @@ export namespace gg
 
 	struct Error
 	{
-		ErrorCode code;
+		ErrorCode   code;
 		std::string message;
 	};
 
@@ -48,7 +48,7 @@ export namespace gg
 	public:
 		ComException(HRESULT hr);
 		std::wstring WhatString() const;
-		char const* what() const override;
+		char const*  what() const override;
 
 	private:
 		HRESULT returnCode;

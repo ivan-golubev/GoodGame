@@ -16,9 +16,9 @@ namespace gg
 {
 	nanoseconds TimeManager::Tick()
 	{
-		time_point<steady_clock> now = steady_clock::now();
-		nanoseconds elapsed = duration_cast<nanoseconds>(now - currentTime);
-		currentTime = now;
+		time_point<steady_clock> now     = steady_clock::now();
+		nanoseconds              elapsed = duration_cast<nanoseconds>(now - currentTime);
+		currentTime                      = now;
 		return elapsed;
 	}
 

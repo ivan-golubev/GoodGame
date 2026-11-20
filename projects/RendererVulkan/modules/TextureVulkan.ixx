@@ -20,7 +20,7 @@ export namespace gg
 		std::expected<void, Error> Initialize();
 
 		VkImageView textureImageView{};
-		VkSampler textureSampler{};
+		VkSampler   textureSampler{};
 
 	private:
 		std::expected<void, Error> CreateTextureImage();
@@ -30,8 +30,8 @@ export namespace gg
 		std::expected<void, Error> TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
 		std::expected<void, Error> CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
-		VkDevice device;
-		VkImage textureImage{};
+		VkDevice       device;
+		VkImage        textureImage{};
 		VkDeviceMemory textureImageMemory{};
 	};
 

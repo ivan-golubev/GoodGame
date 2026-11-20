@@ -17,28 +17,28 @@ namespace gg
 	{
 	public:
 		static std::shared_ptr<Application> Init(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
-		static void Destroy();
-		static bool IsInitialized();
+		static void                         Destroy();
+		static bool                         IsInitialized();
 		static std::shared_ptr<Application> Get();
 
 		~Application() noexcept;
 
-		Application(Application const&) = delete;
+		Application(Application const&)            = delete;
 		Application& operator=(Application const&) = delete;
 
-		Application(Application&&) noexcept = default;
+		Application(Application&&) noexcept            = default;
 		Application& operator=(Application&&) noexcept = default;
 
 		std::expected<void, Error> Tick();
-		void OnWindowResized(uint32_t width, uint32_t height);
-		void OnWindowMinimized();
-		void OnWindowRestored();
-		void OnKeyPressed(SDL_Keycode, bool isDown);
-		void OnMouseMoved(int32_t deltaX, int32_t deltaY);
+		void                       OnWindowResized(uint32_t width, uint32_t height);
+		void                       OnWindowMinimized();
+		void                       OnWindowRestored();
+		void                       OnKeyPressed(SDL_Keycode, bool isDown);
+		void                       OnMouseMoved(int32_t deltaX, int32_t deltaY);
 
 		std::shared_ptr<InputManager> GetInputManager();
-		std::shared_ptr<TimeManager> GetTimeManager();
-		std::shared_ptr<Renderer> GetRenderer();
+		std::shared_ptr<TimeManager>  GetTimeManager();
+		std::shared_ptr<Renderer>     GetRenderer();
 
 	private:
 		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
@@ -48,7 +48,7 @@ namespace gg
 		bool isPaused{ false };
 
 		std::shared_ptr<InputManager> inputManager;
-		std::shared_ptr<TimeManager> timeManager;
-		std::shared_ptr<Renderer> renderer;
+		std::shared_ptr<TimeManager>  timeManager;
+		std::shared_ptr<Renderer>     renderer;
 	};
 } // namespace gg

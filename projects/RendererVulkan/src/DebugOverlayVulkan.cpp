@@ -43,11 +43,11 @@ namespace gg
 			};
 
 			VkDescriptorPoolCreateInfo poolInfo{
-				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-				.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-				.maxSets = 1000 * IM_ARRAYSIZE(poolSizes),
+				.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+				.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+				.maxSets       = 1000 * IM_ARRAYSIZE(poolSizes),
 				.poolSizeCount = (uint32_t)IM_ARRAYSIZE(poolSizes),
-				.pPoolSizes = poolSizes,
+				.pPoolSizes    = poolSizes,
 			};
 
 			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
@@ -60,18 +60,18 @@ namespace gg
 
 		{
 			ImGui_ImplVulkan_InitInfo initInfo{
-				.Instance = info.instance,
-				.PhysicalDevice = info.physicalDevice,
-				.Device = device,
-				.QueueFamily = info.graphicsQueueFamily,
-				.Queue = info.graphicsQueue,
-				.PipelineCache = VK_NULL_HANDLE,
-				.DescriptorPool = descriptorPool,
-				.Subpass = 0,
-				.MinImageCount = maxFramesInFlight,
-				.ImageCount = maxFramesInFlight,
-				.MSAASamples = VK_SAMPLE_COUNT_1_BIT,
-				.Allocator = VK_NULL_HANDLE,
+				.Instance        = info.instance,
+				.PhysicalDevice  = info.physicalDevice,
+				.Device          = device,
+				.QueueFamily     = info.graphicsQueueFamily,
+				.Queue           = info.graphicsQueue,
+				.PipelineCache   = VK_NULL_HANDLE,
+				.DescriptorPool  = descriptorPool,
+				.Subpass         = 0,
+				.MinImageCount   = maxFramesInFlight,
+				.ImageCount      = maxFramesInFlight,
+				.MSAASamples     = VK_SAMPLE_COUNT_1_BIT,
+				.Allocator       = VK_NULL_HANDLE,
 				.CheckVkResultFn = [](VkResult err)
 				{
 					if (err != VK_SUCCESS)
@@ -79,7 +79,7 @@ namespace gg
 				},
 			};
 
-			imguiVulkanInitResult = VK_SUCCESS;
+			imguiVulkanInitResult    = VK_SUCCESS;
 			vulkanBackendInitialized = ImGui_ImplVulkan_Init(&initInfo, info.renderPass);
 		}
 		if (!vulkanBackendInitialized || imguiVulkanInitResult != VK_SUCCESS)

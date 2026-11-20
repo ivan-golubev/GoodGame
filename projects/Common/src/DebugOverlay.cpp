@@ -37,8 +37,8 @@ namespace gg
 		ImGui::Begin("Renderer settings");
 
 		std::shared_ptr<Application> app{ Application::Get() };
-		std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
-		std::shared_ptr<Camera> camera{ renderer->GetCamera() };
+		std::shared_ptr<Renderer>    renderer{ app->GetRenderer() };
+		std::shared_ptr<Camera>      camera{ renderer->GetCamera() };
 
 		RendererType const rendererType{ renderer->GetType() };
 		ImGui::TextColored(rendererNameColor[rendererType], "Renderer: %s", ToString(rendererType).c_str());

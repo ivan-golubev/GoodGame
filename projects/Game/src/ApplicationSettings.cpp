@@ -18,13 +18,13 @@ namespace gg
 {
 	std::expected<std::shared_ptr<Application>, Error> MakeApplication(ApplicationSettings const& s)
 	{
-		std::shared_ptr<TimeManager> timeManager{ std::make_shared<TimeManager>() };
+		std::shared_ptr<TimeManager>  timeManager{ std::make_shared<TimeManager>() };
 		std::shared_ptr<InputManager> inputManager{ std::make_shared<InputManager>() };
-		RendererSettings const rendererSettings{
-			.width = s.width,
-			.height = s.height,
+		RendererSettings const        rendererSettings{
+			.width        = s.width,
+			.height       = s.height,
 			.windowHandle = s.windowHandle,
-			.timeManager = timeManager,
+			.timeManager  = timeManager,
 			.inputManager = inputManager,
 		};
 

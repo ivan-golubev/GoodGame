@@ -17,8 +17,8 @@ export namespace gg
 	{
 	public:
 		Skybox(std::string const& name, std::shared_ptr<ShaderProgram>);
-		virtual ~Skybox() noexcept = default;
-		Skybox(Skybox const&) = delete;
+		virtual ~Skybox() noexcept       = default;
+		Skybox(Skybox const&)            = delete;
 		Skybox& operator=(Skybox const&) = delete;
 
 		/* Loads the face images and checks they can form a cube map. */

@@ -144,8 +144,8 @@ namespace
 		try
 		{
 			ApplicationSettings const appSettings{
-				.width = width,
-				.height = height,
+				.width        = width,
+				.height       = height,
 				.windowHandle = window.get(),
 				.rendererType = rendererType,
 			};
@@ -159,7 +159,7 @@ namespace
 			DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
-			auto handleAssetLoadError = [](Error const& error)
+			auto                      handleAssetLoadError = [](Error const& error)
 			{
 				DebugLog(DebugLevel::Error, error.message);
 			};
@@ -205,8 +205,8 @@ int main()
 
 	constexpr uint32_t width{ 1920 };
 	constexpr uint32_t height{ 1080 };
-	RendererType rendererType{ RendererType::Vulkan };
-	uint32_t status{ 0 };
+	RendererType       rendererType{ RendererType::Vulkan };
+	uint32_t           status{ 0 };
 	do
 	{
 		status = RunApplication(width, height, rendererType);

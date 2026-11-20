@@ -17,15 +17,15 @@ namespace
 	std::expected<VkShaderModule, gg::Error> CreateShaderModule(VkDevice device, std::string const& shaderBlob, std::string const& shaderPath)
 	{
 		VkShaderModuleCreateInfo createInfo{
-			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+			.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 			.codeSize = shaderBlob.size(),
-			.pCode = reinterpret_cast<uint32_t const*>(shaderBlob.data()),
+			.pCode    = reinterpret_cast<uint32_t const*>(shaderBlob.data()),
 		};
 		VkShaderModule shaderModule{};
 		VkResult const result{ vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) };
 		if (result != VK_SUCCESS)
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ShaderModuleCreationFailed,
+				.code    = gg::ErrorCode::ShaderModuleCreationFailed,
 				.message = std::format("Failed to create Vulkan shader module from '{}': VkResult {}", shaderPath, static_cast<int>(result)),
 			});
 		return shaderModule;
@@ -37,14 +37,14 @@ namespace
 
 		if (!file.is_open())
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ShaderFileReadFailed,
+				.code    = gg::ErrorCode::ShaderFileReadFailed,
 				.message = std::format("Failed to open shader file '{}' for reading", filename),
 			});
 
 		std::streampos const fileSize{ file.tellg() };
 		if (fileSize <= 0)
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ShaderFileEmpty,
+				.code    = gg::ErrorCode::ShaderFileEmpty,
 				.message = std::format("Shader file '{}' is empty or its size could not be read", filename),
 			});
 		std::string buffer{};
@@ -53,7 +53,7 @@ namespace
 		file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
 		if (!file)
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ShaderFileReadFailed,
+				.code    = gg::ErrorCode::ShaderFileReadFailed,
 				.message = std::format("Failed while reading shader file '{}'", filename),
 			});
 		return buffer;
@@ -71,7 +71,7 @@ namespace gg
 	{
 		std::string const vertexShaderPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_string() };
 		std::string const fragmentShaderPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_string() };
-		auto vertexBlobResult{ ReadFile(vertexShaderPath) };
+		auto              vertexBlobResult{ ReadFile(vertexShaderPath) };
 		if (!vertexBlobResult)
 			return std::unexpected(vertexBlobResult.error());
 		vertexShaderBlob = std::move(*vertexBlobResult);
@@ -120,11 +120,11 @@ namespace gg
 			if (device && fragmentShader)
 				vkDestroyShaderModule(device, fragmentShader, nullptr);
 
-			vertexShaderBlob = std::move(other.vertexShaderBlob);
+			vertexShaderBlob   = std::move(other.vertexShaderBlob);
 			fragmentShaderBlob = std::move(other.fragmentShaderBlob);
-			device = std::exchange(other.device, VK_NULL_HANDLE);
-			vertexShader = std::exchange(other.vertexShader, VK_NULL_HANDLE);
-			fragmentShader = std::exchange(other.fragmentShader, VK_NULL_HANDLE);
+			device             = std::exchange(other.device, VK_NULL_HANDLE);
+			vertexShader       = std::exchange(other.vertexShader, VK_NULL_HANDLE);
+			fragmentShader     = std::exchange(other.fragmentShader, VK_NULL_HANDLE);
 		}
 		return *this;
 	}

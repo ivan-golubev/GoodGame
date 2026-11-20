@@ -89,11 +89,11 @@ namespace gg
 {
 	std::expected<void, Error> RendererVulkan::Initialize(RendererSettings const& rs)
 	{
-		width = rs.width;
-		height = rs.height;
+		width           = rs.width;
+		height          = rs.height;
 		windowHandleSDL = rs.windowHandle;
-		timeManager = rs.timeManager;
-		camera = std::make_shared<Camera>(rs.inputManager);
+		timeManager     = rs.timeManager;
+		camera          = std::make_shared<Camera>(rs.inputManager);
 		uint32_t extensionCount;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extensionCount, nullptr))
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Could not get the number of required instance extensions from SDL." });
@@ -140,14 +140,14 @@ namespace gg
 			if (!indices.graphicsFamily)
 				return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "No graphics queue family was found for the Vulkan debug UI." });
 			DebugOverlayVulkanCreateInfo debugOverlayInfo{
-				.device = device,
-				.instance = instance,
+				.device              = device,
+				.instance            = instance,
 				.graphicsQueueFamily = *indices.graphicsFamily,
-				.graphicsQueue = graphicsQueue,
-				.physicalDevice = physicalDevice,
-				.renderPass = renderPass,
-				.windowHandleSDL = windowHandleSDL,
-				.renderer = this,
+				.graphicsQueue       = graphicsQueue,
+				.physicalDevice      = physicalDevice,
+				.renderPass          = renderPass,
+				.windowHandleSDL     = windowHandleSDL,
+				.renderer            = this,
 			};
 
 			debugOverlay = std::make_unique<DebugOverlayVulkan>();
@@ -169,7 +169,7 @@ namespace gg
 
 	std::shared_ptr<RendererVulkan> RendererVulkan::Get()
 	{
-		std::shared_ptr<Application> app{ Application::Get() };
+		std::shared_ptr<Application>    app{ Application::Get() };
 		std::shared_ptr<RendererVulkan> renderer{ dynamic_pointer_cast<RendererVulkan>(app->GetRenderer()) };
 		return renderer;
 	}
@@ -177,21 +177,21 @@ namespace gg
 	std::expected<void, Error> RendererVulkan::CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions)
 	{
 		VkApplicationInfo appInfo{
-			.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-			.pApplicationName = "gg Vulkan Renderer",
+			.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+			.pApplicationName   = "gg Vulkan Renderer",
 			.applicationVersion = VK_HEADER_VERSION_COMPLETE,
-			.pEngineName = "gg Engine",
-			.engineVersion = VK_HEADER_VERSION_COMPLETE,
-			.apiVersion = VK_HEADER_VERSION_COMPLETE,
+			.pEngineName        = "gg Engine",
+			.engineVersion      = VK_HEADER_VERSION_COMPLETE,
+			.apiVersion         = VK_HEADER_VERSION_COMPLETE,
 		};
 
 		VkInstanceCreateInfo instInfo{
-			.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-			.flags = 0,
-			.pApplicationInfo = &appInfo,
-			.enabledLayerCount = static_cast<uint32_t>(layers.size()),
-			.ppEnabledLayerNames = layers.data(),
-			.enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+			.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+			.flags                   = 0,
+			.pApplicationInfo        = &appInfo,
+			.enabledLayerCount       = static_cast<uint32_t>(layers.size()),
+			.ppEnabledLayerNames     = layers.data(),
+			.enabledExtensionCount   = static_cast<uint32_t>(extensions.size()),
 			.ppEnabledExtensionNames = extensions.data(),
 		};
 
@@ -212,7 +212,7 @@ namespace gg
 		SDL_Vulkan_GetDrawableSize(windowHandleSDL, &width, &height);
 
 		return {
-			.width = std::clamp(static_cast<uint32_t>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+			.width  = std::clamp(static_cast<uint32_t>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
 			.height = std::clamp(static_cast<uint32_t>(height), capabilities.minImageExtent.height, capabilities.maxImageExtent.height),
 		};
 	}
@@ -220,9 +220,9 @@ namespace gg
 	std::expected<void, Error> RendererVulkan::CreateSwapChain()
 	{
 		SwapChainSupportDetails swapChainSupport{ QuerySwapChainSupport(physicalDevice) };
-		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
-		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
-		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
+		VkSurfaceFormatKHR      surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+		VkPresentModeKHR        presentMode   = ChooseSwapPresentMode(swapChainSupport.presentModes);
+		VkExtent2D              extent        = ChooseSwapExtent(swapChainSupport.capabilities);
 
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
@@ -230,24 +230,24 @@ namespace gg
 		QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
 		if (!indices.IsComplete())
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "No complete queue family was found while creating the swap chain." });
-		uint32_t queueFamilyIndices[]{ *indices.graphicsFamily, *indices.presentFamily };
-		bool const useConcurrentSharing = indices.graphicsFamily != indices.presentFamily;
+		uint32_t                 queueFamilyIndices[]{ *indices.graphicsFamily, *indices.presentFamily };
+		bool const               useConcurrentSharing = indices.graphicsFamily != indices.presentFamily;
 		VkSwapchainCreateInfoKHR createInfo{
-			.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-			.surface = surface,
-			.minImageCount = imageCount,
-			.imageFormat = surfaceFormat.format,
-			.imageColorSpace = surfaceFormat.colorSpace,
-			.imageExtent = extent,
-			.imageArrayLayers = 1,
-			.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-			.imageSharingMode = useConcurrentSharing ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE,
+			.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+			.surface               = surface,
+			.minImageCount         = imageCount,
+			.imageFormat           = surfaceFormat.format,
+			.imageColorSpace       = surfaceFormat.colorSpace,
+			.imageExtent           = extent,
+			.imageArrayLayers      = 1,
+			.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			.imageSharingMode      = useConcurrentSharing ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE,
 			.queueFamilyIndexCount = useConcurrentSharing ? 2U : 0U,
-			.pQueueFamilyIndices = useConcurrentSharing ? queueFamilyIndices : nullptr,
-			.preTransform = swapChainSupport.capabilities.currentTransform,
-			.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-			.presentMode = presentMode,
-			.clipped = VK_TRUE,
+			.pQueueFamilyIndices   = useConcurrentSharing ? queueFamilyIndices : nullptr,
+			.preTransform          = swapChainSupport.capabilities.currentTransform,
+			.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+			.presentMode           = presentMode,
+			.clipped               = VK_TRUE,
 		};
 		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create swap chain." });
@@ -257,7 +257,7 @@ namespace gg
 		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
 		swapChainImageFormat = surfaceFormat.format;
-		swapChainExtent = extent;
+		swapChainExtent      = extent;
 		return {};
 	}
 
@@ -277,65 +277,65 @@ namespace gg
 	std::expected<void, Error> RendererVulkan::CreateRenderPass()
 	{
 		VkAttachmentDescription colorAttachment{
-			.format = swapChainImageFormat,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			.format         = swapChainImageFormat,
+			.samples        = VK_SAMPLE_COUNT_1_BIT,
+			.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+			.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+			.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		};
 
 		/* Cleared to 1.0 (far plane) every frame; the contents are not needed after the pass. */
 		VkAttachmentDescription depthAttachment{
-			.format = depthBuffer->GetFormat(),
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			.format         = depthBuffer->GetFormat(),
+			.samples        = VK_SAMPLE_COUNT_1_BIT,
+			.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+			.finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		};
 
 		VkAttachmentReference colorAttachmentRef{
 			.attachment = 0,
-			.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		};
 
 		VkAttachmentReference depthAttachmentRef{
 			.attachment = 1,
-			.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		};
 
 		/* The previous frame may still be testing against the shared depth image: wait for its depth tests
 		   before this frame clears it, in addition to the existing colour output dependency. */
 		VkSubpassDependency dependency{
-			.srcSubpass = VK_SUBPASS_EXTERNAL,
-			.dstSubpass = 0,
-			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			.srcSubpass    = VK_SUBPASS_EXTERNAL,
+			.dstSubpass    = 0,
+			.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+			.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
 			.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 		};
 
 		VkSubpassDescription subpass{
-			.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-			.colorAttachmentCount = 1,
-			.pColorAttachments = &colorAttachmentRef,
+			.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+			.colorAttachmentCount    = 1,
+			.pColorAttachments       = &colorAttachmentRef,
 			.pDepthStencilAttachment = &depthAttachmentRef,
 		};
 
 		std::array<VkAttachmentDescription, 2> const attachments{ colorAttachment, depthAttachment };
-		VkRenderPassCreateInfo renderPassInfo{
-			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		VkRenderPassCreateInfo                       renderPassInfo{
+			.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
 			.attachmentCount = static_cast<uint32_t>(attachments.size()),
-			.pAttachments = attachments.data(),
-			.subpassCount = 1,
-			.pSubpasses = &subpass,
+			.pAttachments    = attachments.data(),
+			.subpassCount    = 1,
+			.pSubpasses      = &subpass,
 			.dependencyCount = 1,
-			.pDependencies = &dependency,
+			.pDependencies   = &dependency,
 		};
 
 		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
@@ -346,49 +346,49 @@ namespace gg
 	}
 
 	std::expected<GraphicsPipeline, Error> RendererVulkan::CreateGraphicsPipeline(
-		VkShaderModule vertexShader,
-		VkShaderModule fragmentShader,
-		VkPipelineVertexInputStateCreateInfo const& vertexInputInfo,
-		VkCullModeFlags cullMode,
+		VkShaderModule                               vertexShader,
+		VkShaderModule                               fragmentShader,
+		VkPipelineVertexInputStateCreateInfo const&  vertexInputInfo,
+		VkCullModeFlags                              cullMode,
 		VkPipelineDepthStencilStateCreateInfo const& depthStencil,
-		VkDescriptorSetLayout const& setLayout
+		VkDescriptorSetLayout const&                 setLayout
 	)
 	{
 		std::expected<GraphicsPipeline, Error> result{ std::in_place };
 
 		VkPipelineShaderStageCreateInfo vertShaderStageInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.stage = VK_SHADER_STAGE_VERTEX_BIT,
+			.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.stage  = VK_SHADER_STAGE_VERTEX_BIT,
 			.module = vertexShader,
-			.pName = entryPointVertexShader.data(),
+			.pName  = entryPointVertexShader.data(),
 		};
 
 		VkPipelineShaderStageCreateInfo fragShaderStageInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
 			.module = fragmentShader,
-			.pName = entryPointFragmentShader.data(),
+			.pName  = entryPointFragmentShader.data(),
 		};
 
 		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-			.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+			.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 			.primitiveRestartEnable = VK_FALSE,
 		};
 
-		float const viewportY = flipVulkanViewport
+		float const viewportY      = flipVulkanViewport
 			? static_cast<float>(swapChainExtent.height)
 			: 0.0f;
 		float const viewportHeight = flipVulkanViewport
 			? -static_cast<float>(swapChainExtent.height)
 			: static_cast<float>(swapChainExtent.height);
-		VkViewport viewport{
-			.x = 0.0f,
-			.y = viewportY,
-			.width = static_cast<float>(swapChainExtent.width),
-			.height = viewportHeight,
+		VkViewport  viewport{
+			.x        = 0.0f,
+			.y        = viewportY,
+			.width    = static_cast<float>(swapChainExtent.width),
+			.height   = viewportHeight,
 			.minDepth = 0.0f,
 			.maxDepth = 1.0f,
 		};
@@ -398,72 +398,72 @@ namespace gg
 		};
 
 		VkPipelineViewportStateCreateInfo viewportState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+			.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
 			.viewportCount = 1,
-			.pViewports = &viewport,
-			.scissorCount = 1,
-			.pScissors = &scissor,
+			.pViewports    = &viewport,
+			.scissorCount  = 1,
+			.pScissors     = &scissor,
 		};
 
 		VkPipelineRasterizationStateCreateInfo rasterizer{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-			.depthClampEnable = VK_FALSE,
+			.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+			.depthClampEnable        = VK_FALSE,
 			.rasterizerDiscardEnable = VK_FALSE,
-			.polygonMode = VK_POLYGON_MODE_FILL,
-			.cullMode = cullMode,
-			.frontFace = VK_FRONT_FACE_CLOCKWISE,
-			.depthBiasEnable = VK_FALSE,
-			.lineWidth = 1.0f,
+			.polygonMode             = VK_POLYGON_MODE_FILL,
+			.cullMode                = cullMode,
+			.frontFace               = VK_FRONT_FACE_CLOCKWISE,
+			.depthBiasEnable         = VK_FALSE,
+			.lineWidth               = 1.0f,
 		};
 
 		VkPipelineMultisampleStateCreateInfo multisampling{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+			.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 			.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-			.sampleShadingEnable = VK_FALSE,
+			.sampleShadingEnable  = VK_FALSE,
 		};
 
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{
-			.blendEnable = VK_FALSE,
+			.blendEnable         = VK_FALSE,
 			.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
 			.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-			.colorBlendOp = VK_BLEND_OP_ADD,
+			.colorBlendOp        = VK_BLEND_OP_ADD,
 			.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
 			.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-			.alphaBlendOp = VK_BLEND_OP_ADD,
-			.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+			.alphaBlendOp        = VK_BLEND_OP_ADD,
+			.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
 		};
 
 		VkPipelineColorBlendStateCreateInfo colorBlending{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-			.logicOpEnable = VK_FALSE,
-			.logicOp = VK_LOGIC_OP_COPY,
+			.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+			.logicOpEnable   = VK_FALSE,
+			.logicOp         = VK_LOGIC_OP_COPY,
 			.attachmentCount = 1,
-			.pAttachments = &colorBlendAttachment,
+			.pAttachments    = &colorBlendAttachment,
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+			.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.setLayoutCount = 1,
-			.pSetLayouts = &setLayout,
+			.pSetLayouts    = &setLayout,
 		};
 
 		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &result->layout) != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan graphics pipeline layout." });
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{
-			.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-			.stageCount = 2,
-			.pStages = shaderStages,
-			.pVertexInputState = &vertexInputInfo,
+			.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+			.stageCount          = 2,
+			.pStages             = shaderStages,
+			.pVertexInputState   = &vertexInputInfo,
 			.pInputAssemblyState = &inputAssembly,
-			.pViewportState = &viewportState,
+			.pViewportState      = &viewportState,
 			.pRasterizationState = &rasterizer,
-			.pMultisampleState = &multisampling,
-			.pDepthStencilState = &depthStencil,
-			.pColorBlendState = &colorBlending,
-			.layout = result->layout,
-			.renderPass = renderPass,
-			.subpass = 0,
+			.pMultisampleState   = &multisampling,
+			.pDepthStencilState  = &depthStencil,
+			.pColorBlendState    = &colorBlending,
+			.layout              = result->layout,
+			.renderPass          = renderPass,
+			.subpass             = 0,
 		};
 
 		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &result->pipeline) != VK_SUCCESS)
@@ -481,14 +481,14 @@ namespace gg
 		{
 			/* Every framebuffer shares the one depth image; the render pass dependency orders its use across frames. */
 			std::array<VkImageView, 2> const attachments{ swapChainImageViews[i], depthBuffer->GetView() };
-			VkFramebufferCreateInfo framebufferInfo{
-				.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-				.renderPass = renderPass,
+			VkFramebufferCreateInfo          framebufferInfo{
+				.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+				.renderPass      = renderPass,
 				.attachmentCount = static_cast<uint32_t>(attachments.size()),
-				.pAttachments = attachments.data(),
-				.width = swapChainExtent.width,
-				.height = swapChainExtent.height,
-				.layers = 1,
+				.pAttachments    = attachments.data(),
+				.width           = swapChainExtent.width,
+				.height          = swapChainExtent.height,
+				.layers          = 1,
 			};
 			if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS)
 				return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan framebuffer." });
@@ -502,8 +502,8 @@ namespace gg
 		if (!queueFamilyIndices.graphicsFamily)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "No graphics queue family was found while creating the Vulkan command pool." });
 		VkCommandPoolCreateInfo poolInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-			.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+			.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+			.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 			.queueFamilyIndex = *queueFamilyIndices.graphicsFamily,
 		};
 		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
@@ -516,9 +516,9 @@ namespace gg
 	std::expected<void, Error> RendererVulkan::CreateCommandBuffers()
 	{
 		VkCommandBufferAllocateInfo allocInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool = commandPool,
-			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.commandPool        = commandPool,
+			.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 			.commandBufferCount = static_cast<uint32_t>(commandBuffers.size()),
 		};
 		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
@@ -539,7 +539,7 @@ namespace gg
 		for (size_t i = 0; i < maxFramesInFlight; ++i)
 		{
 			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frameImageAvailableSemaphores[i]) != VK_SUCCESS
-				|| vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+			    || vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
 			{
 				return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to create Vulkan frame synchronization objects." });
 			}
@@ -571,7 +571,7 @@ namespace gg
 
 		QueueFamilyIndices indices{
 			.graphicsFamily = std::nullopt,
-			.presentFamily = std::nullopt,
+			.presentFamily  = std::nullopt,
 		};
 		uint32_t i{ 0 };
 		for (auto const& q : queueFamilies)
@@ -610,7 +610,7 @@ namespace gg
 	{
 		SwapChainSupportDetails details{
 			.capabilities = {},
-			.formats = {},
+			.formats      = {},
 			.presentModes = {},
 		};
 
@@ -688,16 +688,16 @@ namespace gg
 		QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
 		if (!indices.IsComplete())
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "No complete queue family was found while creating the Vulkan device." });
-		std::set<uint32_t> uniqueQueueFamilies{ *indices.graphicsFamily, *indices.presentFamily };
+		std::set<uint32_t>                   uniqueQueueFamilies{ *indices.graphicsFamily, *indices.presentFamily };
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
 
 		float queuePriority{ 1.0f };
 		for (uint32_t queueFamily : uniqueQueueFamilies)
 		{
 			VkDeviceQueueCreateInfo queueCreateInfo{
-				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+				.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 				.queueFamilyIndex = queueFamily,
-				.queueCount = 1,
+				.queueCount       = 1,
 				.pQueuePriorities = &queuePriority,
 			};
 			queueCreateInfos.push_back(queueCreateInfo);
@@ -706,27 +706,27 @@ namespace gg
 			.samplerAnisotropy = VK_TRUE
 		};
 		VkPhysicalDeviceVulkan12Features enabledVk12Features{
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-			.descriptorIndexing = true,
+			.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+			.descriptorIndexing                        = true,
 			.shaderSampledImageArrayNonUniformIndexing = true,
-			.descriptorBindingVariableDescriptorCount = true,
-			.runtimeDescriptorArray = true,
-			.bufferDeviceAddress = true
+			.descriptorBindingVariableDescriptorCount  = true,
+			.runtimeDescriptorArray                    = true,
+			.bufferDeviceAddress                       = true
 		};
 		VkPhysicalDeviceVulkan13Features enabledVk13Features{
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
-			.pNext = &enabledVk12Features,
+			.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+			.pNext            = &enabledVk12Features,
 			.synchronization2 = true,
 			.dynamicRendering = true,
 		};
 		VkDeviceCreateInfo createInfo{
-			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-			.pNext = &enabledVk13Features,
-			.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
-			.pQueueCreateInfos = queueCreateInfos.data(),
-			.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
+			.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+			.pNext                   = &enabledVk13Features,
+			.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size()),
+			.pQueueCreateInfos       = queueCreateInfos.data(),
+			.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size()),
 			.ppEnabledExtensionNames = deviceExtensions.data(),
-			.pEnabledFeatures = &enabledVk10Features,
+			.pEnabledFeatures        = &enabledVk10Features,
 		};
 		VkResult const result{ vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) };
 		if (result != VK_SUCCESS)
@@ -739,10 +739,10 @@ namespace gg
 	{
 		struct BufferResources
 		{
-			VkDevice device;
-			VkBuffer buffer{};
+			VkDevice       device;
+			VkBuffer       buffer{};
 			VkDeviceMemory memory{};
-			VkBuffer stagingBuffer{};
+			VkBuffer       stagingBuffer{};
 			VkDeviceMemory stagingMemory{};
 
 			~BufferResources() noexcept
@@ -763,7 +763,7 @@ namespace gg
 		if (auto result{ CreateBuffer(resources.stagingBuffer, resources.stagingMemory, indexBufferSizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 			return std::unexpected(result.error());
 
-		void* mappedData{};
+		void*          mappedData{};
 		VkResult const mapResult{ vkMapMemory(device, resources.stagingMemory, 0, indexBufferSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to map staging buffer for index data (VkResult {})", static_cast<int>(mapResult)) });
@@ -789,10 +789,10 @@ namespace gg
 		};
 
 		VkDescriptorPoolCreateInfo poolInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets = maxFramesInFlight * maxDescriptorSets,
+			.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+			.maxSets       = maxFramesInFlight * maxDescriptorSets,
 			.poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
-			.pPoolSizes = poolSizes.data(),
+			.pPoolSizes    = poolSizes.data(),
 		};
 
 		if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
@@ -847,17 +847,17 @@ namespace gg
 	}
 
 	std::expected<void, Error> RendererVulkan::CreateBuffer(
-		VkBuffer& outBuffer,
-		VkDeviceMemory& outBufferMemory,
-		uint64_t sizeBytes,
+		VkBuffer&             outBuffer,
+		VkDeviceMemory&       outBufferMemory,
+		uint64_t              sizeBytes,
 		VkBufferUsageFlagBits usage,
 		VkMemoryPropertyFlags properties
 	)
 	{
 		struct BufferResources
 		{
-			VkDevice device;
-			VkBuffer buffer{};
+			VkDevice       device;
+			VkBuffer       buffer{};
 			VkDeviceMemory memory{};
 
 			~BufferResources() noexcept
@@ -868,13 +868,13 @@ namespace gg
 					vkFreeMemory(device, memory, nullptr);
 			}
 		} resources{ device };
-		outBuffer = VK_NULL_HANDLE;
+		outBuffer       = VK_NULL_HANDLE;
 		outBufferMemory = VK_NULL_HANDLE;
 
 		VkBufferCreateInfo bufferInfo{
-			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-			.size = sizeBytes,
-			.usage = static_cast<VkBufferUsageFlags>(usage),
+			.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+			.size        = sizeBytes,
+			.usage       = static_cast<VkBufferUsageFlags>(usage),
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		};
 		VkResult const createResult{ vkCreateBuffer(device, &bufferInfo, nullptr, &resources.buffer) };
@@ -891,8 +891,8 @@ namespace gg
 		if (!memoryTypeResult)
 			return std::unexpected(memoryTypeResult.error());
 		VkMemoryAllocateInfo allocInfo{
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = memRequirements.size,
+			.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+			.allocationSize  = memRequirements.size,
 			.memoryTypeIndex = *memoryTypeResult,
 		};
 		VkResult const allocationResult{ vkAllocateMemory(device, &allocInfo, nullptr, &resources.memory) };
@@ -904,7 +904,7 @@ namespace gg
 		if (bindResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to bind memory to Vulkan buffer (VkResult {})", static_cast<int>(bindResult)) });
 
-		outBuffer = std::exchange(resources.buffer, VK_NULL_HANDLE);
+		outBuffer       = std::exchange(resources.buffer, VK_NULL_HANDLE);
 		outBufferMemory = std::exchange(resources.memory, VK_NULL_HANDLE);
 		return {};
 	}
@@ -958,8 +958,8 @@ namespace gg
 	void RendererVulkan::OnWindowResized(uint32_t width, uint32_t height)
 	{
 		isWindowResized = true;
-		width = std::max(8u, width);
-		height = std::max(8u, height);
+		width           = std::max(8u, width);
+		height          = std::max(8u, height);
 	}
 
 	VkDevice RendererVulkan::GetDevice() const { return device; }
@@ -1004,8 +1004,8 @@ namespace gg
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererVulkan::LoadShader(std::string const& shaderName)
 	{
-		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
-		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
+		std::string const                    vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
+		std::string const                    fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionVulkan) };
 		std::unique_ptr<ShaderProgramVulkan> shader{ new ShaderProgramVulkan(device) };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
@@ -1015,7 +1015,7 @@ namespace gg
 	std::expected<std::shared_ptr<Texture>, Error> RendererVulkan::LoadTexture(std::string const& name)
 	{
 		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
-		auto texture{ std::make_unique<TextureVulkan>(device, textureRelativePath) };
+		auto              texture{ std::make_unique<TextureVulkan>(device, textureRelativePath) };
 		if (auto const result{ texture->Initialize() }; !result)
 			return std::unexpected(result.error());
 		return std::shared_ptr<Texture>{ std::move(texture) };
@@ -1027,7 +1027,7 @@ namespace gg
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		std::shared_ptr<ModelVulkan> model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
+		std::shared_ptr<ModelVulkan>   model = std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device);
 		if (auto const result{ model->Initialize(descriptorPool) }; !result)
 			return std::unexpected(result.error());
 		models.push_back(model);
@@ -1048,33 +1048,33 @@ namespace gg
 
 	VkResult RendererVulkan::Present(uint32_t imageIndex)
 	{
-		VkSemaphore signalSemaphores[] = { swapchainImageRenderFinishedSemaphores[imageIndex] };
-		VkSwapchainKHR swapChains[] = { swapChain };
+		VkSemaphore      signalSemaphores[] = { swapchainImageRenderFinishedSemaphores[imageIndex] };
+		VkSwapchainKHR   swapChains[]       = { swapChain };
 		VkPresentInfoKHR presentInfo{
-			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+			.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 			.waitSemaphoreCount = 1,
-			.pWaitSemaphores = signalSemaphores,
-			.swapchainCount = 1,
-			.pSwapchains = swapChains,
-			.pImageIndices = &imageIndex,
+			.pWaitSemaphores    = signalSemaphores,
+			.swapchainCount     = 1,
+			.pSwapchains        = swapChains,
+			.pImageIndices      = &imageIndex,
 		};
 		return vkQueuePresentKHR(graphicsQueue, &presentInfo);
 	}
 
 	std::expected<void, Error> RendererVulkan::SubmitCommands(uint32_t imageIndex)
 	{
-		VkSemaphore waitSemaphores[]{ frameImageAvailableSemaphores[currentFrame] };
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSemaphore signalSemaphores[] = { swapchainImageRenderFinishedSemaphores[imageIndex] };
-		VkSubmitInfo submitInfo{
-			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-			.waitSemaphoreCount = 1,
-			.pWaitSemaphores = waitSemaphores,
-			.pWaitDstStageMask = waitStages,
-			.commandBufferCount = 1,
-			.pCommandBuffers = &commandBuffers[currentFrame],
+		VkSemaphore          waitSemaphores[]{ frameImageAvailableSemaphores[currentFrame] };
+		VkPipelineStageFlags waitStages[]       = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkSemaphore          signalSemaphores[] = { swapchainImageRenderFinishedSemaphores[imageIndex] };
+		VkSubmitInfo         submitInfo{
+			.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			.waitSemaphoreCount   = 1,
+			.pWaitSemaphores      = waitSemaphores,
+			.pWaitDstStageMask    = waitStages,
+			.commandBufferCount   = 1,
+			.pCommandBuffers      = &commandBuffers[currentFrame],
 			.signalSemaphoreCount = 1,
-			.pSignalSemaphores = signalSemaphores,
+			.pSignalSemaphores    = signalSemaphores,
 		};
 		VkResult const result{ vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) };
 		if (result != VK_SUCCESS)
@@ -1098,12 +1098,12 @@ namespace gg
 			VkClearValue{ .depthStencil = { .depth = 1.0f, .stencil = 0 } },
 		};
 		VkRenderPassBeginInfo renderPassInfo{
-			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-			.renderPass = renderPass,
-			.framebuffer = frameBuffers[imageIndex],
-			.renderArea = { .offset = { .x = 0, .y = 0 }, .extent = swapChainExtent },
+			.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+			.renderPass      = renderPass,
+			.framebuffer     = frameBuffers[imageIndex],
+			.renderArea      = { .offset = { .x = 0, .y = 0 }, .extent = swapChainExtent },
 			.clearValueCount = static_cast<uint32_t>(clearValues.size()),
-			.pClearValues = clearValues.data(),
+			.pClearValues    = clearValues.data(),
 		};
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1127,14 +1127,14 @@ namespace gg
 	std::expected<VkCommandBuffer, Error> RendererVulkan::BeginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool = commandPool,
-			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.commandPool        = commandPool,
+			.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 			.commandBufferCount = 1,
 		};
 
 		VkCommandBuffer commandBuffer{};
-		VkResult const allocationResult{ vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) };
+		VkResult const  allocationResult{ vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) };
 		if (allocationResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanCommandFailed, .message = std::format("Failed to allocate a one-time command buffer (VkResult {})", static_cast<int>(allocationResult)) });
 
@@ -1162,9 +1162,9 @@ namespace gg
 		}
 
 		VkSubmitInfo submitInfo{
-			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 			.commandBufferCount = 1,
-			.pCommandBuffers = &commandBuffer,
+			.pCommandBuffers    = &commandBuffer,
 		};
 
 		VkResult const submitResult{ vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) };
@@ -1189,24 +1189,24 @@ namespace gg
 		VkPhysicalDeviceProperties properties{ .apiVersion = 0 };
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 		VkSamplerCreateInfo samplerInfo{
-			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-			.magFilter = VK_FILTER_LINEAR,
-			.minFilter = VK_FILTER_LINEAR,
-			.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-			.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.mipLodBias = 0.0f,
-			.anisotropyEnable = VK_TRUE,
-			.maxAnisotropy = properties.limits.maxSamplerAnisotropy,
-			.compareEnable = VK_FALSE,
-			.compareOp = VK_COMPARE_OP_ALWAYS,
-			.minLod = 0.0f,
-			.maxLod = 0.0f,
-			.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+			.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+			.magFilter               = VK_FILTER_LINEAR,
+			.minFilter               = VK_FILTER_LINEAR,
+			.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+			.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+			.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+			.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+			.mipLodBias              = 0.0f,
+			.anisotropyEnable        = VK_TRUE,
+			.maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+			.compareEnable           = VK_FALSE,
+			.compareOp               = VK_COMPARE_OP_ALWAYS,
+			.minLod                  = 0.0f,
+			.maxLod                  = 0.0f,
+			.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
 			.unnormalizedCoordinates = VK_FALSE,
 		};
-		VkSampler textureSampler{};
+		VkSampler      textureSampler{};
 		VkResult const result{ vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) };
 		if (result != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to create texture sampler (VkResult {}).", static_cast<int>(result)) });

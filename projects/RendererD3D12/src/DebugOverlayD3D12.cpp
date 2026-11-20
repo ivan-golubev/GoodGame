@@ -27,19 +27,19 @@ namespace gg
 
 		{ /* Memory for Imgui's fonts */
 			D3D12_DESCRIPTOR_HEAP_DESC desc{
-				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+				.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 				.NumDescriptors = 1,
-				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 			};
 			HRESULT const result{ device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap)) };
 			if (FAILED(result))
 				return std::unexpected(Error{
-					.code = ErrorCode::D3D12DebugOverlayInitializationFailed,
+					.code    = ErrorCode::D3D12DebugOverlayInitializationFailed,
 					.message = std::format("Failed to create the D3D12 ImGui descriptor heap (HRESULT 0x{:08X})", static_cast<uint32_t>(result)),
 				});
 		}
 
-		sdlBackendInitialized = ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
+		sdlBackendInitialized  = ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
 		dx12BackendInitialized = ImGui_ImplDX12_Init(
 			device.Get(),
 			maxFramesInFlight,
@@ -50,7 +50,7 @@ namespace gg
 		);
 		if (!sdlBackendInitialized || !dx12BackendInitialized)
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12DebugOverlayInitializationFailed,
+				.code    = ErrorCode::D3D12DebugOverlayInitializationFailed,
 				.message = "Failed to initialize an ImGui D3D12 or SDL backend",
 			});
 		return {};

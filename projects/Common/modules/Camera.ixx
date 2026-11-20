@@ -14,23 +14,23 @@ export namespace gg
 	{
 	public:
 		Camera(std::shared_ptr<InputManager>);
-		void UpdateCamera(std::chrono::nanoseconds deltaTime);
-		void UpdateProjectionMatrix(uint32_t width, uint32_t height);
+		void               UpdateCamera(std::chrono::nanoseconds deltaTime);
+		void               UpdateProjectionMatrix(uint32_t width, uint32_t height);
 		glm::mat4x4 const& GetViewMatrix() const;
 		glm::mat4x4 const& GetProjectionMatrix() const;
-		glm::vec4 GetPositionVec4() const; /* returns a copy */
+		glm::vec4          GetPositionVec4() const; /* returns a copy */
 
 		/* direct accessors */
 		glm::vec3* GetPosition();
-		float* GetYaw(); /* radians, 0 = looking along +Z, positive = turned right */
-		float* GetPitch(); /* radians, 0 = level, positive = looking up */
+		float*     GetYaw(); /* radians, 0 = looking along +Z, positive = turned right */
+		float*     GetPitch(); /* radians, 0 = level, positive = looking up */
 	private:
 		glm::mat4x4 projectionMatrix{};
 		glm::mat4x4 viewMatrix{};
 
 		glm::vec3 cameraPosition{ 0.f, 0.f, -4.f };
-		float yaw{ 0.f };
-		float pitch{ 0.f };
+		float     yaw{ 0.f };
+		float     pitch{ 0.f };
 
 		std::shared_ptr<InputManager> inputManager;
 	};

@@ -17,13 +17,13 @@ export namespace gg
 	public:
 		~DebugOverlayD3D12() noexcept;
 		std::expected<void, Error> Initialize(ComPtr<ID3D12Device4>, SDL_Window*);
-		void Render(ComPtr<ID3D12GraphicsCommandList>);
+		void                       Render(ComPtr<ID3D12GraphicsCommandList>);
 
 	private:
 		ComPtr<ID3D12DescriptorHeap> imguiSrvDescHeap;
-		bool contextCreated{};
-		bool sdlBackendInitialized{};
-		bool dx12BackendInitialized{};
+		bool                         contextCreated{};
+		bool                         sdlBackendInitialized{};
+		bool                         dx12BackendInitialized{};
 	};
 
 } // namespace gg

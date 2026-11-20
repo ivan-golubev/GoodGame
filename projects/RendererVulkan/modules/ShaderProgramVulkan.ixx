@@ -16,7 +16,7 @@ export namespace gg
 		ShaderProgramVulkan& operator=(ShaderProgramVulkan&&) noexcept;
 
 		/* Prohibit copying to make sure the underlying shader is destroyed exactly once */
-		ShaderProgramVulkan(ShaderProgramVulkan const&) = delete;
+		ShaderProgramVulkan(ShaderProgramVulkan const&)            = delete;
 		ShaderProgramVulkan& operator=(ShaderProgramVulkan const&) = delete;
 
 		~ShaderProgramVulkan() noexcept;
@@ -33,7 +33,7 @@ export namespace gg
 		std::string vertexShaderBlob;
 		std::string fragmentShaderBlob;
 
-		VkDevice device{};
+		VkDevice       device{};
 		VkShaderModule vertexShader{ nullptr };
 		VkShaderModule fragmentShader{ nullptr };
 	};

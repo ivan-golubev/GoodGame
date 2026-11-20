@@ -42,33 +42,33 @@ namespace gg
 
 		static std::shared_ptr<RendererVulkan> Get();
 
-		RendererVulkan(RendererVulkan const&) = delete;
+		RendererVulkan(RendererVulkan const&)            = delete;
 		RendererVulkan& operator=(RendererVulkan const&) = delete;
 
-		RendererVulkan(RendererVulkan&&) noexcept = default;
+		RendererVulkan(RendererVulkan&&) noexcept            = default;
 		RendererVulkan& operator=(RendererVulkan&&) noexcept = default;
 
 		std::shared_ptr<Camera> GetCamera() override;
-		RendererType GetType() const override;
+		RendererType            GetType() const override;
 
-		void OnWindowResized(uint32_t width, uint32_t height) override;
-		std::expected<void, Error> Render(nanoseconds deltaTime) override;
+		void                                                 OnWindowResized(uint32_t width, uint32_t height) override;
+		std::expected<void, Error>                           Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
-		std::expected<void, Error> LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
-		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
+		std::expected<void, Error>                           LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
+		std::expected<void, Error>                           LoadSkybox(std::string const& name, std::string const& shaderName) override;
 
 		VkDevice GetDevice() const;
 
 		std::expected<VkCommandBuffer, Error> BeginSingleTimeCommands();
-		std::expected<void, Error> EndSingleTimeCommands(VkCommandBuffer);
+		std::expected<void, Error>            EndSingleTimeCommands(VkCommandBuffer);
 
 		std::expected<VkSampler, Error> CreateTextureSampler();
-		std::expected<uint32_t, Error> FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
+		std::expected<uint32_t, Error>  FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
 
 		std::expected<void, Error> CreateBuffer(
-			VkBuffer& outBuffer,
+			VkBuffer&       outBuffer,
 			VkDeviceMemory& outMemory,
-			uint64_t sizeBytes,
+			uint64_t        sizeBytes,
 			VkBufferUsageFlagBits,
 			VkMemoryPropertyFlags
 		);
@@ -91,14 +91,14 @@ namespace gg
 		{
 			std::optional<uint32_t> graphicsFamily;
 			std::optional<uint32_t> presentFamily;
-			bool IsComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
+			bool                    IsComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
 		};
 
 		struct SwapChainSupportDetails
 		{
-			VkSurfaceCapabilitiesKHR capabilities;
+			VkSurfaceCapabilitiesKHR        capabilities;
 			std::vector<VkSurfaceFormatKHR> formats;
-			std::vector<VkPresentModeKHR> presentModes;
+			std::vector<VkPresentModeKHR>   presentModes;
 		};
 
 		std::expected<void, Error> CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions);
@@ -123,34 +123,34 @@ namespace gg
 
 		VkResult Present(uint32_t imageIndex);
 
-		void CleanupSwapChain();
+		void                       CleanupSwapChain();
 		std::expected<void, Error> RecreateSwapChain();
 		std::expected<void, Error> ResizeWindow();
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const) const;
-		bool IsDeviceSuitable(VkPhysicalDevice const) const;
+		bool               IsDeviceSuitable(VkPhysicalDevice const) const;
 
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice const) const;
-		bool SwapChainRequirementsSatisfied(VkPhysicalDevice const) const;
+		bool                    SwapChainRequirementsSatisfied(VkPhysicalDevice const) const;
 
 		VkExtent2D ChooseSwapExtent(VkSurfaceCapabilitiesKHR const&) const;
 
 		bool isWindowResized{ true };
 
-		uint32_t width{};
-		uint32_t height{};
+		uint32_t    width{};
+		uint32_t    height{};
 		SDL_Window* windowHandleSDL{ nullptr };
 
-		VkCommandPool commandPool{};
+		VkCommandPool                                  commandPool{};
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers{};
-		VkRenderPass renderPass{};
+		VkRenderPass                                   renderPass{};
 
 		/* Render Targets */
-		std::vector<VkImage> swapChainImages;
-		std::vector<VkImageView> swapChainImageViews;
+		std::vector<VkImage>       swapChainImages;
+		std::vector<VkImageView>   swapChainImageViews;
 		std::vector<VkFramebuffer> frameBuffers;
-		VkFormat swapChainImageFormat{};
-		VkExtent2D swapChainExtent{};
+		VkFormat                   swapChainImageFormat{};
+		VkExtent2D                 swapChainExtent{};
 
 		std::unique_ptr<DepthBufferVulkan> depthBuffer;
 
@@ -159,21 +159,21 @@ namespace gg
 		VkDescriptorPool descriptorPool{};
 
 		std::vector<std::shared_ptr<ModelVulkan>> models;
-		std::shared_ptr<TimeManager> timeManager;
-		std::shared_ptr<Camera> camera;
-		std::unique_ptr<DebugOverlayVulkan> debugOverlay;
-		std::unique_ptr<SkyboxVulkan> skybox;
+		std::shared_ptr<TimeManager>              timeManager;
+		std::shared_ptr<Camera>                   camera;
+		std::unique_ptr<DebugOverlayVulkan>       debugOverlay;
+		std::unique_ptr<SkyboxVulkan>             skybox;
 
-		VkDevice device{};
-		VkInstance instance{};
+		VkDevice         device{};
+		VkInstance       instance{};
 		VkPhysicalDevice physicalDevice{};
-		VkQueue graphicsQueue{};
-		VkSurfaceKHR surface{};
-		VkSwapchainKHR swapChain{};
+		VkQueue          graphicsQueue{};
+		VkSurfaceKHR     surface{};
+		VkSwapchainKHR   swapChain{};
 		/* Synchronization objects */
 		std::array<VkSemaphore, maxFramesInFlight> frameImageAvailableSemaphores{};
-		std::vector<VkSemaphore> swapchainImageRenderFinishedSemaphores;
-		std::array<VkFence, maxFramesInFlight> inFlightFences{};
+		std::vector<VkSemaphore>                   swapchainImageRenderFinishedSemaphores;
+		std::array<VkFence, maxFramesInFlight>     inFlightFences{};
 	};
 
 } // namespace gg

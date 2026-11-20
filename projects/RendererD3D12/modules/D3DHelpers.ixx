@@ -10,12 +10,12 @@ export namespace gg
 	/* Returns the first available hardware Direct3D 12 adapter
 	   or nullptr if none can be found. */
 	void GetHardwareAdapter(
-		_In_ IDXGIFactory1* pFactory,
+		_In_ IDXGIFactory1*                       pFactory,
 		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
-		bool requestHighPerformanceAdapter = false
+		bool                                      requestHighPerformanceAdapter = false
 	);
 
-	void SetName(ID3D12Object*, std::wstring const&);
+	void         SetName(ID3D12Object*, std::wstring const&);
 	std::wstring GetName(ID3D12Object*);
 
 } // namespace gg

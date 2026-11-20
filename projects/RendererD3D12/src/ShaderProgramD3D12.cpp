@@ -16,19 +16,19 @@ namespace gg
 
 	std::expected<void, Error> ShaderProgramD3D12::Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
 	{
-		std::wstring vertexShaderAbsPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_wstring() };
-		std::wstring fragmentShaderAbsPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_wstring() };
+		std::wstring  vertexShaderAbsPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_wstring() };
+		std::wstring  fragmentShaderAbsPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_wstring() };
 		HRESULT const vertexResult{ D3DReadFileToBlob(vertexShaderAbsPath.c_str(), &vertexShaderBlob) };
 		if (FAILED(vertexResult))
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12ShaderReadFailed,
+				.code    = ErrorCode::D3D12ShaderReadFailed,
 				.message = std::format("Failed to read D3D12 vertex shader '{}': HRESULT 0x{:08X}", vertexShaderRelativePath, static_cast<uint32_t>(vertexResult)),
 			});
 
 		HRESULT const fragmentResult{ D3DReadFileToBlob(fragmentShaderAbsPath.c_str(), &fragmentShaderBlob) };
 		if (FAILED(fragmentResult))
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12ShaderReadFailed,
+				.code    = ErrorCode::D3D12ShaderReadFailed,
 				.message = std::format("Failed to read D3D12 pixel shader '{}': HRESULT 0x{:08X}", fragmentShaderRelativePath, static_cast<uint32_t>(fragmentResult)),
 			});
 		return {};

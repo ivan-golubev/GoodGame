@@ -13,14 +13,14 @@ export namespace gg
 
 	struct DebugOverlayVulkanCreateInfo
 	{
-		VkDevice device;
-		VkInstance instance;
-		uint32_t graphicsQueueFamily;
-		VkQueue graphicsQueue;
+		VkDevice         device;
+		VkInstance       instance;
+		uint32_t         graphicsQueueFamily;
+		VkQueue          graphicsQueue;
 		VkPhysicalDevice physicalDevice;
-		VkRenderPass renderPass;
-		SDL_Window* windowHandleSDL;
-		RendererVulkan* renderer;
+		VkRenderPass     renderPass;
+		SDL_Window*      windowHandleSDL;
+		RendererVulkan*  renderer;
 	};
 
 	class DebugOverlayVulkan
@@ -28,14 +28,14 @@ export namespace gg
 	public:
 		~DebugOverlayVulkan() noexcept;
 		std::expected<void, Error> Initialize(DebugOverlayVulkanCreateInfo const&);
-		void Render(VkCommandBuffer);
+		void                       Render(VkCommandBuffer);
 
 	private:
-		VkDevice device{};
+		VkDevice         device{};
 		VkDescriptorPool descriptorPool{};
-		bool contextCreated{};
-		bool sdlBackendInitialized{};
-		bool vulkanBackendInitialized{};
+		bool             contextCreated{};
+		bool             sdlBackendInitialized{};
+		bool             vulkanBackendInitialized{};
 	};
 
 } // namespace gg

@@ -5,7 +5,7 @@ export module VertexVulkan;
 
 export namespace gg
 {
-	VkVertexInputBindingDescription GetVertexBindingDescription();
+	VkVertexInputBindingDescription                  GetVertexBindingDescription();
 	std::array<VkVertexInputAttributeDescription, 3> GetVertexAttributeDescriptions();
 
 } // namespace gg

@@ -50,14 +50,14 @@ namespace gg
 		std::wstring const nameW{ name.begin(), name.end() };
 
 		D3D12_DESCRIPTOR_HEAP_DESC const srvHeapDesc{
-			.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+			.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 			.NumDescriptors = 1,
-			.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+			.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 		};
 		HRESULT const heapResult{ device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap)) };
 		if (FAILED(heapResult))
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12InitializationFailed,
+				.code    = ErrorCode::D3D12InitializationFailed,
 				.message = std::format("Failed to create the skybox SRV descriptor heap: HRESULT 0x{:08X}", static_cast<uint32_t>(heapResult)),
 			});
 		SetName(srvHeap.Get(), std::format(L"SRV_DescriptorHeap_Skybox_{}", nameW));
@@ -106,18 +106,18 @@ namespace gg
 
 		/* s0: linear filtering; clamp so nothing wraps across a face edge */
 		D3D12_STATIC_SAMPLER_DESC const sampler{
-			.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-			.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-			.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-			.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-			.MipLODBias = 0,
-			.MaxAnisotropy = 0,
-			.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
-			.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
-			.MinLOD = 0.0f,
-			.MaxLOD = D3D12_FLOAT32_MAX,
-			.ShaderRegister = 0,
-			.RegisterSpace = 0,
+			.Filter           = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+			.AddressU         = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+			.AddressV         = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+			.AddressW         = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+			.MipLODBias       = 0,
+			.MaxAnisotropy    = 0,
+			.ComparisonFunc   = D3D12_COMPARISON_FUNC_ALWAYS,
+			.BorderColor      = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
+			.MinLOD           = 0.0f,
+			.MaxLOD           = D3D12_FLOAT32_MAX,
+			.ShaderRegister   = 0,
+			.RegisterSpace    = 0,
 			.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL,
 		};
 
@@ -126,12 +126,12 @@ namespace gg
 
 		ComPtr<ID3DBlob> rootSignatureBlob;
 		ComPtr<ID3DBlob> errorBlob;
-		HRESULT const serializeResult{ D3DX12SerializeVersionedRootSignature(&rootSignatureDescription, featureData.HighestVersion, &rootSignatureBlob, &errorBlob) };
+		HRESULT const    serializeResult{ D3DX12SerializeVersionedRootSignature(&rootSignatureDescription, featureData.HighestVersion, &rootSignatureBlob, &errorBlob) };
 		if (FAILED(serializeResult))
 		{
 			std::string const details{ errorBlob ? std::string{ static_cast<char const*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize() } : std::string{} };
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12InitializationFailed,
+				.code    = ErrorCode::D3D12InitializationFailed,
 				.message = std::format("Failed to serialize the skybox root signature: HRESULT 0x{:08X} {}", static_cast<uint32_t>(serializeResult), details),
 			});
 		}
@@ -139,7 +139,7 @@ namespace gg
 		HRESULT const createResult{ device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature)) };
 		if (FAILED(createResult))
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12InitializationFailed,
+				.code    = ErrorCode::D3D12InitializationFailed,
 				.message = std::format("Failed to create the skybox root signature: HRESULT 0x{:08X}", static_cast<uint32_t>(createResult)),
 			});
 		std::wstring const nameW{ name.begin(), name.end() };
@@ -158,7 +158,7 @@ namespace gg
 		   Draw it with DrawInstanced(3, 1, 0, 0). */
 		D3D12_INPUT_LAYOUT_DESC const inputLayout{
 			.pInputElementDescs = nullptr,
-			.NumElements = 0,
+			.NumElements        = 0,
 		};
 
 		/* The shader writes z = 1 (far plane). Test against the depth buffer so models cover the sky,
@@ -166,10 +166,10 @@ namespace gg
 		   No depth writes: the sky never occludes anything. */
 		CD3DX12_DEPTH_STENCIL_DESC1 depthStencil{ D3D12_DEFAULT };
 		depthStencil.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-		depthStencil.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		depthStencil.DepthFunc      = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
 		std::wstring const nameW{ name.begin(), name.end() };
-		auto result{ RendererD3D12::Get()->CreateGraphicsPipeline(
+		auto               result{ RendererD3D12::Get()->CreateGraphicsPipeline(
 			CD3DX12_SHADER_BYTECODE(shader->GetVertexShader().Get()),
 			CD3DX12_SHADER_BYTECODE(shader->GetFragmentShader().Get()),
 			inputLayout,

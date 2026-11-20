@@ -14,7 +14,7 @@ export namespace gg
 	public:
 		DepthBufferVulkan(VkDevice, VkPhysicalDevice, VkFormat);
 		~DepthBufferVulkan() noexcept;
-		DepthBufferVulkan(DepthBufferVulkan const&) = delete;
+		DepthBufferVulkan(DepthBufferVulkan const&)            = delete;
 		DepthBufferVulkan& operator=(DepthBufferVulkan const&) = delete;
 
 		/* Picks the best depth format the device supports as an optimal-tiling depth attachment. */
@@ -23,19 +23,19 @@ export namespace gg
 		/* (Re)creates the image for the given size, releasing the previous one. The GPU must be idle. */
 		std::expected<void, Error> Create(VkExtent2D);
 
-		VkFormat GetFormat() const;
+		VkFormat    GetFormat() const;
 		VkImageView GetView() const;
 
 	private:
-		void Destroy();
+		void                           Destroy();
 		std::expected<uint32_t, Error> FindMemoryType(uint32_t typeFilter) const;
 
-		VkDevice device{};
+		VkDevice         device{};
 		VkPhysicalDevice physicalDevice{};
-		VkFormat format{};
+		VkFormat         format{};
 
-		VkImage image{};
+		VkImage        image{};
 		VkDeviceMemory memory{};
-		VkImageView view{};
+		VkImageView    view{};
 	};
 } // namespace gg

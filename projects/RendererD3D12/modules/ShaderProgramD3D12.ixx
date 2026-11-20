@@ -19,7 +19,7 @@ export namespace gg
 		ShaderProgramD3D12& operator=(ShaderProgramD3D12&&) noexcept;
 
 		/* Prohibit copying to make sure the underlying shader is destroyed exactly once */
-		ShaderProgramD3D12(ShaderProgramD3D12 const&) = delete;
+		ShaderProgramD3D12(ShaderProgramD3D12 const&)            = delete;
 		ShaderProgramD3D12& operator=(ShaderProgramD3D12 const&) = delete;
 
 		~ShaderProgramD3D12() noexcept = default;

@@ -7,6 +7,6 @@ export namespace gg
 	struct GraphicsPipeline
 	{
 		VkPipelineLayout layout{};
-		VkPipeline pipeline{};
+		VkPipeline       pipeline{};
 	};
 } // namespace gg

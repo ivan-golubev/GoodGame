@@ -24,7 +24,7 @@ namespace gg
 
 		std::expected<void, Error> Initialize(VkDescriptorPool);
 		std::expected<void, Error> CreatePipeline();
-		void Draw(VkCommandBuffer, uint32_t frame, Camera const&, double currentTimeSec);
+		void                       Draw(VkCommandBuffer, uint32_t frame, Camera const&, double currentTimeSec);
 
 	private:
 		std::expected<void, Error> CreateVertexBuffer();
@@ -32,20 +32,20 @@ namespace gg
 		std::expected<void, Error> CreateDescriptorSetLayout();
 		std::expected<void, Error> CreateUniformBuffers();
 		std::expected<void, Error> CreateDescriptorSets(VkDescriptorPool);
-		void DestroyPipeline();
-		void UpdateUniformBuffers(uint32_t frame, Camera const&, double currentTimeSec);
+		void                       DestroyPipeline();
+		void                       UpdateUniformBuffers(uint32_t frame, Camera const&, double currentTimeSec);
 
-		VkDevice device;
-		VkBuffer vertexBuffer{};
+		VkDevice       device;
+		VkBuffer       vertexBuffer{};
 		VkDeviceMemory vertexBufferMemory{};
 
-		std::array<VkBuffer, maxFramesInFlight> uniformBuffersMVP{};
+		std::array<VkBuffer, maxFramesInFlight>       uniformBuffersMVP{};
 		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryMVP{};
 
-		std::array<VkBuffer, maxFramesInFlight> uniformBuffersDirLight{};
+		std::array<VkBuffer, maxFramesInFlight>       uniformBuffersDirLight{};
 		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryDirLight{};
 
-		VkDescriptorSetLayout descriptorSetLayout{};
+		VkDescriptorSetLayout                          descriptorSetLayout{};
 		std::array<VkDescriptorSet, maxFramesInFlight> descriptorSets{};
 
 		GraphicsPipeline graphicsPipeline{};

@@ -18,8 +18,8 @@ export namespace gg
 {
 	constexpr char const* texturesLocation{ "assets/textures" };
 	constexpr char const* texturesExtension{ "tga" };
-	constexpr double cubeRotationSpeed{ 0.2 }; // meters per seconds
-	constexpr int32_t maxFramesInFlight{ 2 };
+	constexpr double      cubeRotationSpeed{ 0.2 }; // meters per seconds
+	constexpr int32_t     maxFramesInFlight{ 2 };
 
 	/* Flip the sign of the viewport's height, Y goes up, just in D3D12 */
 	constexpr bool flipVulkanViewport{ true };

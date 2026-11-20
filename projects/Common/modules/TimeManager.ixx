@@ -14,10 +14,10 @@ namespace gg
 	{
 	public:
 		[[nodiscard("Delta time should be passed to renderer")]]
-		nanoseconds Tick();
-		nanoseconds GetCurrentTimeUs() const;
+		nanoseconds  Tick();
+		nanoseconds  GetCurrentTimeUs() const;
 		milliseconds GetCurrentTimeMs() const;
-		double GetCurrentTimeSec() const;
+		double       GetCurrentTimeSec() const;
 
 	private:
 		time_point<steady_clock> startTime{ steady_clock::now() };

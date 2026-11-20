@@ -13,9 +13,9 @@ export namespace gg
 {
 	struct ApplicationSettings
 	{
-		uint32_t width;
-		uint32_t height;
-		SDL_Window* windowHandle;
+		uint32_t     width;
+		uint32_t     height;
+		SDL_Window*  windowHandle;
 		RendererType rendererType;
 	};
 

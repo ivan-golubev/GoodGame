@@ -32,13 +32,13 @@ namespace
 		);
 		if (!scene)
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ModelImportFailed,
+				.code    = gg::ErrorCode::ModelImportFailed,
 				.message = std::format("Failed to import model '{}': {}", modelAbsolutePath, importer.GetErrorString()),
 			});
 
 		if (scene->mNumMeshes == 0)
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ModelContainsNoMeshes,
+				.code    = gg::ErrorCode::ModelContainsNoMeshes,
 				.message = std::format("No meshes were found in model '{}'", modelAbsolutePath),
 			});
 		return scene;
@@ -49,22 +49,22 @@ namespace
 		constexpr uint32_t uvSetNumber{ 0 };
 		if (!assimpMesh->HasPositions())
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ModelMeshMissingPositions,
+				.code    = gg::ErrorCode::ModelMeshMissingPositions,
 				.message = std::format("Mesh '{}' is missing vertex positions", assimpMesh->mName.C_Str()),
 			});
 		if (!assimpMesh->HasTextureCoords(uvSetNumber))
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ModelMeshMissingTextureCoordinates,
+				.code    = gg::ErrorCode::ModelMeshMissingTextureCoordinates,
 				.message = std::format("Mesh '{}' is missing texture coordinates in UV set {}", assimpMesh->mName.C_Str(), uvSetNumber),
 			});
 		if (!assimpMesh->HasNormals())
 			return std::unexpected(gg::Error{
-				.code = gg::ErrorCode::ModelMeshMissingNormals,
+				.code    = gg::ErrorCode::ModelMeshMissingNormals,
 				.message = std::format("Mesh '{}' is missing vertex normals", assimpMesh->mName.C_Str()),
 			});
 
 		bool const hasTextureCoords = assimpMesh->HasTextureCoords(uvSetNumber);
-		gg::Mesh mesh{};
+		gg::Mesh   mesh{};
 		mesh.vertices.reserve(assimpMesh->mNumVertices);
 		mesh.indices.reserve(assimpMesh->mNumFaces * 3);
 
@@ -73,9 +73,9 @@ namespace
 			aiFace* face{ &assimpMesh->mFaces[faceIndex] };
 			for (unsigned int j{ 0 }; j < face->mNumIndices; ++j)
 			{
-				auto vertexIndex = face->mIndices[j];
-				auto const& pos = assimpMesh->mVertices[vertexIndex];
-				auto const& normal = assimpMesh->mNormals[vertexIndex];
+				auto        vertexIndex = face->mIndices[j];
+				auto const& pos         = assimpMesh->mVertices[vertexIndex];
+				auto const& normal      = assimpMesh->mNormals[vertexIndex];
 
 				auto const textureCoords = hasTextureCoords
 					? assimpMesh->mTextureCoords[uvSetNumber][vertexIndex]
@@ -137,7 +137,7 @@ namespace gg
 			vertices.clear();
 			indices.clear();
 			vertices = std::move(other.vertices);
-			indices = std::move(other.indices);
+			indices  = std::move(other.indices);
 		}
 		return *this;
 	}
@@ -155,13 +155,13 @@ namespace gg
 		BreakIfFalse(sizeof(ai_real) == sizeof(float));
 
 		Assimp::Importer importer;
-		auto sceneResult{ ReadScene(modelAbsolutePath, importer) };
+		auto             sceneResult{ ReadScene(modelAbsolutePath, importer) };
 		if (!sceneResult)
 			return std::unexpected(sceneResult.error());
-		aiScene const* scene{ *sceneResult };
-		std::string loadedName{ scene->mMeshes[0]->mName.C_Str() };
+		aiScene const*    scene{ *sceneResult };
+		std::string       loadedName{ scene->mMeshes[0]->mName.C_Str() };
 		std::vector<Mesh> loadedMeshes{};
-		auto meshesResult{ LoadMeshes(*scene, loadedMeshes) };
+		auto              meshesResult{ LoadMeshes(*scene, loadedMeshes) };
 		if (!meshesResult)
 			return std::unexpected(meshesResult.error());
 		std::vector<std::string> loadedTextureNames{};
@@ -192,12 +192,12 @@ namespace gg
 	{
 		if (this != &other)
 		{
-			translation = other.translation;
-			shaderProgram = std::move(other.shaderProgram);
-			textureNames = std::move(other.textureNames);
-			textures = std::move(other.textures);
-			meshes = std::move(other.meshes);
-			name = std::move(other.name);
+			translation       = other.translation;
+			shaderProgram     = std::move(other.shaderProgram);
+			textureNames      = std::move(other.textureNames);
+			textures          = std::move(other.textures);
+			meshes            = std::move(other.meshes);
+			name              = std::move(other.name);
 			modelAbsolutePath = std::move(other.modelAbsolutePath);
 		}
 		return *this;

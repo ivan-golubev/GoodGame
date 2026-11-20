@@ -42,16 +42,16 @@ namespace gg
 		/* Only used inside the render pass (cleared on load, not stored), so it is a transient attachment:
 		   on tile-based GPUs it can live in on-chip memory and never be backed by RAM. */
 		VkImageCreateInfo const imageInfo{
-			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-			.imageType = VK_IMAGE_TYPE_2D,
-			.format = format,
-			.extent = { .width = extent.width, .height = extent.height, .depth = 1 },
-			.mipLevels = 1,
-			.arrayLayers = 1,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+			.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+			.imageType     = VK_IMAGE_TYPE_2D,
+			.format        = format,
+			.extent        = { .width = extent.width, .height = extent.height, .depth = 1 },
+			.mipLevels     = 1,
+			.arrayLayers   = 1,
+			.samples       = VK_SAMPLE_COUNT_1_BIT,
+			.tiling        = VK_IMAGE_TILING_OPTIMAL,
+			.usage         = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+			.sharingMode   = VK_SHARING_MODE_EXCLUSIVE,
 			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		};
 		if (VK_SUCCESS != vkCreateImage(device, &imageInfo, nullptr, &image))
@@ -63,8 +63,8 @@ namespace gg
 		if (!memoryTypeResult)
 			return std::unexpected(memoryTypeResult.error());
 		VkMemoryAllocateInfo const allocInfo{
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = memRequirements.size,
+			.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+			.allocationSize  = memRequirements.size,
 			.memoryTypeIndex = *memoryTypeResult,
 		};
 		if (VK_SUCCESS != vkAllocateMemory(device, &allocInfo, nullptr, &memory))
@@ -80,7 +80,7 @@ namespace gg
 		return {};
 	}
 
-	VkFormat DepthBufferVulkan::GetFormat() const { return format; }
+	VkFormat    DepthBufferVulkan::GetFormat() const { return format; }
 	VkImageView DepthBufferVulkan::GetView() const { return view; }
 
 	void DepthBufferVulkan::Destroy()
@@ -90,8 +90,8 @@ namespace gg
 		if (view) vkDestroyImageView(device, view, nullptr);
 		if (image) vkDestroyImage(device, image, nullptr);
 		if (memory) vkFreeMemory(device, memory, nullptr);
-		view = VK_NULL_HANDLE;
-		image = VK_NULL_HANDLE;
+		view   = VK_NULL_HANDLE;
+		image  = VK_NULL_HANDLE;
 		memory = VK_NULL_HANDLE;
 	}
 

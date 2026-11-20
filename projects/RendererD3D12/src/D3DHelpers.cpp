@@ -15,9 +15,9 @@ namespace gg
 
 	/* Taken from Microsoft's DirectX-Graphics-Samples  */
 	void GetHardwareAdapter(
-		_In_ IDXGIFactory1* pFactory,
+		_In_ IDXGIFactory1*                       pFactory,
 		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
-		bool requestHighPerformanceAdapter
+		bool                                      requestHighPerformanceAdapter
 	)
 	{
 		*ppAdapter = nullptr;

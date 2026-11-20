@@ -46,7 +46,7 @@ using std::chrono::nanoseconds;
 	{                                                                                                                  \
 		if (FAILED(hr))                                                                                                \
 			return std::unexpected(gg::Error{                                                                          \
-				.code = errorCode,                                                                                     \
+				.code    = errorCode,                                                                                  \
 				.message = std::format("D3D12 {} failed with HRESULT 0x{:08X}", operation, static_cast<uint32_t>(hr)), \
 			});                                                                                                        \
 	} while (false)
@@ -66,14 +66,14 @@ namespace gg
 {
 	std::expected<void, Error> RendererD3D12::Initialize(RendererSettings const& rs)
 	{
-		width = rs.width;
-		height = rs.height;
+		width           = rs.width;
+		height          = rs.height;
 		windowHandleSDL = rs.windowHandle;
-		windowHandle = GetWindowHandle(rs.windowHandle);
-		timeManager = rs.timeManager;
-		camera = std::make_shared<Camera>(rs.inputManager);
-		scissorRect = { D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX };
-		viewport = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f };
+		windowHandle    = GetWindowHandle(rs.windowHandle);
+		timeManager     = rs.timeManager;
+		camera          = std::make_shared<Camera>(rs.inputManager);
+		scissorRect     = { D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX };
+		viewport        = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f };
 		uint8_t dxgiFactoryFlags{ 0 };
 
 		if constexpr (IsDebug())
@@ -88,7 +88,7 @@ namespace gg
 		}
 
 		ComPtr<IDXGIFactory4> factory;
-		HRESULT const factoryResult{ CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)) };
+		HRESULT const         factoryResult{ CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)) };
 		D3D12_CHECK_HRESULT(factoryResult, ErrorCode::D3D12InitializationFailed, "create DXGI factory");
 
 		{ /* Select a hardware adapter and create a D3D12 device */
@@ -117,7 +117,7 @@ namespace gg
 
 		{ /* Create a command queue */
 			D3D12_COMMAND_QUEUE_DESC queueDesc{
-				.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+				.Type  = D3D12_COMMAND_LIST_TYPE_DIRECT,
 				.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
 			};
 
@@ -128,17 +128,17 @@ namespace gg
 
 		{ /* Create a swap chain */
 			DXGI_SWAP_CHAIN_DESC1 swapChainDesc{
-				.Width = width,
-				.Height = height,
-				.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
-				.SampleDesc = { .Count = 1, .Quality = 0 },
+				.Width       = width,
+				.Height      = height,
+				.Format      = DXGI_FORMAT_R8G8B8A8_UNORM,
+				.SampleDesc  = { .Count = 1, .Quality = 0 },
 				.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
 				.BufferCount = maxFramesInFlight,
-				.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+				.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_DISCARD,
 			};
 
 			ComPtr<IDXGISwapChain1> swapChain1;
-			HRESULT const swapChainResult{ factory->CreateSwapChainForHwnd(
+			HRESULT const           swapChainResult{ factory->CreateSwapChainForHwnd(
 				commandQueue.Get(),
 				windowHandle,
 				&swapChainDesc,
@@ -157,9 +157,9 @@ namespace gg
 
 		{ /* Describe and create a render target view (RTV) descriptor heap. */
 			D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{
-				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+				.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
 				.NumDescriptors = maxFramesInFlight,
-				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
 			HRESULT const d3d12CreateRenderTargetDescriptorHeapResult{ device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&renderTargetViewHeap)) };
 			D3D12_CHECK_HRESULT(d3d12CreateRenderTargetDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create render target descriptor heap");
@@ -197,9 +197,9 @@ namespace gg
 
 		{ /* Describe and create a depth stencil view (DSV) descriptor heap. */
 			D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{
-				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+				.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
 				.NumDescriptors = 1,
-				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
 			HRESULT const d3d12CreateDepthStencilDescriptorHeapResult{ device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&depthStencilHeap)) };
 			D3D12_CHECK_HRESULT(d3d12CreateDepthStencilDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create depth stencil descriptor heap");
@@ -236,18 +236,18 @@ namespace gg
 			rootParameters[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 			D3D12_STATIC_SAMPLER_DESC sampler{
-				.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-				.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-				.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-				.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-				.MipLODBias = 0,
-				.MaxAnisotropy = 0,
-				.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
-				.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
-				.MinLOD = 0.0f,
-				.MaxLOD = D3D12_FLOAT32_MAX,
-				.ShaderRegister = 0,
-				.RegisterSpace = 0,
+				.Filter           = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+				.AddressU         = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+				.AddressV         = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+				.AddressW         = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+				.MipLODBias       = 0,
+				.MaxAnisotropy    = 0,
+				.ComparisonFunc   = D3D12_COMPARISON_FUNC_ALWAYS,
+				.BorderColor      = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
+				.MinLOD           = 0.0f,
+				.MaxLOD           = D3D12_FLOAT32_MAX,
+				.ShaderRegister   = 0,
+				.RegisterSpace    = 0,
 				.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL,
 			};
 
@@ -257,7 +257,7 @@ namespace gg
 			/* Serialize the root signature */
 			ComPtr<ID3DBlob> rootSignatureBlob;
 			ComPtr<ID3DBlob> errorBlob;
-			HRESULT const d3d12SerializeRootSignatureResult{ D3DX12SerializeVersionedRootSignature(
+			HRESULT const    d3d12SerializeRootSignatureResult{ D3DX12SerializeVersionedRootSignature(
 				&rootSignatureDescription,
 				featureData.HighestVersion,
 				&rootSignatureBlob,
@@ -303,7 +303,7 @@ namespace gg
 			{ .SemanticName = "TEXCOORD", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 }
 		};
 
-		std::string const psoName{ std::format("PSO_{}", model->name) };
+		std::string const  psoName{ std::format("PSO_{}", model->name) };
 		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
 
 		auto result{ CreateGraphicsPipeline(
@@ -322,41 +322,41 @@ namespace gg
 	}
 
 	std::expected<ComPtr<ID3D12PipelineState>, Error> RendererD3D12::CreateGraphicsPipeline(
-		D3D12_SHADER_BYTECODE const& vertexShader,
-		D3D12_SHADER_BYTECODE const& pixelShader,
-		D3D12_INPUT_LAYOUT_DESC const& inputLayout,
-		D3D12_CULL_MODE cullMode,
+		D3D12_SHADER_BYTECODE const&       vertexShader,
+		D3D12_SHADER_BYTECODE const&       pixelShader,
+		D3D12_INPUT_LAYOUT_DESC const&     inputLayout,
+		D3D12_CULL_MODE                    cullMode,
 		CD3DX12_DEPTH_STENCIL_DESC1 const& depthStencil,
-		ID3D12RootSignature* pipelineRootSignature,
-		std::wstring const& name
+		ID3D12RootSignature*               pipelineRootSignature,
+		std::wstring const&                name
 	)
 	{
 		std::expected<ComPtr<ID3D12PipelineState>, Error> result{ std::in_place };
 
 		D3D12_RT_FORMAT_ARRAY rtvFormats{
-			.RTFormats = { rtvFormat },
+			.RTFormats        = { rtvFormat },
 			.NumRenderTargets = 1,
 		};
 
-		CD3DX12_BLEND_DESC blendDesc{ D3D12_DEFAULT };
+		CD3DX12_BLEND_DESC      blendDesc{ D3D12_DEFAULT };
 		CD3DX12_RASTERIZER_DESC rasterizerDesc{ D3D12_DEFAULT };
 		rasterizerDesc.CullMode = cullMode;
 
 		PipelineStateStream pipelineStateStream{
-			.rootSignature = pipelineRootSignature,
-			.inputLayout = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(inputLayout),
+			.rootSignature         = pipelineRootSignature,
+			.inputLayout           = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(inputLayout),
 			.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-			.blendState = blendDesc,
-			.rasterizerState = rasterizerDesc,
-			.depthStencilState = depthStencil,
-			.VS = vertexShader,
-			.PS = pixelShader,
-			.DSVFormat = DXGI_FORMAT_D32_FLOAT,
-			.RTVFormats = rtvFormats,
+			.blendState            = blendDesc,
+			.rasterizerState       = rasterizerDesc,
+			.depthStencilState     = depthStencil,
+			.VS                    = vertexShader,
+			.PS                    = pixelShader,
+			.DSVFormat             = DXGI_FORMAT_D32_FLOAT,
+			.RTVFormats            = rtvFormats,
 		};
 
 		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc{
-			.SizeInBytes = sizeof(PipelineStateStream),
+			.SizeInBytes                   = sizeof(PipelineStateStream),
 			.pPipelineStateSubobjectStream = &pipelineStateStream,
 		};
 		HRESULT const d3d12CreateGraphicsPipelineStateResult{ device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&*result)) };
@@ -367,8 +367,8 @@ namespace gg
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
-		std::string const vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
-		std::string const fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
+		std::string const                   vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
+		std::string const                   fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
 		std::unique_ptr<ShaderProgramD3D12> shader{ new ShaderProgramD3D12() };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
@@ -389,14 +389,14 @@ namespace gg
 
 	std::expected<std::shared_ptr<Texture>, Error> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
 	{
-		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
+		std::string const             textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
 		std::unique_ptr<TextureD3D12> texture{ std::make_unique<TextureD3D12>(textureRelativePath) };
-		std::wstring const textureName{ texture->GetName() };
+		std::wstring const            textureName{ texture->GetName() };
 		if (auto const result{ texture->Initialize() }; !result)
 			return std::unexpected(result.error());
 
 		std::array<Texture const*, 1> const images{ texture.get() };
-		auto uploadResult{ UploadTexture(images, D3D12_SRV_DIMENSION_TEXTURE2D, srvHeap->GetCPUDescriptorHandleForHeapStart(), textureName, textureRelativePath) };
+		auto                                uploadResult{ UploadTexture(images, D3D12_SRV_DIMENSION_TEXTURE2D, srvHeap->GetCPUDescriptorHandleForHeapStart(), textureName, textureRelativePath) };
 		if (!uploadResult)
 			return std::unexpected(std::move(uploadResult.error()));
 		texture->texture = std::move(*uploadResult);
@@ -406,16 +406,16 @@ namespace gg
 
 	std::expected<ComPtr<ID3D12Resource>, Error> RendererD3D12::UploadTexture(
 		std::span<Texture const* const> images,
-		D3D12_SRV_DIMENSION srvDimension,
-		D3D12_CPU_DESCRIPTOR_HANDLE srvHandle,
-		std::wstring const& resourceName,
-		std::string const& sourceName
+		D3D12_SRV_DIMENSION             srvDimension,
+		D3D12_CPU_DESCRIPTOR_HANDLE     srvHandle,
+		std::wstring const&             resourceName,
+		std::string const&              sourceName
 	)
 	{
 		auto makeUploadError = [&sourceName](char const* operation, HRESULT result)
 		{
 			return Error{
-				.code = ErrorCode::D3D12TextureUploadFailed,
+				.code    = ErrorCode::D3D12TextureUploadFailed,
 				.message = std::format("Failed to {} for texture '{}': HRESULT 0x{:08X}", operation, sourceName, static_cast<uint32_t>(result)),
 			};
 		};
@@ -430,19 +430,19 @@ namespace gg
 		uint32_t const subresourceCount{ static_cast<uint32_t>(images.size()) };
 
 		std::expected<ComPtr<ID3D12Resource>, Error> texture{ std::in_place };
-		HRESULT result{};
+		HRESULT                                      result{};
 		// Describe and create a Texture2D (array) with one slice per image.
 		D3D12_RESOURCE_DESC textureDesc{
-			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-			.Alignment = 0,
-			.Width = width,
-			.Height = height,
+			.Dimension        = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Alignment        = 0,
+			.Width            = width,
+			.Height           = height,
 			.DepthOrArraySize = static_cast<UINT16>(subresourceCount),
-			.MipLevels = 1,
-			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
-			.SampleDesc = { .Count = 1, .Quality = 0 },
-			.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
-			.Flags = D3D12_RESOURCE_FLAG_NONE,
+			.MipLevels        = 1,
+			.Format           = DXGI_FORMAT_R8G8B8A8_UNORM,
+			.SampleDesc       = { .Count = 1, .Quality = 0 },
+			.Layout           = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+			.Flags            = D3D12_RESOURCE_FLAG_NONE,
 		};
 
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
@@ -460,9 +460,9 @@ namespace gg
 		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(texture->Get(), 0, subresourceCount);
 
 		/* Intermediate upload buffer; only needed until the copy has executed. */
-		ComPtr<ID3D12Resource> uploadResource;
+		ComPtr<ID3D12Resource>        uploadResource;
 		CD3DX12_HEAP_PROPERTIES const uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
-		CD3DX12_RESOURCE_DESC const bufferResDesc{ CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize) };
+		CD3DX12_RESOURCE_DESC const   bufferResDesc{ CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize) };
 		result = device->CreateCommittedResource(
 			&uploadHeapProps,
 			D3D12_HEAP_FLAG_NONE,
@@ -484,14 +484,14 @@ namespace gg
 
 		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the texture, one subresource per image. */
-		LONG_PTR const textureRowPitch = width * Texture::bytesPerPixel;
-		LONG_PTR const textureSlicePitch = textureRowPitch * height;
+		LONG_PTR const                      textureRowPitch   = width * Texture::bytesPerPixel;
+		LONG_PTR const                      textureSlicePitch = textureRowPitch * height;
 		std::vector<D3D12_SUBRESOURCE_DATA> textureData;
 		textureData.reserve(subresourceCount);
 		for (Texture const* image : images)
 			textureData.push_back(D3D12_SUBRESOURCE_DATA{
-				.pData = image->pixels,
-				.RowPitch = textureRowPitch,
+				.pData      = image->pixels,
+				.RowPitch   = textureRowPitch,
 				.SlicePitch = textureSlicePitch,
 			});
 
@@ -502,7 +502,7 @@ namespace gg
 			if (FAILED(closeResult))
 				return std::unexpected(makeUploadError("close the command list after texture upload failed", closeResult));
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12TextureUploadFailed,
+				.code    = ErrorCode::D3D12TextureUploadFailed,
 				.message = std::format("Failed to copy texture '{}' into the D3D12 upload resource", sourceName),
 			});
 		}
@@ -512,8 +512,8 @@ namespace gg
 		{
 			/* Describe and create a SRV for the texture. */
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{
-				.Format = textureDesc.Format,
-				.ViewDimension = srvDimension,
+				.Format                  = textureDesc.Format,
+				.ViewDimension           = srvDimension,
 				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
 			};
 			if (srvDimension == D3D12_SRV_DIMENSION_TEXTURECUBE)
@@ -555,7 +555,7 @@ namespace gg
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		std::shared_ptr<ModelD3D12> model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
+		std::shared_ptr<ModelD3D12>    model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
 		if (auto const result{ model->Initialize() }; !result)
 			return std::unexpected(result.error());
 
@@ -566,9 +566,9 @@ namespace gg
 
 		{ /* Create  a shader resource view (SRV) heap for textures */
 			D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{
-				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+				.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 				.NumDescriptors = 1,
-				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 			};
 			HRESULT const d3d12CreateModelTextureDescriptorHeapResult{ device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&model->srvHeap)) };
 			D3D12_CHECK_HRESULT(d3d12CreateModelTextureDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create model texture descriptor heap");
@@ -610,8 +610,8 @@ namespace gg
 
 		/* Init the Vertex buffer view */
 		model->vertexBufferView.BufferLocation = model->vertexBuffer->GetGPUVirtualAddress();
-		model->vertexBufferView.SizeInBytes = static_cast<uint32_t>(vertexBufferSizeBytes);
-		model->vertexBufferView.StrideInBytes = sizeof(Vertex);
+		model->vertexBufferView.SizeInBytes    = static_cast<uint32_t>(vertexBufferSizeBytes);
+		model->vertexBufferView.StrideInBytes  = sizeof(Vertex);
 		return {};
 	}
 
@@ -650,7 +650,7 @@ namespace gg
 		depthBuffer.Reset();
 
 		D3D12_CLEAR_VALUE optimizedClearValue{
-			.Format = DXGI_FORMAT_D32_FLOAT,
+			.Format       = DXGI_FORMAT_D32_FLOAT,
 			.DepthStencil = { .Depth = 1.0f, .Stencil = 0 },
 		};
 
@@ -658,7 +658,7 @@ namespace gg
 		uint32_t const height{ std::max(this->height, 0U) };
 
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-		D3D12_RESOURCE_DESC const resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		D3D12_RESOURCE_DESC const     resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 			DXGI_FORMAT_D32_FLOAT, width, height,
 			1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
 		);
@@ -675,10 +675,10 @@ namespace gg
 
 		/* create the DSV */
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{
-			.Format = DXGI_FORMAT_D32_FLOAT,
+			.Format        = DXGI_FORMAT_D32_FLOAT,
 			.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
-			.Flags = D3D12_DSV_FLAG_NONE,
-			.Texture2D = { .MipSlice = 0 },
+			.Flags         = D3D12_DSV_FLAG_NONE,
+			.Texture2D     = { .MipSlice = 0 },
 		};
 		dsvHandle = { depthStencilHeap->GetCPUDescriptorHandleForHeapStart() };
 		device->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHandle);
@@ -687,17 +687,17 @@ namespace gg
 
 	std::expected<void, Error> RendererD3D12::CreateBuffer(
 		ComPtr<ID3D12GraphicsCommandList> const& commandList,
-		ComPtr<ID3D12Resource>& gpuResource,
-		ComPtr<ID3D12Resource>& cpuResource,
-		void const* data,
-		uint64_t sizeBytes,
-		std::wstring const& resourceName
+		ComPtr<ID3D12Resource>&                  gpuResource,
+		ComPtr<ID3D12Resource>&                  cpuResource,
+		void const*                              data,
+		uint64_t                                 sizeBytes,
+		std::wstring const&                      resourceName
 	)
 	{
 		/* create an intermediate resource */
 		CD3DX12_HEAP_PROPERTIES uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
-		CD3DX12_RESOURCE_DESC uploadResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes) };
-		HRESULT const d3d12CreateUploadBufferResourceResult{ device->CreateCommittedResource(
+		CD3DX12_RESOURCE_DESC   uploadResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes) };
+		HRESULT const           d3d12CreateUploadBufferResourceResult{ device->CreateCommittedResource(
 			&uploadHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&uploadResourceProps,
@@ -710,8 +710,8 @@ namespace gg
 
 		/* create the target resource on the GPU */
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-		CD3DX12_RESOURCE_DESC const gpuResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes, D3D12_RESOURCE_FLAG_NONE) };
-		HRESULT const d3d12CreateGPUBufferResourceResult{ device->CreateCommittedResource(
+		CD3DX12_RESOURCE_DESC const   gpuResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes, D3D12_RESOURCE_FLAG_NONE) };
+		HRESULT const                 d3d12CreateGPUBufferResourceResult{ device->CreateCommittedResource(
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&gpuResourceProps,
@@ -724,8 +724,8 @@ namespace gg
 
 		/* transfer the data */
 		D3D12_SUBRESOURCE_DATA subresourceData{
-			.pData = data,
-			.RowPitch = static_cast<LONG_PTR>(sizeBytes),
+			.pData      = data,
+			.RowPitch   = static_cast<LONG_PTR>(sizeBytes),
 			.SlicePitch = static_cast<LONG_PTR>(sizeBytes),
 		};
 
@@ -760,7 +760,7 @@ namespace gg
 
 	std::shared_ptr<RendererD3D12> RendererD3D12::Get()
 	{
-		std::shared_ptr<Application> app{ Application::Get() };
+		std::shared_ptr<Application>   app{ Application::Get() };
 		std::shared_ptr<RendererD3D12> renderer{ dynamic_pointer_cast<RendererD3D12>(app->GetRenderer()) };
 		return renderer;
 	}
@@ -768,8 +768,8 @@ namespace gg
 	void RendererD3D12::OnWindowResized(uint32_t width, uint32_t height)
 	{
 		isWindowResized = true;
-		width = std::max(8u, width);
-		height = std::max(8u, height);
+		width           = std::max(8u, width);
+		height          = std::max(8u, height);
 	}
 
 	std::expected<void, Error> RendererD3D12::Render(nanoseconds deltaTime)
@@ -801,7 +801,7 @@ namespace gg
 	std::expected<void, Error> RendererD3D12::WaitForPreviousFrame()
 	{
 		uint64_t const fencePrevValue{ fenceValue };
-		HRESULT const d3d12SignalFrameFenceResult{ commandQueue->Signal(fence.Get(), fencePrevValue) };
+		HRESULT const  d3d12SignalFrameFenceResult{ commandQueue->Signal(fence.Get(), fencePrevValue) };
 		D3D12_CHECK_HRESULT(d3d12SignalFrameFenceResult, ErrorCode::D3D12SynchronizationFailed, "signal frame fence");
 		fenceValue++;
 
@@ -841,7 +841,7 @@ namespace gg
 			commandList->ResourceBarrier(1, &barrier);
 
 			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize };
-			float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
+			float const                   clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
 			commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -855,7 +855,7 @@ namespace gg
 				commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 				ModelViewProjection mvpMatrices{
-					.MVP = CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
+					.MVP          = CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
 					.viewPosition = camera->GetPositionVec4(),
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjection) / sizeof(float), &mvpMatrices, 0);

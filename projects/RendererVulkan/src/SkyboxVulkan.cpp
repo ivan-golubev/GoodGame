@@ -72,25 +72,25 @@ namespace gg
 	{
 		// SkyboxCamera: inverse projection and camera rotation, used to rebuild the view ray in the pixel shader.
 		VkDescriptorSetLayoutBinding const cameraBinding{
-			.binding = 0,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.binding         = 0,
+			.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT,
 		};
 
 		// Cube map and its sampler, sampled with the world-space view ray.
 		VkDescriptorSetLayoutBinding const cubeMapBinding{
-			.binding = 2,
-			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.binding         = 2,
+			.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT,
 		};
 
 		std::array<VkDescriptorSetLayoutBinding, 2> const bindings{ cameraBinding, cubeMapBinding };
-		VkDescriptorSetLayoutCreateInfo const layoutInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		VkDescriptorSetLayoutCreateInfo const             layoutInfo{
+			.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 			.bindingCount = static_cast<uint32_t>(bindings.size()),
-			.pBindings = bindings.data(),
+			.pBindings    = bindings.data(),
 		};
 
 		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
@@ -114,10 +114,10 @@ namespace gg
 		std::array<VkDescriptorSetLayout, maxFramesInFlight> layouts{};
 		layouts.fill(descriptorSetLayout);
 		VkDescriptorSetAllocateInfo const allocInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = descriptorPool,
+			.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool     = descriptorPool,
 			.descriptorSetCount = maxFramesInFlight,
-			.pSetLayouts = layouts.data(),
+			.pSetLayouts        = layouts.data(),
 		};
 
 		if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
@@ -128,12 +128,12 @@ namespace gg
 			VkDescriptorBufferInfo const cameraInfo{
 				.buffer = uniformBuffersCamera[i],
 				.offset = 0,
-				.range = sizeof(SkyboxCamera),
+				.range  = sizeof(SkyboxCamera),
 			};
 
 			VkDescriptorImageInfo const cubeMapInfo{
-				.sampler = textureSampler,
-				.imageView = textureImageView,
+				.sampler     = textureSampler,
+				.imageView   = textureImageView,
 				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			};
 
@@ -159,11 +159,11 @@ namespace gg
 		// so it reads no vertex attributes: no bindings, no attributes, and no vertex buffer to bind.
 		// Draw it with vkCmdDraw(commandBuffer, 3, 1, 0, 0).
 		VkPipelineVertexInputStateCreateInfo const vertexInputInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			.vertexBindingDescriptionCount = 0,
-			.pVertexBindingDescriptions = nullptr,
+			.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+			.vertexBindingDescriptionCount   = 0,
+			.pVertexBindingDescriptions      = nullptr,
 			.vertexAttributeDescriptionCount = 0,
-			.pVertexAttributeDescriptions = nullptr,
+			.pVertexAttributeDescriptions    = nullptr,
 		};
 
 		// One triangle that always faces the viewer; culling has nothing to remove.
@@ -173,12 +173,12 @@ namespace gg
 		// with LESS_OR_EQUAL so the sky passes where the buffer is still at its cleared value of 1.
 		// No depth writes: the sky never occludes anything.
 		VkPipelineDepthStencilStateCreateInfo const depthStencil{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-			.depthTestEnable = VK_TRUE,
-			.depthWriteEnable = VK_FALSE,
-			.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+			.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+			.depthTestEnable       = VK_TRUE,
+			.depthWriteEnable      = VK_FALSE,
+			.depthCompareOp        = VK_COMPARE_OP_LESS_OR_EQUAL,
 			.depthBoundsTestEnable = VK_FALSE,
-			.stencilTestEnable = VK_FALSE,
+			.stencilTestEnable     = VK_FALSE,
 		};
 
 		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
@@ -205,7 +205,7 @@ namespace gg
 	void SkyboxVulkan::UpdateCamera(uint32_t frame, Camera const& camera)
 	{
 		SkyboxCamera const skyboxCamera{ CalculateSkyboxCamera(camera) };
-		void* data;
+		void*              data;
 		vkMapMemory(device, uniformBuffersMemoryCamera[frame], 0, sizeof(SkyboxCamera), 0, &data);
 		memcpy(data, &skyboxCamera, sizeof(SkyboxCamera));
 		vkUnmapMemory(device, uniformBuffersMemoryCamera[frame]);
@@ -224,12 +224,12 @@ namespace gg
 	std::expected<void, Error> SkyboxVulkan::CreateTextureImage()
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		VkDeviceSize const layerSize{ textures[0]->SizeBytes() };
-		VkDeviceSize const imageSize{ layerSize * textures.size() };
+		VkDeviceSize const              layerSize{ textures[0]->SizeBytes() };
+		VkDeviceSize const              imageSize{ layerSize * textures.size() };
 		struct StagingResources
 		{
-			VkDevice device;
-			VkBuffer buffer{};
+			VkDevice       device;
+			VkBuffer       buffer{};
 			VkDeviceMemory memory{};
 			~StagingResources() noexcept
 			{
@@ -240,7 +240,7 @@ namespace gg
 		if (auto result{ renderer->CreateBuffer(staging.buffer, staging.memory, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 			return std::unexpected(result.error());
 
-		void* mappedData{};
+		void*          mappedData{};
 		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, imageSize, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanTextureResourceCreationFailed, .message = std::format("Failed to map Vulkan skybox staging buffer (VkResult {}).", static_cast<int>(mapResult)) });
@@ -249,17 +249,17 @@ namespace gg
 		vkUnmapMemory(device, staging.memory);
 
 		VkImageCreateInfo imageInfo{
-			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-			.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
-			.imageType = VK_IMAGE_TYPE_2D,
-			.format = textureFormat,
-			.extent = { .width = textures[0]->width, .height = textures[0]->height, .depth = 1 },
-			.mipLevels = 1,
-			.arrayLayers = static_cast<uint32_t>(textures.size()),
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+			.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+			.flags         = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+			.imageType     = VK_IMAGE_TYPE_2D,
+			.format        = textureFormat,
+			.extent        = { .width = textures[0]->width, .height = textures[0]->height, .depth = 1 },
+			.mipLevels     = 1,
+			.arrayLayers   = static_cast<uint32_t>(textures.size()),
+			.samples       = VK_SAMPLE_COUNT_1_BIT,
+			.tiling        = VK_IMAGE_TILING_OPTIMAL,
+			.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			.sharingMode   = VK_SHARING_MODE_EXCLUSIVE,
 			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		};
 		VkResult const createResult{ vkCreateImage(device, &imageInfo, nullptr, &textureImage) };
@@ -272,8 +272,8 @@ namespace gg
 		if (!memoryTypeResult)
 			return std::unexpected(memoryTypeResult.error());
 		VkMemoryAllocateInfo allocationInfo{
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = requirements.size,
+			.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+			.allocationSize  = requirements.size,
 			.memoryTypeIndex = *memoryTypeResult,
 		};
 		VkResult const allocateResult{ vkAllocateMemory(device, &allocationInfo, nullptr, &textureImageMemory) };
@@ -294,27 +294,27 @@ namespace gg
 	{
 		VkPipelineStageFlags sourceStage{ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
 		VkPipelineStageFlags destinationStage{ VK_PIPELINE_STAGE_TRANSFER_BIT };
-		VkAccessFlags sourceAccess{};
-		VkAccessFlags destinationAccess{ VK_ACCESS_TRANSFER_WRITE_BIT };
+		VkAccessFlags        sourceAccess{};
+		VkAccessFlags        destinationAccess{ VK_ACCESS_TRANSFER_WRITE_BIT };
 		if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
-			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			sourceAccess = VK_ACCESS_TRANSFER_WRITE_BIT;
+			sourceStage       = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			destinationStage  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			sourceAccess      = VK_ACCESS_TRANSFER_WRITE_BIT;
 			destinationAccess = VK_ACCESS_SHADER_READ_BIT;
 		}
 		auto commandResult{ RendererVulkan::Get()->BeginSingleTimeCommands() };
 		if (!commandResult) return std::unexpected(commandResult.error());
 		VkImageMemoryBarrier barrier{
-			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-			.srcAccessMask = sourceAccess,
-			.dstAccessMask = destinationAccess,
-			.oldLayout = oldLayout,
-			.newLayout = newLayout,
+			.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			.srcAccessMask       = sourceAccess,
+			.dstAccessMask       = destinationAccess,
+			.oldLayout           = oldLayout,
+			.newLayout           = newLayout,
 			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-			.image = image,
-			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = static_cast<uint32_t>(textures.size()) },
+			.image               = image,
+			.subresourceRange    = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = static_cast<uint32_t>(textures.size()) },
 		};
 		vkCmdPipelineBarrier(*commandResult, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		return RendererVulkan::Get()->EndSingleTimeCommands(*commandResult);
@@ -325,13 +325,13 @@ namespace gg
 		auto commandResult{ RendererVulkan::Get()->BeginSingleTimeCommands() };
 		if (!commandResult) return std::unexpected(commandResult.error());
 		std::array<VkBufferImageCopy, 6> regions{};
-		VkDeviceSize layerSize{ textures[0]->SizeBytes() };
+		VkDeviceSize                     layerSize{ textures[0]->SizeBytes() };
 		for (uint32_t i{}; i < regions.size(); ++i)
 		{
 			regions[i] = VkBufferImageCopy{
-				.bufferOffset = layerSize * i,
+				.bufferOffset     = layerSize * i,
 				.imageSubresource = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .baseArrayLayer = i, .layerCount = 1 },
-				.imageExtent = { .width = width, .height = height, .depth = 1 },
+				.imageExtent      = { .width = width, .height = height, .depth = 1 },
 			};
 		}
 		vkCmdCopyBufferToImage(*commandResult, buffer, textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(regions.size()), regions.data());
@@ -341,10 +341,10 @@ namespace gg
 	std::expected<void, Error> SkyboxVulkan::CreateTextureImageView()
 	{
 		VkImageViewCreateInfo viewInfo{
-			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-			.image = textureImage,
-			.viewType = VK_IMAGE_VIEW_TYPE_CUBE,
-			.format = textureFormat,
+			.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+			.image            = textureImage,
+			.viewType         = VK_IMAGE_VIEW_TYPE_CUBE,
+			.format           = textureFormat,
 			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = static_cast<uint32_t>(textures.size()) },
 		};
 		VkResult const result{ vkCreateImageView(device, &viewInfo, nullptr, &textureImageView) };

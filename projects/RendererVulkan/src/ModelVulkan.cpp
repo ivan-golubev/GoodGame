@@ -87,8 +87,8 @@ namespace gg
 
 		struct StagingResources
 		{
-			VkDevice device;
-			VkBuffer buffer{};
+			VkDevice       device;
+			VkBuffer       buffer{};
 			VkDeviceMemory memory{};
 
 			~StagingResources() noexcept
@@ -104,7 +104,7 @@ namespace gg
 		if (auto result{ renderer->CreateBuffer(staging.buffer, staging.memory, vertexBufferSizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 			return std::unexpected(result.error());
 
-		void* mappedData{};
+		void*          mappedData{};
 		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, vertexBufferSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to map staging buffer for vertex data (VkResult {})", static_cast<int>(mapResult)) });
@@ -136,33 +136,33 @@ namespace gg
 	std::expected<void, Error> ModelVulkan::CreateDescriptorSetLayout()
 	{
 		VkDescriptorSetLayoutBinding const uboLayoutBindingMVP{
-			.binding = 0,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.binding         = 0,
+			.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			.stageFlags      = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 		};
 
 		VkDescriptorSetLayoutBinding const uboLayoutBindingDirLight{
-			.binding = 1,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.binding         = 1,
+			.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT,
 		};
 
 		VkDescriptorSetLayoutBinding const samplerLayoutBinding{
-			.binding = 2,
-			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.binding         = 2,
+			.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT,
 		};
 
 		std::array<VkDescriptorSetLayoutBinding, 3> const bindings{
 			uboLayoutBindingMVP, uboLayoutBindingDirLight, samplerLayoutBinding
 		};
 		VkDescriptorSetLayoutCreateInfo const layoutInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+			.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 			.bindingCount = static_cast<uint32_t>(bindings.size()),
-			.pBindings = bindings.data(),
+			.pBindings    = bindings.data(),
 		};
 
 		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
@@ -178,24 +178,24 @@ namespace gg
 
 		DestroyPipeline();
 
-		auto const bindingDescription{ GetVertexBindingDescription() };
-		auto const attributeDescriptions{ GetVertexAttributeDescriptions() };
+		auto const                                 bindingDescription{ GetVertexBindingDescription() };
+		auto const                                 attributeDescriptions{ GetVertexAttributeDescriptions() };
 		VkPipelineVertexInputStateCreateInfo const vertexInputInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			.vertexBindingDescriptionCount = 1,
-			.pVertexBindingDescriptions = &bindingDescription,
+			.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+			.vertexBindingDescriptionCount   = 1,
+			.pVertexBindingDescriptions      = &bindingDescription,
 			.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
-			.pVertexAttributeDescriptions = attributeDescriptions.data(),
+			.pVertexAttributeDescriptions    = attributeDescriptions.data(),
 		};
 
 		/* Opaque geometry: nearer surfaces win and write their depth. */
 		VkPipelineDepthStencilStateCreateInfo const depthStencil{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-			.depthTestEnable = VK_TRUE,
-			.depthWriteEnable = VK_TRUE,
-			.depthCompareOp = VK_COMPARE_OP_LESS,
+			.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+			.depthTestEnable       = VK_TRUE,
+			.depthWriteEnable      = VK_TRUE,
+			.depthCompareOp        = VK_COMPARE_OP_LESS,
 			.depthBoundsTestEnable = VK_FALSE,
-			.stencilTestEnable = VK_FALSE,
+			.stencilTestEnable     = VK_FALSE,
 		};
 
 		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
@@ -239,10 +239,10 @@ namespace gg
 		std::array<VkDescriptorSetLayout, maxFramesInFlight> layouts{};
 		layouts.fill(descriptorSetLayout);
 		VkDescriptorSetAllocateInfo const allocInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = descriptorPool,
+			.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool     = descriptorPool,
 			.descriptorSetCount = maxFramesInFlight,
-			.pSetLayouts = layouts.data(),
+			.pSetLayouts        = layouts.data(),
 		};
 
 		if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
@@ -256,18 +256,18 @@ namespace gg
 			VkDescriptorBufferInfo const bufferInfoMVP{
 				.buffer = uniformBuffersMVP[i],
 				.offset = 0,
-				.range = sizeof(ModelViewProjection),
+				.range  = sizeof(ModelViewProjection),
 			};
 
 			VkDescriptorBufferInfo const bufferInfoDirLight{
 				.buffer = uniformBuffersDirLight[i],
 				.offset = 0,
-				.range = sizeof(DirectionalLight),
+				.range  = sizeof(DirectionalLight),
 			};
 
 			VkDescriptorImageInfo const imageInfo{
-				.sampler = texture->textureSampler,
-				.imageView = texture->textureImageView,
+				.sampler     = texture->textureSampler,
+				.imageView   = texture->textureImageView,
 				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			};
 
@@ -286,7 +286,7 @@ namespace gg
 	{
 		{ /* MVP matrix */
 			ModelViewProjection const mvpMatrices{
-				.MVP = CalculateMVP(translation, currentTimeSec, camera),
+				.MVP          = CalculateMVP(translation, currentTimeSec, camera),
 				.viewPosition = camera.GetPositionVec4(),
 			};
 			void* data;
@@ -309,7 +309,7 @@ namespace gg
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.layout, 0, 1, &descriptorSets[frame], 0, nullptr);
 
-		VkBuffer const vertexBuffers[]{ vertexBuffer };
+		VkBuffer const     vertexBuffers[]{ vertexBuffer };
 		VkDeviceSize const offsets[]{ 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 

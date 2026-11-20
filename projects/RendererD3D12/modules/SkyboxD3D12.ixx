@@ -22,18 +22,18 @@ export namespace gg
 		~SkyboxD3D12() noexcept override = default;
 
 		std::expected<void, Error> Initialize();
-		void Draw(ID3D12GraphicsCommandList*, Camera const&);
+		void                       Draw(ID3D12GraphicsCommandList*, Camera const&);
 
 	private:
 		std::expected<void, Error> CreateCubeTexture();
 		std::expected<void, Error> CreateRootSignature();
 		std::expected<void, Error> CreatePipeline();
 
-		std::string name;
+		std::string          name;
 		ComPtr<ID3D12Device> device;
 
 		ComPtr<ID3D12DescriptorHeap> srvHeap; /* shader-visible, holds the cube map SRV */
-		ComPtr<ID3D12Resource> cubeTexture; /* 2D texture array with one slice per face */
+		ComPtr<ID3D12Resource>       cubeTexture; /* 2D texture array with one slice per face */
 
 		ComPtr<ID3D12RootSignature> rootSignature;
 		ComPtr<ID3D12PipelineState> pipelineState;

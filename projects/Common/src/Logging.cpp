@@ -13,7 +13,7 @@ namespace
 	std::wstring ToWString(std::string const& str)
 	{
 		if (str.empty()) return {};
-		int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+		int          sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
 		std::wstring wstrTo(sizeNeeded, 0);
 		MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], sizeNeeded);
 		return wstrTo;
@@ -21,7 +21,7 @@ namespace
 
 	void PrintToVSDebugConsole(DebugLevel debugLevel, std::string const& message)
 	{
-		std::wstring wMessage{ ToWString(message) };
+		std::wstring   wMessage{ ToWString(message) };
 		wchar_t const* debugLevelStr = (debugLevel == DebugLevel::Info) ? L"[Info] " : L"[Error] ";
 		OutputDebugStringW(debugLevelStr);
 		OutputDebugStringW(wMessage.c_str());

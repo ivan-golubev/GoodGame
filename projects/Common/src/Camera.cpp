@@ -17,11 +17,11 @@ namespace gg
 {
 	constexpr double cameraMoveSpeed{ 5.0 }; // in metres per second
 	constexpr double cameraTurnSpeed{ std::numbers::pi_v<double> }; // in radians per second, arrow keys
-	constexpr float mouseSensitivity{ 0.0022f }; // in radians per pixel of mouse motion
-	constexpr float maxPitch{ std::numbers::pi_v<float> * 89.f / 180.f }; // stop short of straight up/down, where lookAt degenerates
-	constexpr float fieldOfView{ 90.f };
-	constexpr float nearPlane{ 0.1f };
-	constexpr float farPlane{ 100.f };
+	constexpr float  mouseSensitivity{ 0.0022f }; // in radians per pixel of mouse motion
+	constexpr float  maxPitch{ std::numbers::pi_v<float> * 89.f / 180.f }; // stop short of straight up/down, where lookAt degenerates
+	constexpr float  fieldOfView{ 90.f };
+	constexpr float  nearPlane{ 0.1f };
+	constexpr float  farPlane{ 100.f };
 
 	constexpr glm::vec3 up{ 0.f, 1.f, 0.f };
 
@@ -51,14 +51,14 @@ namespace gg
 			if (inputManager->IsKeyDown(InputAction::LookCameraDown))
 				pitch -= cameraTurnAmount;
 
-			yaw = std::remainder(yaw, 2.f * std::numbers::pi_v<float>); // keep in [-pi, pi]
+			yaw   = std::remainder(yaw, 2.f * std::numbers::pi_v<float>); // keep in [-pi, pi]
 			pitch = std::clamp(pitch, -maxPitch, maxPitch);
 		}
 
 		/* left-handed: +X right, +Y up, +Z forward */
-		float const sinYaw{ std::sin(yaw) };
-		float const cosYaw{ std::cos(yaw) };
-		float const cosPitch{ std::cos(pitch) };
+		float const     sinYaw{ std::sin(yaw) };
+		float const     cosYaw{ std::cos(yaw) };
+		float const     cosPitch{ std::cos(pitch) };
 		glm::vec3 const lookDirection{ sinYaw * cosPitch, std::sin(pitch), cosYaw * cosPitch };
 
 		{ /* move: forward/back and strafe stay on the horizontal plane; Q/E move along world up */
@@ -96,7 +96,7 @@ namespace gg
 	glm::vec4 Camera::GetPositionVec4() const { return glm::vec4(cameraPosition, 1.0f); }
 
 	glm::vec3* Camera::GetPosition() { return &cameraPosition; }
-	float* Camera::GetYaw() { return &yaw; }
-	float* Camera::GetPitch() { return &pitch; }
+	float*     Camera::GetYaw() { return &yaw; }
+	float*     Camera::GetPitch() { return &pitch; }
 
 } // namespace gg
