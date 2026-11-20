@@ -38,7 +38,7 @@ VSOutput vs_main(uint vertexID : SV_VertexID)
 float4 ps_main(VSOutput input) : SV_Target
 {
 	// Undo the projection: this pixel's screen position on the far plane, back in view space (homogeneous).
-	float4 viewPosition = mul(SkyboxCameraCB.InvProjection, float4(input.ndc, 1.0, 1.0));
+	float4 viewPosition = mul(SkyboxCameraCB.invProjection, float4(input.ndc, 1.0, 1.0));
 
 	// Perspective divide gives the view-space point. The camera is at the view-space origin, so this point
 	// is also the direction of the ray through the pixel.
@@ -46,7 +46,7 @@ float4 ps_main(VSOutput input) : SV_Target
 
 	// Rotate the ray into world space. Only the 3x3 rotation is used: a direction is unaffected by
 	// the camera's position, which keeps the sky fixed as the camera moves.
-	float3 worldDirection = mul((float3x3)SkyboxCameraCB.InvViewRotation, viewDirection);
+	float3 worldDirection = mul((float3x3)SkyboxCameraCB.invViewRotation, viewDirection);
 
 	// Cube map lookup by direction; the hardware picks the face from the dominant axis.
 	return texture0.Sample(sampler0, normalize(worldDirection));

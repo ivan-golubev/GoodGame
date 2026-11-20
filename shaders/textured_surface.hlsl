@@ -41,7 +41,7 @@ float4 ps_main(PSInput input) : SV_Target
 {
 	float4 textureColor = texture0.Sample(sampler0, input.texCoord);
 
-	float3 viewDir = (float3) normalize(ModelViewProjectionCB.ViewPosition - input.position);
+	float3 viewDir = (float3) normalize(ModelViewProjectionCB.viewPosition - input.position);
 	float4 lightColor = BlinnPhong((float3)input.normal, viewDir, DirectionalLightCB);
 
 	return lightColor * textureColor;
