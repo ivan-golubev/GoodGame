@@ -28,8 +28,6 @@ import Texture;
 import TimeManager;
 import Vertex;
 
-using std::chrono::nanoseconds;
-
 namespace gg
 {
 	struct ModelVulkan;
@@ -50,7 +48,7 @@ namespace gg
 		RendererType GetType() const override;
 
 		void                                                 OnWindowResized(uint32_t width, uint32_t height) override;
-		std::expected<void, Error>                           Render(nanoseconds deltaTime, Scene&) override;
+		std::expected<void, Error>                           Render(Scene&) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 
 		std::expected<void, Error> LoadModel(

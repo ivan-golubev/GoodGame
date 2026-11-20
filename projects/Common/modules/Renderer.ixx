@@ -19,8 +19,6 @@ import Scene;
 export import ErrorHandling;
 import SettingsRenderer;
 
-using std::chrono::nanoseconds;
-
 export namespace gg
 {
 	struct RendererSettings
@@ -47,7 +45,7 @@ export namespace gg
 		virtual std::expected<void, Error> Initialize(RendererSettings const&) = 0;
 
 		virtual void                                                 OnWindowResized(uint32_t width, uint32_t height) = 0;
-		virtual std::expected<void, Error>                           Render(nanoseconds deltaTime, Scene&)            = 0;
+		virtual std::expected<void, Error>                           Render(Scene&)                                   = 0;
 		virtual std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName)        = 0;
 
 		virtual std::expected<void, Error> LoadModel(

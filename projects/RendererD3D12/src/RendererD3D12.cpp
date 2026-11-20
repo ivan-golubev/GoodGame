@@ -40,8 +40,6 @@ import TextureD3D12;
 import Vertex;
 
 using Microsoft::WRL::ComPtr;
-using std::chrono::nanoseconds;
-
 namespace
 {
 	HWND GetWindowHandle(SDL_Window* windowHandle)
@@ -569,7 +567,7 @@ namespace gg
 		height          = std::max(8u, height);
 	}
 
-	std::expected<void, Error> RendererD3D12::Render(nanoseconds deltaTime, Scene& scene)
+	std::expected<void, Error> RendererD3D12::Render(Scene& scene)
 	{
 		if (isWindowResized)
 		{
@@ -578,7 +576,6 @@ namespace gg
 			scene.camera.UpdateProjectionMatrix(width, height);
 		}
 
-		scene.camera.UpdateCamera(deltaTime);
 		/* Record all the commands we need to render the scene into the command list. */
 		if (auto result{ PopulateCommandList(scene) }; !result)
 			return std::unexpected(result.error());

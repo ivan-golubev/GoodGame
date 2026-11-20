@@ -49,9 +49,12 @@ namespace gg
 
 	std::expected<void, Error> Application::Tick()
 	{
-		if (!isPaused)
-			return renderer->Render(timeManager->Tick(), scene);
-		return {};
+		if (isPaused)
+			return {};
+
+		/* Game logic first, then draw the result */
+		scene.camera.UpdateCamera(timeManager->Tick());
+		return renderer->Render(scene);
 	}
 
 	void Application::OnWindowResized(uint32_t width, uint32_t height)

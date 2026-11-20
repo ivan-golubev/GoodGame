@@ -36,8 +36,6 @@ import TextureVulkan;
 import Vertex;
 import VertexVulkan;
 
-using std::chrono::nanoseconds;
-
 namespace
 {
 	std::string const shaderExtensionVulkan{ "spv" };
@@ -805,7 +803,7 @@ namespace gg
 		height          = std::max(8u, height);
 	}
 
-	std::expected<void, Error> RendererVulkan::Render(nanoseconds deltaTime, Scene& scene)
+	std::expected<void, Error> RendererVulkan::Render(Scene& scene)
 	{
 		vkWaitForFences(context->GetDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -828,8 +826,6 @@ namespace gg
 				.code    = ErrorCode::VulkanRendererFrameFailed,
 				.message = std::format("Failed to acquire swap chain image (VkResult {}).", static_cast<int>(result)),
 			});
-
-		scene.camera.UpdateCamera(deltaTime);
 
 		vkResetFences(context->GetDevice(), 1, &inFlightFences[currentFrame]);
 
