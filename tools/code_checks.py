@@ -135,13 +135,19 @@ def run_format(clang_format: str, files: list[Path], fix: bool, jobs: int) -> bo
 		formatted = list(pool.map(lambda p: is_formatted(clang_format, p), files))
 	bad = [path for path, ok in zip(files, formatted) if not ok]
 
+	failed = []
 	for path in bad:
-		if fix:
-			format_file(clang_format, path)
+		if not fix:
+			print(f"  needs formatting: {relative(path)}")
+		elif format_file(clang_format, path) == 0:
 			print(f"  formatted {relative(path)}")
 		else:
-			print(f"  needs formatting: {relative(path)}")
+			failed.append(path)
+			print(f"  FAILED to format {relative(path)}")
 
+	if failed:
+		print(f"clang-format: fixed {len(bad) - len(failed)} file(s), {len(failed)} failed")
+		return False
 	if fix or not bad:
 		print("clang-format: OK" if not bad else f"clang-format: fixed {len(bad)} file(s)")
 		return True

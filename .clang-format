@@ -14,6 +14,7 @@ AllowShortLambdasOnASingleLine: None
 AllowShortLoopsOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 NamespaceIndentation: All
+AccessModifierOffset: -4
 FixNamespaceComments: false
 SortIncludes: Never
 PointerAlignment: Left
@@ -22,5 +23,8 @@ Cpp11BracedListStyle: false
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
 LineEnding: DeriveCRLF
+BreakBeforeBinaryOperators: NonAssignment
+AlignAfterOpenBracket: BlockIndent
+AlignOperands: DontAlign
 AlignTrailingComments: false
 AlignEscapedNewlines: Left
