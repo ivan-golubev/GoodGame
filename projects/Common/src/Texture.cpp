@@ -24,11 +24,11 @@ namespace gg
 		pixels = stbi_load(textureAbsolutePath.c_str(), &imageWidth, &imageHeight, &imageChannels, STBI_rgb_alpha);
 		if (!pixels)
 		{
-			auto const message = std::format(
+			auto const message{ std::format(
 				"Failed to load texture '{}': {}",
 				textureAbsolutePath,
 				stbi_failure_reason() ? stbi_failure_reason() : "unknown image loading error"
-			);
+			) };
 			return std::unexpected(Error{
 				.code    = ErrorCode::TextureLoadFailed,
 				.message = message,

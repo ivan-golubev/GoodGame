@@ -23,13 +23,13 @@ namespace
 	std::expected<aiScene const*, gg::Error> ReadScene(std::string const& modelAbsolutePath, Assimp::Importer& importer)
 	{
 		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
-		aiScene const* scene = importer.ReadFile(
+		aiScene const* scene{ importer.ReadFile(
 			modelAbsolutePath,
 			aiProcess_Triangulate
 				| aiProcess_JoinIdenticalVertices
 				| aiProcess_SortByPType
 				| aiProcess_FlipUVs
-		);
+		) };
 		if (!scene)
 			return std::unexpected(gg::Error{
 				.code    = gg::ErrorCode::ModelImportFailed,
@@ -63,7 +63,7 @@ namespace
 				.message = std::format("Mesh '{}' is missing vertex normals", assimpMesh->mName.C_Str()),
 			});
 
-		bool const hasTextureCoords = assimpMesh->HasTextureCoords(uvSetNumber);
+		bool const hasTextureCoords{ assimpMesh->HasTextureCoords(uvSetNumber) };
 		gg::Mesh   mesh{};
 		mesh.vertices.reserve(assimpMesh->mNumVertices);
 		mesh.indices.reserve(assimpMesh->mNumFaces * 3);
@@ -73,13 +73,15 @@ namespace
 			aiFace* face{ &assimpMesh->mFaces[faceIndex] };
 			for (unsigned int j{ 0 }; j < face->mNumIndices; ++j)
 			{
-				auto        vertexIndex = face->mIndices[j];
-				auto const& pos         = assimpMesh->mVertices[vertexIndex];
-				auto const& normal      = assimpMesh->mNormals[vertexIndex];
+				auto        vertexIndex{ face->mIndices[j] };
+				auto const& pos{ assimpMesh->mVertices[vertexIndex] };
+				auto const& normal{ assimpMesh->mNormals[vertexIndex] };
 
-				auto const textureCoords = hasTextureCoords
-					? assimpMesh->mTextureCoords[uvSetNumber][vertexIndex]
-					: aiVector3D{ 0, 0, 0 };
+				auto const textureCoords{
+					hasTextureCoords
+						? assimpMesh->mTextureCoords[uvSetNumber][vertexIndex]
+						: aiVector3D{ 0, 0, 0 }
+				};
 
 				mesh.vertices.emplace_back(
 					static_cast<float>(pos.x),
@@ -112,7 +114,7 @@ namespace
 
 	void LoadTextureNames(aiScene const& scene, std::vector<std::string>& textureNames)
 	{
-		for (uint32_t i = 0; i < scene.mNumTextures; ++i)
+		for (uint32_t i{ 0 }; i < scene.mNumTextures; ++i)
 			textureNames.emplace_back(scene.mTextures[i]->mFilename.C_Str());
 	}
 }

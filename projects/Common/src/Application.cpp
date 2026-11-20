@@ -24,8 +24,8 @@ namespace gg
 	)
 	{
 		BreakIfFalse(!Application::IsInitialized());
-		Application* app = new Application(std::move(renderer), timeManager, inputManager);
-		instance         = std::shared_ptr<Application>(app);
+		Application* app{ new Application(std::move(renderer), timeManager, inputManager) };
+		instance = std::shared_ptr<Application>(app);
 		return instance;
 	}
 

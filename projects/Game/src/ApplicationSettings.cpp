@@ -28,9 +28,11 @@ namespace gg
 			.inputManager = inputManager,
 		};
 
-		std::unique_ptr<Renderer> renderer = s.rendererType == RendererType::Vulkan
-			? std::unique_ptr<Renderer>{ std::make_unique<RendererVulkan>() }
-			: std::unique_ptr<Renderer>{ std::make_unique<RendererD3D12>() };
+		std::unique_ptr<Renderer> renderer{
+			s.rendererType == RendererType::Vulkan
+				? std::unique_ptr<Renderer>{ std::make_unique<RendererVulkan>() }
+				: std::unique_ptr<Renderer>{ std::make_unique<RendererD3D12>() }
+		};
 
 		if (auto result{ renderer->Initialize(rendererSettings) }; !result)
 			return std::unexpected(result.error());

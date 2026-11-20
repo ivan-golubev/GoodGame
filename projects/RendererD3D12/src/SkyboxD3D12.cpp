@@ -57,10 +57,10 @@ namespace gg
 		HRESULT const heapResult{ device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap)) };
 		if (FAILED(heapResult))
 		{
-			auto const message = std::format(
+			auto const message{ std::format(
 				"Failed to create the skybox SRV descriptor heap: HRESULT 0x{:08X}",
 				static_cast<uint32_t>(heapResult)
-			);
+			) };
 			return std::unexpected(Error{
 				.code    = ErrorCode::D3D12InitializationFailed,
 				.message = message,
@@ -95,11 +95,12 @@ namespace gg
 			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 
 		/* No vertex input: the fullscreen triangle is generated from SV_VertexID. Only the pixel shader reads resources. */
-		D3D12_ROOT_SIGNATURE_FLAGS const rootSignatureFlags =
+		D3D12_ROOT_SIGNATURE_FLAGS const rootSignatureFlags{
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS
 			| D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS
 			| D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS
-			| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+			| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS
+		};
 
 		/* t0: the cube map SRV */
 		CD3DX12_DESCRIPTOR_RANGE1 cubeMapRange;
@@ -140,14 +141,16 @@ namespace gg
 		) };
 		if (FAILED(serializeResult))
 		{
-			std::string const details = errorBlob
-				? std::string{ static_cast<char const*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize() }
-				: std::string{};
-			auto const        message = std::format(
+			std::string const details{
+				errorBlob
+					? std::string{ static_cast<char const*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize() }
+					: std::string{}
+			};
+			auto const message{ std::format(
 				"Failed to serialize the skybox root signature: HRESULT 0x{:08X} {}",
 				static_cast<uint32_t>(serializeResult),
 				details
-			);
+			) };
 			return std::unexpected(Error{
 				.code    = ErrorCode::D3D12InitializationFailed,
 				.message = message,

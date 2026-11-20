@@ -186,7 +186,7 @@ namespace
 					handleAssetLoadError(result.error());
 			}
 
-			uint32_t status = MainLoop(app, rendererType);
+			uint32_t status{ MainLoop(app, rendererType) };
 			Application::Destroy();
 
 			if (status != EXIT_SUCCESS)

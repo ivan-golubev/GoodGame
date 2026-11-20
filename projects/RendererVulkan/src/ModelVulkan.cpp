@@ -121,10 +121,10 @@ namespace gg
 		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(vertexBufferSizeBytes));
 		vkUnmapMemory(device, staging.memory);
 
-		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(
+		VkBufferUsageFlagBits const usage{ static_cast<VkBufferUsageFlagBits>(
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
-		);
-		auto vertexBufferResult{ renderer->CreateBuffer(
+		) };
+		auto                        vertexBufferResult{ renderer->CreateBuffer(
 			vertexBuffer,
 			vertexBufferMemory,
 			vertexBufferSizeBytes,

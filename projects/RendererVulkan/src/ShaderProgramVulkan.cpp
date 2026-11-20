@@ -29,11 +29,11 @@ namespace
 		VkResult const result{ vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) };
 		if (result != VK_SUCCESS)
 		{
-			auto const message = std::format(
+			auto const message{ std::format(
 				"Failed to create Vulkan shader module from '{}': VkResult {}",
 				shaderPath,
 				static_cast<int>(result)
-			);
+			) };
 			return std::unexpected(gg::Error{
 				.code    = gg::ErrorCode::VulkanShaderModuleCreationFailed,
 				.message = message,

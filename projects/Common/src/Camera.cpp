@@ -41,7 +41,7 @@ namespace gg
 			yaw += mouse.x * mouseSensitivity;
 			pitch -= mouse.y * mouseSensitivity; // screen y grows downwards
 
-			float const cameraTurnAmount = static_cast<float>(cameraTurnSpeed * deltaTimeSeconds);
+			float const cameraTurnAmount{ static_cast<float>(cameraTurnSpeed * deltaTimeSeconds) };
 			if (inputManager->IsKeyDown(InputAction::TurnCameraRight))
 				yaw += cameraTurnAmount;
 			if (inputManager->IsKeyDown(InputAction::TurnCameraLeft))
@@ -65,7 +65,7 @@ namespace gg
 			glm::vec3 const moveForward{ sinYaw, 0.f, cosYaw };
 			glm::vec3 const moveRight{ cosYaw, 0.f, -sinYaw };
 
-			float const cameraMoveAmount = static_cast<float>(cameraMoveSpeed * deltaTimeSeconds);
+			float const cameraMoveAmount{ static_cast<float>(cameraMoveSpeed * deltaTimeSeconds) };
 			if (inputManager->IsKeyDown(InputAction::MoveCameraForward))
 				cameraPosition += moveForward * cameraMoveAmount;
 			if (inputManager->IsKeyDown(InputAction::MoveCameraBack))

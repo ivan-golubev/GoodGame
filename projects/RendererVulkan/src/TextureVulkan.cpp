@@ -56,7 +56,7 @@ namespace gg
 			});
 
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		VkDevice                        device = renderer->GetDevice();
+		VkDevice                        device{ renderer->GetDevice() };
 		struct StagingResources
 		{
 			VkDevice       device;
@@ -71,7 +71,7 @@ namespace gg
 					vkFreeMemory(device, memory, nullptr);
 			}
 		} staging{ device };
-		VkDeviceSize imageSizeBytes = SizeBytes();
+		VkDeviceSize imageSizeBytes{ SizeBytes() };
 		auto         bufferResult{ renderer->CreateBuffer(
 			staging.buffer,
 			staging.memory,
@@ -141,7 +141,7 @@ namespace gg
 	)
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		VkDevice                        device = renderer->GetDevice();
+		VkDevice                        device{ renderer->GetDevice() };
 
 		VkImageCreateInfo imageInfo{
 			.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -179,10 +179,10 @@ namespace gg
 		VkResult const allocationResult{ vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) };
 		if (allocationResult != VK_SUCCESS)
 		{
-			auto const message = std::format(
+			auto const message{ std::format(
 				"Failed to allocate memory for Vulkan texture image (VkResult {})",
 				static_cast<int>(allocationResult)
-			);
+			) };
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
 				.message = message,
@@ -230,11 +230,11 @@ namespace gg
 		}
 		else
 		{
-			auto const message = std::format(
+			auto const message{ std::format(
 				"Cannot transition Vulkan texture image from layout {} to unsupported layout {}",
 				static_cast<int>(oldLayout),
 				static_cast<int>(newLayout)
-			);
+			) };
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureUnsupportedLayoutTransition,
 				.message = message,

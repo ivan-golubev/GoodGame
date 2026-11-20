@@ -24,11 +24,11 @@ namespace gg
 		HRESULT const vertexResult{ D3DReadFileToBlob(vertexShaderAbsPath.c_str(), &vertexShaderBlob) };
 		if (FAILED(vertexResult))
 		{
-			auto const message = std::format(
+			auto const message{ std::format(
 				"Failed to read D3D12 vertex shader '{}': HRESULT 0x{:08X}",
 				vertexShaderRelativePath,
 				static_cast<uint32_t>(vertexResult)
-			);
+			) };
 			return std::unexpected(Error{
 				.code    = ErrorCode::D3D12ShaderReadFailed,
 				.message = message,
@@ -38,11 +38,11 @@ namespace gg
 		HRESULT const fragmentResult{ D3DReadFileToBlob(fragmentShaderAbsPath.c_str(), &fragmentShaderBlob) };
 		if (FAILED(fragmentResult))
 		{
-			auto const message = std::format(
+			auto const message{ std::format(
 				"Failed to read D3D12 pixel shader '{}': HRESULT 0x{:08X}",
 				fragmentShaderRelativePath,
 				static_cast<uint32_t>(fragmentResult)
-			);
+			) };
 			return std::unexpected(Error{
 				.code    = ErrorCode::D3D12ShaderReadFailed,
 				.message = message,

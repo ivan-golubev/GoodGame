@@ -13,7 +13,7 @@ namespace
 	std::wstring ToWString(std::string const& str)
 	{
 		if (str.empty()) return {};
-		int          sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), nullptr, 0);
+		int          sizeNeeded{ MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), nullptr, 0) };
 		std::wstring wstrTo(sizeNeeded, 0);
 		MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), &wstrTo[0], sizeNeeded);
 		return wstrTo;
@@ -22,7 +22,7 @@ namespace
 	void PrintToVSDebugConsole(DebugLevel debugLevel, std::string const& message)
 	{
 		std::wstring   wMessage{ ToWString(message) };
-		wchar_t const* debugLevelStr = (debugLevel == DebugLevel::Info) ? L"[Info] " : L"[Error] ";
+		wchar_t const* debugLevelStr{ (debugLevel == DebugLevel::Info) ? L"[Info] " : L"[Error] " };
 		OutputDebugStringW(debugLevelStr);
 		OutputDebugStringW(wMessage.c_str());
 		OutputDebugStringW(L"\n");
@@ -48,7 +48,7 @@ namespace gg
 			}
 			else
 			{
-				auto& outStream = (debugLevel == DebugLevel::Info) ? std::cout : std::cerr;
+				auto& outStream{ (debugLevel == DebugLevel::Info) ? std::cout : std::cerr };
 				// Keep logging failures in the stream state instead of throwing.
 				outStream.exceptions(std::ios::goodbit);
 				outStream << message << std::endl;

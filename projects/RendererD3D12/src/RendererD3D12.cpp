@@ -198,7 +198,7 @@ namespace gg
 		) };
 		D3D12_CHECK_HRESULT(d3d12CreateCommandListResult, ErrorCode::D3D12InitializationFailed, "create command list");
 		SetName(commandList.Get(), L"CommandList_Direct");
-		auto name = GetName(commandList.Get());
+		auto name{ GetName(commandList.Get()) };
 
 		{ /* Create synchronization objects */
 			HRESULT const d3d12CreateFenceResult{ device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)) };
@@ -248,11 +248,12 @@ namespace gg
 				featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 			}
 			/* Create the root signature */
-			D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+			D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags{
 				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
 				| D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS
 				| D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS
-				| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+				| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS
+			};
 
 			CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
@@ -321,7 +322,7 @@ namespace gg
 	std::expected<void, Error> RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
 	{
 		BreakIfFalse(model->shaderProgram.get());
-		ShaderProgramD3D12* shaderProgram = dynamic_cast<ShaderProgramD3D12*>(model->shaderProgram.get());
+		ShaderProgramD3D12* shaderProgram{ dynamic_cast<ShaderProgramD3D12*>(model->shaderProgram.get()) };
 
 		/* Specify the input layout */
 		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
@@ -536,7 +537,7 @@ namespace gg
 		if (FAILED(result))
 			return std::unexpected(makeUploadError("create the GPU texture resource", result));
 		SetName(texture->Get(), resourceName);
-		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(texture->Get(), 0, subresourceCount);
+		uint64_t const uploadBufferSize{ GetRequiredIntermediateSize(texture->Get(), 0, subresourceCount) };
 
 		/* Intermediate upload buffer; only needed until the copy has executed. */
 		ComPtr<ID3D12Resource>        uploadResource;
@@ -563,8 +564,8 @@ namespace gg
 
 		/* Copy data to the intermediate upload heap and then schedule a copy
 		   from the upload heap to the texture, one subresource per image. */
-		LONG_PTR const                      textureRowPitch   = width * Texture::bytesPerPixel;
-		LONG_PTR const                      textureSlicePitch = textureRowPitch * height;
+		LONG_PTR const                      textureRowPitch{ width * Texture::bytesPerPixel };
+		LONG_PTR const                      textureSlicePitch{ textureRowPitch * height };
 		std::vector<D3D12_SUBRESOURCE_DATA> textureData;
 		textureData.reserve(subresourceCount);
 		for (Texture const* image : images)
@@ -650,7 +651,7 @@ namespace gg
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		std::shared_ptr<ModelD3D12>    model = std::make_shared<ModelD3D12>(modelRelativePath, shader, position);
+		std::shared_ptr<ModelD3D12>    model{ std::make_shared<ModelD3D12>(modelRelativePath, shader, position) };
 		if (auto const result{ model->Initialize() }; !result)
 			return std::unexpected(result.error());
 
@@ -704,7 +705,7 @@ namespace gg
 			"reset command list for vertex upload"
 		);
 
-		uint64_t const vertexBufferSizeBytes = mesh.VerticesSizeBytes();
+		uint64_t const vertexBufferSizeBytes{ mesh.VerticesSizeBytes() };
 
 		auto vertexBufferResult{ CreateBuffer(
 			commandList,
@@ -786,11 +787,11 @@ namespace gg
 		uint32_t const height{ std::max(this->height, 0U) };
 
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-		D3D12_RESOURCE_DESC const     resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		D3D12_RESOURCE_DESC const     resourceDesc{ CD3DX12_RESOURCE_DESC::Tex2D(
 			DXGI_FORMAT_D32_FLOAT, width, height,
 			1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-		);
-		HRESULT const d3d12CreateDepthBufferResourceResult{ device->CreateCommittedResource(
+		) };
+		HRESULT const                 d3d12CreateDepthBufferResourceResult{ device->CreateCommittedResource(
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&resourceDesc,
