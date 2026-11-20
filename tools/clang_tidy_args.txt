@@ -1,0 +1,19 @@
+# Compiler arguments for clang-tidy (one per line, # starts a comment).
+# Relative paths resolve against the project root; $VARS are expanded.
+# Mirrors the include paths and defines in props/*.props.
+-std=c++23
+-DWIN32_LEAN_AND_MEAN
+-DNOMINMAX
+-DGLM_FORCE_DEPTH_ZERO_TO_ONE
+-DVK_USE_PLATFORM_WIN32_KHR
+-DSDL_MAIN_HANDLED
+-DUSE_PIX
+-Ilib
+-Ilib/glm
+-Ilib/imgui
+-Ilib/assimp/include
+-Ilib/DirectX-Headers/include
+-Ipackages/WinPixEventRuntime.1.0.240308001/Include
+-I$VULKAN_SDK/Include
+-I$VULKAN_SDK/Include/SDL2
+-I$VULKAN_SDK/Third-Party/Include

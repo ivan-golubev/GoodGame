@@ -2,3 +2,5 @@
 bin
 intermediate
 lib/assimp-out
+.claude/settings.local.json
+__pycache__/
