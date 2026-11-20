@@ -18,11 +18,6 @@ struct ModelViewProjection
 	float4 viewPosition;
 };
 
-struct ViewProjection
-{
-	matrix<float, 4, 4> VP;
-};
-
 struct SkyboxCamera
 {
 	matrix<float, 4, 4> invProjection;   // inverse of the camera projection
