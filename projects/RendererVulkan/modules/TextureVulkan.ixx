@@ -24,7 +24,16 @@ export namespace gg
 
 	private:
 		std::expected<void, Error> CreateTextureImage();
-		std::expected<void, Error> CreateImage(uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
+		std::expected<void, Error> CreateImage(
+			uint32_t width,
+			uint32_t height,
+			VkFormat,
+			VkImageTiling,
+			VkImageUsageFlags,
+			VkMemoryPropertyFlags,
+			VkImage&,
+			VkDeviceMemory&
+		);
 		std::expected<void, Error> CreateTextureImageView();
 
 		std::expected<void, Error> TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
@@ -35,5 +44,11 @@ export namespace gg
 		VkDeviceMemory textureImageMemory{};
 	};
 
-	std::expected<VkImageView, Error> CreateImageView(VkDevice, VkImage, VkFormat, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D, VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT);
+	std::expected<VkImageView, Error> CreateImageView(
+		VkDevice,
+		VkImage,
+		VkFormat,
+		VkImageViewType    viewType = VK_IMAGE_VIEW_TYPE_2D,
+		VkImageAspectFlags aspect   = VK_IMAGE_ASPECT_COLOR_BIT
+	);
 }

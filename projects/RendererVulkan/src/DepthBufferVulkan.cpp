@@ -32,7 +32,10 @@ namespace gg
 			if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
 				return candidate;
 		}
-		return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "No supported Vulkan depth buffer format found." });
+		return std::unexpected(Error{
+			.code    = ErrorCode::VulkanRendererInitializationFailed,
+			.message = "No supported Vulkan depth buffer format found.",
+		});
 	}
 
 	std::expected<void, Error> DepthBufferVulkan::Create(VkExtent2D extent)
@@ -55,7 +58,10 @@ namespace gg
 			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		};
 		if (VK_SUCCESS != vkCreateImage(device, &imageInfo, nullptr, &image))
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan depth image." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = "Failed to create Vulkan depth image.",
+			});
 
 		VkMemoryRequirements memRequirements{};
 		vkGetImageMemoryRequirements(device, image, &memRequirements);
@@ -68,9 +74,15 @@ namespace gg
 			.memoryTypeIndex = *memoryTypeResult,
 		};
 		if (VK_SUCCESS != vkAllocateMemory(device, &allocInfo, nullptr, &memory))
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan depth image memory." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = "Failed to allocate Vulkan depth image memory.",
+			});
 		if (VK_SUCCESS != vkBindImageMemory(device, image, memory, 0))
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to bind Vulkan depth image memory." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = "Failed to bind Vulkan depth image memory.",
+			});
 
 		/* No layout transition needed: the render pass takes it from UNDEFINED and clears it every frame. */
 		auto viewResult{ CreateImageView(device, image, format, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT) };
@@ -109,6 +121,9 @@ namespace gg
 			for (uint32_t i{ 0 }; i < memProperties.memoryTypeCount; ++i)
 				if ((typeFilter & (1u << i)) && (memProperties.memoryTypes[i].propertyFlags & wanted) == wanted)
 					return i;
-		return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "No suitable memory type for the Vulkan depth buffer." });
+		return std::unexpected(Error{
+			.code    = ErrorCode::VulkanResourceCreationFailed,
+			.message = "No suitable memory type for the Vulkan depth buffer.",
+		});
 	}
 } // namespace gg

@@ -55,8 +55,14 @@ namespace gg
 		void                                                 OnWindowResized(uint32_t width, uint32_t height) override;
 		std::expected<void, Error>                           Render(nanoseconds deltaTime) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
-		std::expected<void, Error>                           LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) override;
-		std::expected<void, Error>                           LoadSkybox(std::string const& name, std::string const& shaderName) override;
+
+		std::expected<void, Error> LoadModel(
+			std::string const& modelRelativePath,
+			std::string const& shaderName,
+			glm::vec3&         position
+		) override;
+
+		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
 
 		std::expected<ComPtr<ID3D12PipelineState>, Error> CreateGraphicsPipeline(
 			D3D12_SHADER_BYTECODE const& vertexShader,

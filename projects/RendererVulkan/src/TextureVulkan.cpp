@@ -107,13 +107,23 @@ namespace gg
 		if (!imageResult)
 			return std::unexpected(imageResult.error());
 
-		auto transitionToTransferResult{ TransitionImageLayout(textureImage, textureFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) };
+		auto transitionToTransferResult{ TransitionImageLayout(
+			textureImage,
+			textureFormat,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		) };
 		if (!transitionToTransferResult)
 			return std::unexpected(transitionToTransferResult.error());
 		auto copyResult{ CopyBufferToImage(staging.buffer, textureImage, width, height) };
 		if (!copyResult)
 			return std::unexpected(copyResult.error());
-		auto transitionToShaderResult{ TransitionImageLayout(textureImage, textureFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) };
+		auto transitionToShaderResult{ TransitionImageLayout(
+			textureImage,
+			textureFormat,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		) };
 		if (!transitionToShaderResult)
 			return std::unexpected(transitionToShaderResult.error());
 		return {};
@@ -168,10 +178,16 @@ namespace gg
 
 		VkResult const allocationResult{ vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) };
 		if (allocationResult != VK_SUCCESS)
+		{
+			auto const message = std::format(
+				"Failed to allocate memory for Vulkan texture image (VkResult {})",
+				static_cast<int>(allocationResult)
+			);
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
-				.message = std::format("Failed to allocate memory for Vulkan texture image (VkResult {})", static_cast<int>(allocationResult)),
+				.message = message,
 			});
+		}
 
 		VkResult const bindResult{ vkBindImageMemory(device, image, imageMemory, 0) };
 		if (bindResult != VK_SUCCESS)
@@ -182,7 +198,12 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> TextureVulkan::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+	std::expected<void, Error> TextureVulkan::TransitionImageLayout(
+		VkImage       image,
+		VkFormat      format,
+		VkImageLayout oldLayout,
+		VkImageLayout newLayout
+	)
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 
@@ -208,10 +229,17 @@ namespace gg
 			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
 		else
+		{
+			auto const message = std::format(
+				"Cannot transition Vulkan texture image from layout {} to unsupported layout {}",
+				static_cast<int>(oldLayout),
+				static_cast<int>(newLayout)
+			);
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureUnsupportedLayoutTransition,
-				.message = std::format("Cannot transition Vulkan texture image from layout {} to unsupported layout {}", static_cast<int>(oldLayout), static_cast<int>(newLayout)),
+				.message = message,
 			});
+		}
 
 		auto commandBufferResult{ renderer->BeginSingleTimeCommands() };
 		if (!commandBufferResult)
@@ -227,7 +255,13 @@ namespace gg
 			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 			.image               = image,
-			.subresourceRange    = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 },
+			.subresourceRange    = {
+				.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel   = 0,
+				.levelCount     = 1,
+				.baseArrayLayer = 0,
+				.layerCount     = 1,
+			},
 		};
 
 		vkCmdPipelineBarrier(
@@ -271,7 +305,13 @@ namespace gg
 		return renderer->EndSingleTimeCommands(commandBuffer);
 	}
 
-	std::expected<VkImageView, Error> CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageViewType viewType, VkImageAspectFlags aspect)
+	std::expected<VkImageView, Error> CreateImageView(
+		VkDevice           device,
+		VkImage            image,
+		VkFormat           format,
+		VkImageViewType    viewType,
+		VkImageAspectFlags aspect
+	)
 	{
 		// A cube view must cover all 6 faces; the image must be created with VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT.
 		uint32_t const        layerCount{ viewType == VK_IMAGE_VIEW_TYPE_CUBE ? 6u : 1u };

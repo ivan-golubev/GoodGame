@@ -56,10 +56,16 @@ namespace gg
 		};
 		HRESULT const heapResult{ device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap)) };
 		if (FAILED(heapResult))
+		{
+			auto const message = std::format(
+				"Failed to create the skybox SRV descriptor heap: HRESULT 0x{:08X}",
+				static_cast<uint32_t>(heapResult)
+			);
 			return std::unexpected(Error{
 				.code    = ErrorCode::D3D12InitializationFailed,
-				.message = std::format("Failed to create the skybox SRV descriptor heap: HRESULT 0x{:08X}", static_cast<uint32_t>(heapResult)),
+				.message = message,
 			});
+		}
 		SetName(srvHeap.Get(), std::format(L"SRV_DescriptorHeap_Skybox_{}", nameW));
 
 		std::array<Texture const*, faceCount> faces{};
@@ -126,17 +132,34 @@ namespace gg
 
 		ComPtr<ID3DBlob> rootSignatureBlob;
 		ComPtr<ID3DBlob> errorBlob;
-		HRESULT const    serializeResult{ D3DX12SerializeVersionedRootSignature(&rootSignatureDescription, featureData.HighestVersion, &rootSignatureBlob, &errorBlob) };
+		HRESULT const    serializeResult{ D3DX12SerializeVersionedRootSignature(
+			&rootSignatureDescription,
+			featureData.HighestVersion,
+			&rootSignatureBlob,
+			&errorBlob
+		) };
 		if (FAILED(serializeResult))
 		{
-			std::string const details{ errorBlob ? std::string{ static_cast<char const*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize() } : std::string{} };
+			std::string const details = errorBlob
+				? std::string{ static_cast<char const*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize() }
+				: std::string{};
+			auto const        message = std::format(
+				"Failed to serialize the skybox root signature: HRESULT 0x{:08X} {}",
+				static_cast<uint32_t>(serializeResult),
+				details
+			);
 			return std::unexpected(Error{
 				.code    = ErrorCode::D3D12InitializationFailed,
-				.message = std::format("Failed to serialize the skybox root signature: HRESULT 0x{:08X} {}", static_cast<uint32_t>(serializeResult), details),
+				.message = message,
 			});
 		}
 
-		HRESULT const createResult{ device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature)) };
+		HRESULT const createResult{ device->CreateRootSignature(
+			0,
+			rootSignatureBlob->GetBufferPointer(),
+			rootSignatureBlob->GetBufferSize(),
+			IID_PPV_ARGS(&rootSignature)
+		) };
 		if (FAILED(createResult))
 			return std::unexpected(Error{
 				.code    = ErrorCode::D3D12InitializationFailed,

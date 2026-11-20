@@ -101,19 +101,38 @@ namespace gg
 		} staging{ device };
 
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		if (auto result{ renderer->CreateBuffer(staging.buffer, staging.memory, vertexBufferSizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-			return std::unexpected(result.error());
+		auto                            stagingBufferResult{ renderer->CreateBuffer(
+			staging.buffer,
+			staging.memory,
+			vertexBufferSizeBytes,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		) };
+		if (!stagingBufferResult)
+			return std::unexpected(stagingBufferResult.error());
 
 		void*          mappedData{};
 		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, vertexBufferSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to map staging buffer for vertex data (VkResult {})", static_cast<int>(mapResult)) });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = std::format("Failed to map staging buffer for vertex data (VkResult {})", static_cast<int>(mapResult)),
+			});
 		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(vertexBufferSizeBytes));
 		vkUnmapMemory(device, staging.memory);
 
-		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-		if (auto result{ renderer->CreateBuffer(vertexBuffer, vertexBufferMemory, vertexBufferSizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) }; !result)
-			return std::unexpected(result.error());
+		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+		);
+		auto vertexBufferResult{ renderer->CreateBuffer(
+			vertexBuffer,
+			vertexBufferMemory,
+			vertexBufferSizeBytes,
+			usage,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		) };
+		if (!vertexBufferResult)
+			return std::unexpected(vertexBufferResult.error());
 		if (auto result{ renderer->CopyBuffer(staging.buffer, vertexBuffer, vertexBufferSizeBytes) }; !result)
 			return std::unexpected(result.error());
 		return {};
@@ -166,7 +185,10 @@ namespace gg
 		};
 
 		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan model descriptor set layout." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = "Failed to create Vulkan model descriptor set layout.",
+			});
 		return {};
 	}
 
@@ -226,10 +248,24 @@ namespace gg
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			if (auto result{ renderer->CreateBuffer(uniformBuffersMVP[i], uniformBuffersMemoryMVP[i], sizeof(ModelViewProjection), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-				return std::unexpected(result.error());
-			if (auto result{ renderer->CreateBuffer(uniformBuffersDirLight[i], uniformBuffersMemoryDirLight[i], sizeof(DirectionalLight), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-				return std::unexpected(result.error());
+			auto mvpBufferResult{ renderer->CreateBuffer(
+				uniformBuffersMVP[i],
+				uniformBuffersMemoryMVP[i],
+				sizeof(ModelViewProjection),
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			) };
+			if (!mvpBufferResult)
+				return std::unexpected(mvpBufferResult.error());
+			auto dirLightBufferResult{ renderer->CreateBuffer(
+				uniformBuffersDirLight[i],
+				uniformBuffersMemoryDirLight[i],
+				sizeof(DirectionalLight),
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			) };
+			if (!dirLightBufferResult)
+				return std::unexpected(dirLightBufferResult.error());
 		}
 		return {};
 	}
@@ -246,7 +282,10 @@ namespace gg
 		};
 
 		if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan descriptor sets for model." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = "Failed to allocate Vulkan descriptor sets for model.",
+			});
 
 		BreakIfFalse(textures.size() > 0);
 		std::shared_ptr<TextureVulkan> texture{ std::dynamic_pointer_cast<TextureVulkan>(textures[0]) };
@@ -272,9 +311,33 @@ namespace gg
 			};
 
 			std::array<VkWriteDescriptorSet, 3> const descriptorWrites{
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &bufferInfoMVP },
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSets[i], .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &bufferInfoDirLight },
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSets[i], .dstBinding = 2, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .pImageInfo = &imageInfo },
+				VkWriteDescriptorSet{
+					.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.dstSet          = descriptorSets[i],
+					.dstBinding      = 0,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					.pBufferInfo     = &bufferInfoMVP,
+				},
+				VkWriteDescriptorSet{
+					.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.dstSet          = descriptorSets[i],
+					.dstBinding      = 1,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					.pBufferInfo     = &bufferInfoDirLight,
+				},
+				VkWriteDescriptorSet{
+					.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.dstSet          = descriptorSets[i],
+					.dstBinding      = 2,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					.pImageInfo      = &imageInfo,
+				},
 			};
 
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -307,7 +370,16 @@ namespace gg
 		UpdateUniformBuffers(frame, camera, currentTimeSec);
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.layout, 0, 1, &descriptorSets[frame], 0, nullptr);
+		vkCmdBindDescriptorSets(
+			commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			graphicsPipeline.layout,
+			0,
+			1,
+			&descriptorSets[frame],
+			0,
+			nullptr
+		);
 
 		VkBuffer const     vertexBuffers[]{ vertexBuffer };
 		VkDeviceSize const offsets[]{ 0 };

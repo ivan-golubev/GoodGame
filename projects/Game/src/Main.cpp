@@ -35,7 +35,10 @@ namespace
 
 	bool IsMouseEvent(SDL_Event const& event)
 	{
-		return event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL;
+		return event.type == SDL_MOUSEMOTION
+			|| event.type == SDL_MOUSEBUTTONDOWN
+			|| event.type == SDL_MOUSEBUTTONUP
+			|| event.type == SDL_MOUSEWHEEL;
 	}
 
 	uint32_t MainLoop(std::shared_ptr<gg::Application> app, gg::RendererType& rendererType)
@@ -132,7 +135,14 @@ namespace
 				SDL_DestroyWindow(window);
 		};
 		std::unique_ptr<SDL_Window, decltype(destroyWindow)> window{
-			SDL_CreateWindow("Rendering sample", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE),
+			SDL_CreateWindow(
+				"Rendering sample",
+				SDL_WINDOWPOS_CENTERED,
+				SDL_WINDOWPOS_CENTERED,
+				width,
+				height,
+				SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE
+			),
 			destroyWindow,
 		};
 		if (!window)

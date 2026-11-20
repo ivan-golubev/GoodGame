@@ -23,7 +23,13 @@ namespace gg
 		: shaderProgram{ s }
 	{
 		for (size_t i{}; i < textures.size(); ++i)
-			textures[i] = std::make_unique<Texture>(std::format("{}/skybox/{}/{}.{}", texturesLocation, name, skyboxFaceNames[i], texturesExtension));
+			textures[i] = std::make_unique<Texture>(std::format(
+				"{}/skybox/{}/{}.{}",
+				texturesLocation,
+				name,
+				skyboxFaceNames[i],
+				texturesExtension
+			));
 	}
 
 	std::expected<void, Error> Skybox::Initialize()
@@ -36,7 +42,10 @@ namespace gg
 		for (size_t i{ 1 }; i < textures.size(); ++i)
 		{
 			if (textures[i]->width != textures[0]->width || textures[i]->height != textures[0]->height)
-				return std::unexpected(Error{ .code = ErrorCode::TextureLoadFailed, .message = "Skybox faces must all have the same dimensions." });
+				return std::unexpected(Error{
+					.code    = ErrorCode::TextureLoadFailed,
+					.message = "Skybox faces must all have the same dimensions.",
+				});
 		}
 		if (textures[0]->width != textures[0]->height)
 			return std::unexpected(Error{ .code = ErrorCode::TextureLoadFailed, .message = "Skybox face textures must be square." });

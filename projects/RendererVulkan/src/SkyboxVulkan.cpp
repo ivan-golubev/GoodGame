@@ -94,7 +94,10 @@ namespace gg
 		};
 
 		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create Vulkan skybox descriptor set layout." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = "Failed to create Vulkan skybox descriptor set layout.",
+			});
 		return {};
 	}
 
@@ -103,8 +106,15 @@ namespace gg
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			if (auto result{ renderer->CreateBuffer(uniformBuffersCamera[i], uniformBuffersMemoryCamera[i], sizeof(SkyboxCamera), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-				return std::unexpected(result.error());
+			auto cameraBufferResult{ renderer->CreateBuffer(
+				uniformBuffersCamera[i],
+				uniformBuffersMemoryCamera[i],
+				sizeof(SkyboxCamera),
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			) };
+			if (!cameraBufferResult)
+				return std::unexpected(cameraBufferResult.error());
 		}
 		return {};
 	}
@@ -121,7 +131,10 @@ namespace gg
 		};
 
 		if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to allocate Vulkan descriptor sets for skybox." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanResourceCreationFailed,
+				.message = "Failed to allocate Vulkan descriptor sets for skybox.",
+			});
 
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
@@ -138,8 +151,24 @@ namespace gg
 			};
 
 			std::array<VkWriteDescriptorSet, 2> const descriptorWrites{
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &cameraInfo },
-				VkWriteDescriptorSet{ .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSets[i], .dstBinding = 2, .dstArrayElement = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .pImageInfo = &cubeMapInfo },
+				VkWriteDescriptorSet{
+					.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.dstSet          = descriptorSets[i],
+					.dstBinding      = 0,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					.pBufferInfo     = &cameraInfo,
+				},
+				VkWriteDescriptorSet{
+					.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.dstSet          = descriptorSets[i],
+					.dstBinding      = 2,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					.pImageInfo      = &cubeMapInfo,
+				},
 			};
 
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -216,7 +245,16 @@ namespace gg
 		UpdateCamera(frame, camera);
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.layout, 0, 1, &descriptorSets[frame], 0, nullptr);
+		vkCmdBindDescriptorSets(
+			commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			graphicsPipeline.layout,
+			0,
+			1,
+			&descriptorSets[frame],
+			0,
+			nullptr
+		);
 		/* One fullscreen triangle generated from SV_VertexID: no vertex buffer to bind. */
 		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 	}
@@ -237,13 +275,23 @@ namespace gg
 				if (memory) vkFreeMemory(device, memory, nullptr);
 			}
 		} staging{ device };
-		if (auto result{ renderer->CreateBuffer(staging.buffer, staging.memory, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
-			return std::unexpected(result.error());
+		auto stagingBufferResult{ renderer->CreateBuffer(
+			staging.buffer,
+			staging.memory,
+			imageSize,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		) };
+		if (!stagingBufferResult)
+			return std::unexpected(stagingBufferResult.error());
 
 		void*          mappedData{};
 		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, imageSize, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanTextureResourceCreationFailed, .message = std::format("Failed to map Vulkan skybox staging buffer (VkResult {}).", static_cast<int>(mapResult)) });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to map Vulkan skybox staging buffer (VkResult {}).", static_cast<int>(mapResult)),
+			});
 		for (size_t i{}; i < textures.size(); ++i)
 			std::memcpy(static_cast<uint8_t*>(mappedData) + layerSize * i, textures[i]->pixels, static_cast<size_t>(layerSize));
 		vkUnmapMemory(device, staging.memory);
@@ -264,7 +312,10 @@ namespace gg
 		};
 		VkResult const createResult{ vkCreateImage(device, &imageInfo, nullptr, &textureImage) };
 		if (createResult != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanTextureResourceCreationFailed, .message = std::format("Failed to create Vulkan cubemap image (VkResult {}).", static_cast<int>(createResult)) });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to create Vulkan cubemap image (VkResult {}).", static_cast<int>(createResult)),
+			});
 
 		VkMemoryRequirements requirements{};
 		vkGetImageMemoryRequirements(device, textureImage, &requirements);
@@ -278,10 +329,16 @@ namespace gg
 		};
 		VkResult const allocateResult{ vkAllocateMemory(device, &allocationInfo, nullptr, &textureImageMemory) };
 		if (allocateResult != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanTextureResourceCreationFailed, .message = std::format("Failed to allocate Vulkan cubemap memory (VkResult {}).", static_cast<int>(allocateResult)) });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to allocate Vulkan cubemap memory (VkResult {}).", static_cast<int>(allocateResult)),
+			});
 		VkResult const bindResult{ vkBindImageMemory(device, textureImage, textureImageMemory, 0) };
 		if (bindResult != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanTextureResourceCreationFailed, .message = std::format("Failed to bind Vulkan cubemap memory (VkResult {}).", static_cast<int>(bindResult)) });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to bind Vulkan cubemap memory (VkResult {}).", static_cast<int>(bindResult)),
+			});
 
 		if (auto result{ TransitionImageLayout(textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) }; !result)
 			return std::unexpected(result.error());
@@ -314,7 +371,13 @@ namespace gg
 			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 			.image               = image,
-			.subresourceRange    = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = static_cast<uint32_t>(textures.size()) },
+			.subresourceRange    = {
+				.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel   = 0,
+				.levelCount     = 1,
+				.baseArrayLayer = 0,
+				.layerCount     = static_cast<uint32_t>(textures.size()),
+			},
 		};
 		vkCmdPipelineBarrier(*commandResult, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		return RendererVulkan::Get()->EndSingleTimeCommands(*commandResult);
@@ -334,7 +397,14 @@ namespace gg
 				.imageExtent      = { .width = width, .height = height, .depth = 1 },
 			};
 		}
-		vkCmdCopyBufferToImage(*commandResult, buffer, textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(regions.size()), regions.data());
+		vkCmdCopyBufferToImage(
+			*commandResult,
+			buffer,
+			textureImage,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			static_cast<uint32_t>(regions.size()),
+			regions.data()
+		);
 		return RendererVulkan::Get()->EndSingleTimeCommands(*commandResult);
 	}
 
@@ -345,11 +415,20 @@ namespace gg
 			.image            = textureImage,
 			.viewType         = VK_IMAGE_VIEW_TYPE_CUBE,
 			.format           = textureFormat,
-			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = static_cast<uint32_t>(textures.size()) },
+			.subresourceRange = {
+				.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel   = 0,
+				.levelCount     = 1,
+				.baseArrayLayer = 0,
+				.layerCount     = static_cast<uint32_t>(textures.size()),
+			},
 		};
 		VkResult const result{ vkCreateImageView(device, &viewInfo, nullptr, &textureImageView) };
 		if (result != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanTextureResourceCreationFailed, .message = std::format("Failed to create Vulkan cubemap image view (VkResult {}).", static_cast<int>(result)) });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
+				.message = std::format("Failed to create Vulkan cubemap image view (VkResult {}).", static_cast<int>(result)),
+			});
 		return {};
 	}
 }

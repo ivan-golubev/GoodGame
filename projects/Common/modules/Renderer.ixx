@@ -47,11 +47,17 @@ export namespace gg
 		virtual RendererType               GetType() const                     = 0;
 		virtual std::expected<void, Error> Initialize(RendererSettings const&) = 0;
 
-		virtual void                                                 OnWindowResized(uint32_t width, uint32_t height)                                                    = 0;
-		virtual std::expected<void, Error>                           Render(nanoseconds deltaTime)                                                                       = 0;
-		virtual std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName)                                                           = 0;
-		virtual std::expected<void, Error>                           LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position) = 0;
-		virtual std::expected<void, Error>                           LoadSkybox(std::string const& name, std::string const& shaderName)                                  = 0;
+		virtual void                                                 OnWindowResized(uint32_t width, uint32_t height) = 0;
+		virtual std::expected<void, Error>                           Render(nanoseconds deltaTime)                    = 0;
+		virtual std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName)        = 0;
+
+		virtual std::expected<void, Error> LoadModel(
+			std::string const& modelRelativePath,
+			std::string const& shaderName,
+			glm::vec3&         position
+		) = 0;
+
+		virtual std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) = 0;
 	};
 
 	glm::mat4x4  CalculateMVP(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);

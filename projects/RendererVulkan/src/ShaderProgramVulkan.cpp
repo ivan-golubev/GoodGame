@@ -14,7 +14,11 @@ import RendererVulkan;
 
 namespace
 {
-	std::expected<VkShaderModule, gg::Error> CreateShaderModule(VkDevice device, std::string const& shaderBlob, std::string const& shaderPath)
+	std::expected<VkShaderModule, gg::Error> CreateShaderModule(
+		VkDevice           device,
+		std::string const& shaderBlob,
+		std::string const& shaderPath
+	)
 	{
 		VkShaderModuleCreateInfo createInfo{
 			.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -24,10 +28,17 @@ namespace
 		VkShaderModule shaderModule{};
 		VkResult const result{ vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) };
 		if (result != VK_SUCCESS)
+		{
+			auto const message = std::format(
+				"Failed to create Vulkan shader module from '{}': VkResult {}",
+				shaderPath,
+				static_cast<int>(result)
+			);
 			return std::unexpected(gg::Error{
 				.code    = gg::ErrorCode::ShaderModuleCreationFailed,
-				.message = std::format("Failed to create Vulkan shader module from '{}': VkResult {}", shaderPath, static_cast<int>(result)),
+				.message = message,
 			});
+		}
 		return shaderModule;
 	}
 
@@ -67,7 +78,10 @@ namespace gg
 	{
 	}
 
-	std::expected<void, Error> ShaderProgramVulkan::Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath)
+	std::expected<void, Error> ShaderProgramVulkan::Initialize(
+		std::string const& vertexShaderRelativePath,
+		std::string const& fragmentShaderRelativePath
+	)
 	{
 		std::string const vertexShaderPath{ std::filesystem::absolute(vertexShaderRelativePath).generic_string() };
 		std::string const fragmentShaderPath{ std::filesystem::absolute(fragmentShaderRelativePath).generic_string() };

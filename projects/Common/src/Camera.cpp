@@ -87,7 +87,13 @@ namespace gg
 	{
 
 		/* Depth maps to 0 (near) .. 1 (far), the Vulkan/D3D12 convention: GLM_FORCE_DEPTH_ZERO_TO_ONE is set in props/GLM.props. */
-		projectionMatrix = glm::perspectiveFovLH(glm::radians(fieldOfView), static_cast<float>(width), static_cast<float>(height), nearPlane, farPlane);
+		projectionMatrix = glm::perspectiveFovLH(
+			glm::radians(fieldOfView),
+			static_cast<float>(width),
+			static_cast<float>(height),
+			nearPlane,
+			farPlane
+		);
 	}
 
 	glm::mat4x4 const& Camera::GetViewMatrix() const { return viewMatrix; }

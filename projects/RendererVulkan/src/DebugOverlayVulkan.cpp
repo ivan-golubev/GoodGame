@@ -51,12 +51,18 @@ namespace gg
 			};
 
 			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
-				return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = "Failed to create the ImGui Vulkan descriptor pool." });
+				return std::unexpected(Error{
+					.code    = ErrorCode::VulkanResourceCreationFailed,
+					.message = "Failed to create the ImGui Vulkan descriptor pool.",
+				});
 		}
 
 		sdlBackendInitialized = ImGui_ImplSDL2_InitForVulkan(info.windowHandleSDL);
 		if (!sdlBackendInitialized)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to initialize the ImGui SDL Vulkan backend." });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanRendererInitializationFailed,
+				.message = "Failed to initialize the ImGui SDL Vulkan backend.",
+			});
 
 		{
 			ImGui_ImplVulkan_InitInfo initInfo{
@@ -83,7 +89,10 @@ namespace gg
 			vulkanBackendInitialized = ImGui_ImplVulkan_Init(&initInfo, info.renderPass);
 		}
 		if (!vulkanBackendInitialized || imguiVulkanInitResult != VK_SUCCESS)
-			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = std::format("Failed to initialize ImGui Vulkan backend (VkResult {}).", static_cast<int>(imguiVulkanInitResult)) });
+			return std::unexpected(Error{
+				.code    = ErrorCode::VulkanRendererInitializationFailed,
+				.message = std::format("Failed to initialize ImGui Vulkan backend (VkResult {}).", static_cast<int>(imguiVulkanInitResult)),
+			});
 
 		{ /* upload fonts for ImGUI */
 			auto commandBufferResult{ info.renderer->BeginSingleTimeCommands() };

@@ -17,7 +17,11 @@ namespace gg
 {
 	std::shared_ptr<Application> Application::instance{ nullptr };
 
-	std::shared_ptr<Application> Application::Init(std::unique_ptr<Renderer> renderer, std::shared_ptr<TimeManager> timeManager, std::shared_ptr<InputManager> inputManager)
+	std::shared_ptr<Application> Application::Init(
+		std::unique_ptr<Renderer>     renderer,
+		std::shared_ptr<TimeManager>  timeManager,
+		std::shared_ptr<InputManager> inputManager
+	)
 	{
 		BreakIfFalse(!Application::IsInitialized());
 		Application* app = new Application(std::move(renderer), timeManager, inputManager);
@@ -42,7 +46,11 @@ namespace gg
 		return instance;
 	}
 
-	Application::Application(std::unique_ptr<Renderer> renderer, std::shared_ptr<TimeManager> timeManager, std::shared_ptr<InputManager> inputManager)
+	Application::Application(
+		std::unique_ptr<Renderer>     renderer,
+		std::shared_ptr<TimeManager>  timeManager,
+		std::shared_ptr<InputManager> inputManager
+	)
 		: renderer{ std::move(renderer) }
 		, inputManager{ inputManager }
 		, timeManager{ timeManager }

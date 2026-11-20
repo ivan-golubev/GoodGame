@@ -72,8 +72,13 @@ namespace gg
 		windowHandle    = GetWindowHandle(rs.windowHandle);
 		timeManager     = rs.timeManager;
 		camera          = std::make_shared<Camera>(rs.inputManager);
-		scissorRect     = { D3D12_DEFAULT_SCISSOR_STARTX, D3D12_DEFAULT_SCISSOR_STARTY, D3D12_VIEWPORT_BOUNDS_MAX, D3D12_VIEWPORT_BOUNDS_MAX };
-		viewport        = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f };
+		scissorRect     = {
+			D3D12_DEFAULT_SCISSOR_STARTX,
+			D3D12_DEFAULT_SCISSOR_STARTY,
+			D3D12_VIEWPORT_BOUNDS_MAX,
+			D3D12_VIEWPORT_BOUNDS_MAX,
+		};
+		viewport = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f };
 		uint8_t dxgiFactoryFlags{ 0 };
 
 		if constexpr (IsDebug())
@@ -161,8 +166,15 @@ namespace gg
 				.NumDescriptors = maxFramesInFlight,
 				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
-			HRESULT const d3d12CreateRenderTargetDescriptorHeapResult{ device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&renderTargetViewHeap)) };
-			D3D12_CHECK_HRESULT(d3d12CreateRenderTargetDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create render target descriptor heap");
+			HRESULT const d3d12CreateRenderTargetDescriptorHeapResult{ device->CreateDescriptorHeap(
+				&rtvHeapDesc,
+				IID_PPV_ARGS(&renderTargetViewHeap)
+			) };
+			D3D12_CHECK_HRESULT(
+				d3d12CreateRenderTargetDescriptorHeapResult,
+				ErrorCode::D3D12InitializationFailed,
+				"create render target descriptor heap"
+			);
 			SetName(renderTargetViewHeap.Get(), L"RTV_DescriptorHeap");
 			rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		}
@@ -172,10 +184,18 @@ namespace gg
 			return std::unexpected(result.error());
 
 		/* Create a command allocator and a command list */
-		HRESULT const d3d12CreateCommandAllocatorResult{ device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)) };
+		HRESULT const d3d12CreateCommandAllocatorResult{ device->CreateCommandAllocator(
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			IID_PPV_ARGS(&commandAllocator)
+		) };
 		D3D12_CHECK_HRESULT(d3d12CreateCommandAllocatorResult, ErrorCode::D3D12InitializationFailed, "create command allocator");
 		SetName(commandAllocator.Get(), L"DefaultAllocator");
-		HRESULT const d3d12CreateCommandListResult{ device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)) };
+		HRESULT const d3d12CreateCommandListResult{ device->CreateCommandList1(
+			0,
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			D3D12_COMMAND_LIST_FLAG_NONE,
+			IID_PPV_ARGS(&commandList)
+		) };
 		D3D12_CHECK_HRESULT(d3d12CreateCommandListResult, ErrorCode::D3D12InitializationFailed, "create command list");
 		SetName(commandList.Get(), L"DefaultCommandList");
 		auto name = GetName(commandList.Get());
@@ -201,8 +221,15 @@ namespace gg
 				.NumDescriptors = 1,
 				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
-			HRESULT const d3d12CreateDepthStencilDescriptorHeapResult{ device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&depthStencilHeap)) };
-			D3D12_CHECK_HRESULT(d3d12CreateDepthStencilDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create depth stencil descriptor heap");
+			HRESULT const d3d12CreateDepthStencilDescriptorHeapResult{ device->CreateDescriptorHeap(
+				&dsvHeapDesc,
+				IID_PPV_ARGS(&depthStencilHeap)
+			) };
+			D3D12_CHECK_HRESULT(
+				d3d12CreateDepthStencilDescriptorHeapResult,
+				ErrorCode::D3D12InitializationFailed,
+				"create depth stencil descriptor heap"
+			);
 
 			dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		}
@@ -298,9 +325,33 @@ namespace gg
 
 		/* Specify the input layout */
 		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
-			{ .SemanticName = "POSITION", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32A32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
-			{ .SemanticName = "NORMAL", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32A32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
-			{ .SemanticName = "TEXCOORD", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 }
+			{
+				.SemanticName         = "POSITION",
+				.SemanticIndex        = 0,
+				.Format               = DXGI_FORMAT_R32G32B32A32_FLOAT,
+				.InputSlot            = 0,
+				.AlignedByteOffset    = D3D12_APPEND_ALIGNED_ELEMENT,
+				.InputSlotClass       = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+				.InstanceDataStepRate = 0,
+			},
+			{
+				.SemanticName         = "NORMAL",
+				.SemanticIndex        = 0,
+				.Format               = DXGI_FORMAT_R32G32B32A32_FLOAT,
+				.InputSlot            = 0,
+				.AlignedByteOffset    = D3D12_APPEND_ALIGNED_ELEMENT,
+				.InputSlotClass       = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+				.InstanceDataStepRate = 0,
+			},
+			{
+				.SemanticName         = "TEXCOORD",
+				.SemanticIndex        = 0,
+				.Format               = DXGI_FORMAT_R32G32_FLOAT,
+				.InputSlot            = 0,
+				.AlignedByteOffset    = D3D12_APPEND_ALIGNED_ELEMENT,
+				.InputSlotClass       = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+				.InstanceDataStepRate = 0,
+			}
 		};
 
 		std::string const  psoName{ std::format("PSO_{}", model->name) };
@@ -359,16 +410,33 @@ namespace gg
 			.SizeInBytes                   = sizeof(PipelineStateStream),
 			.pPipelineStateSubobjectStream = &pipelineStateStream,
 		};
-		HRESULT const d3d12CreateGraphicsPipelineStateResult{ device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&*result)) };
-		D3D12_CHECK_HRESULT(d3d12CreateGraphicsPipelineStateResult, ErrorCode::D3D12PipelineCreationFailed, "create graphics pipeline state");
+		HRESULT const d3d12CreateGraphicsPipelineStateResult{ device->CreatePipelineState(
+			&pipelineStateStreamDesc,
+			IID_PPV_ARGS(&*result)
+		) };
+		D3D12_CHECK_HRESULT(
+			d3d12CreateGraphicsPipelineStateResult,
+			ErrorCode::D3D12PipelineCreationFailed,
+			"create graphics pipeline state"
+		);
 		SetName(result->Get(), name);
 		return result;
 	}
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
-		std::string const                   vertexShaderRelativePath{ std::format("{}/{}_VS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
-		std::string const                   fragmentShaderRelativePath{ std::format("{}/{}_PS.{}", shadersLocation, shaderName, shaderExtensionD3D12) };
+		std::string const                   vertexShaderRelativePath{ std::format(
+			"{}/{}_VS.{}",
+			shadersLocation,
+			shaderName,
+			shaderExtensionD3D12
+		) };
+		std::string const                   fragmentShaderRelativePath{ std::format(
+			"{}/{}_PS.{}",
+			shadersLocation,
+			shaderName,
+			shaderExtensionD3D12
+		) };
 		std::unique_ptr<ShaderProgramD3D12> shader{ new ShaderProgramD3D12() };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
@@ -396,7 +464,13 @@ namespace gg
 			return std::unexpected(result.error());
 
 		std::array<Texture const*, 1> const images{ texture.get() };
-		auto                                uploadResult{ UploadTexture(images, D3D12_SRV_DIMENSION_TEXTURE2D, srvHeap->GetCPUDescriptorHandleForHeapStart(), textureName, textureRelativePath) };
+		auto                                uploadResult{ UploadTexture(
+			images,
+			D3D12_SRV_DIMENSION_TEXTURE2D,
+			srvHeap->GetCPUDescriptorHandleForHeapStart(),
+			textureName,
+			textureRelativePath
+		) };
 		if (!uploadResult)
 			return std::unexpected(std::move(uploadResult.error()));
 		texture->texture = std::move(*uploadResult);
@@ -416,7 +490,12 @@ namespace gg
 		{
 			return Error{
 				.code    = ErrorCode::D3D12TextureUploadFailed,
-				.message = std::format("Failed to {} for texture '{}': HRESULT 0x{:08X}", operation, sourceName, static_cast<uint32_t>(result)),
+				.message = std::format(
+					"Failed to {} for texture '{}': HRESULT 0x{:08X}",
+					operation,
+					sourceName,
+					static_cast<uint32_t>(result)
+				),
 			};
 		};
 
@@ -495,7 +574,15 @@ namespace gg
 				.SlicePitch = textureSlicePitch,
 			});
 
-		UINT64 const uploadedBytes{ UpdateSubresources(commandList.Get(), texture->Get(), uploadResource.Get(), 0, 0, subresourceCount, textureData.data()) };
+		UINT64 const uploadedBytes{ UpdateSubresources(
+			commandList.Get(),
+			texture->Get(),
+			uploadResource.Get(),
+			0,
+			0,
+			subresourceCount,
+			textureData.data()
+		) };
 		if (uploadedBytes == 0)
 		{
 			HRESULT const closeResult{ commandList->Close() };
@@ -507,7 +594,11 @@ namespace gg
 			});
 		}
 
-		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(texture->Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) };
+		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(
+			texture->Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		) };
 		commandList->ResourceBarrier(1, &barrier);
 		{
 			/* Describe and create a SRV for the texture. */
@@ -549,7 +640,11 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererD3D12::LoadModel(std::string const& modelRelativePath, std::string const& shaderName, glm::vec3& position)
+	std::expected<void, Error> RendererD3D12::LoadModel(
+		std::string const& modelRelativePath,
+		std::string const& shaderName,
+		glm::vec3&         position
+	)
 	{
 		auto shaderResult{ LoadShader(shaderName) };
 		if (!shaderResult)
@@ -570,8 +665,15 @@ namespace gg
 				.NumDescriptors = 1,
 				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 			};
-			HRESULT const d3d12CreateModelTextureDescriptorHeapResult{ device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&model->srvHeap)) };
-			D3D12_CHECK_HRESULT(d3d12CreateModelTextureDescriptorHeapResult, ErrorCode::D3D12InitializationFailed, "create model texture descriptor heap");
+			HRESULT const d3d12CreateModelTextureDescriptorHeapResult{ device->CreateDescriptorHeap(
+				&srvHeapDesc,
+				IID_PPV_ARGS(&model->srvHeap)
+			) };
+			D3D12_CHECK_HRESULT(
+				d3d12CreateModelTextureDescriptorHeapResult,
+				ErrorCode::D3D12InitializationFailed,
+				"create model texture descriptor heap"
+			);
 
 			std::wstring const resourceName{ model->name.begin(), model->name.end() };
 			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_{}", resourceName));
@@ -590,16 +692,36 @@ namespace gg
 		Mesh const& mesh{ model->meshes[0] };
 
 		HRESULT const d3d12ResetCommandAllocatorForVertexUploadResult{ commandAllocator->Reset() };
-		D3D12_CHECK_HRESULT(d3d12ResetCommandAllocatorForVertexUploadResult, ErrorCode::D3D12CommandRecordingFailed, "reset command allocator for vertex upload");
+		D3D12_CHECK_HRESULT(
+			d3d12ResetCommandAllocatorForVertexUploadResult,
+			ErrorCode::D3D12CommandRecordingFailed,
+			"reset command allocator for vertex upload"
+		);
 		HRESULT const d3d12ResetCommandListForVertexUploadResult{ commandList->Reset(commandAllocator.Get(), model->pipelineState.Get()) };
-		D3D12_CHECK_HRESULT(d3d12ResetCommandListForVertexUploadResult, ErrorCode::D3D12CommandRecordingFailed, "reset command list for vertex upload");
+		D3D12_CHECK_HRESULT(
+			d3d12ResetCommandListForVertexUploadResult,
+			ErrorCode::D3D12CommandRecordingFailed,
+			"reset command list for vertex upload"
+		);
 
 		uint64_t const vertexBufferSizeBytes = mesh.VerticesSizeBytes();
 
-		if (auto result{ CreateBuffer(commandList, model->vertexBuffer, model->vertexBufferUpload, mesh.vertices.data(), vertexBufferSizeBytes, L"VertexBuffer") }; !result)
-			return std::unexpected(result.error());
+		auto vertexBufferResult{ CreateBuffer(
+			commandList,
+			model->vertexBuffer,
+			model->vertexBufferUpload,
+			mesh.vertices.data(),
+			vertexBufferSizeBytes,
+			L"VertexBuffer"
+		) };
+		if (!vertexBufferResult)
+			return std::unexpected(vertexBufferResult.error());
 		HRESULT const d3d12CloseVertexUploadCommandListResult{ commandList->Close() };
-		D3D12_CHECK_HRESULT(d3d12CloseVertexUploadCommandListResult, ErrorCode::D3D12CommandRecordingFailed, "close vertex upload command list");
+		D3D12_CHECK_HRESULT(
+			d3d12CloseVertexUploadCommandListResult,
+			ErrorCode::D3D12CommandRecordingFailed,
+			"close vertex upload command list"
+		);
 
 		/* Upload Vertex and Index buffers */
 		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
@@ -631,7 +753,13 @@ namespace gg
 		for (uint32_t i{ 0 }; i < maxFramesInFlight; ++i)
 			renderTargets[i].Reset();
 
-		HRESULT const d3d12ResizeSwapChainBuffersResult{ swapChain->ResizeBuffers(maxFramesInFlight, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0) };
+		HRESULT const d3d12ResizeSwapChainBuffersResult{ swapChain->ResizeBuffers(
+			maxFramesInFlight,
+			width,
+			height,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			0
+		) };
 		D3D12_CHECK_HRESULT(d3d12ResizeSwapChainBuffersResult, ErrorCode::D3D12ResizeFailed, "resize swap chain buffers");
 
 		for (uint8_t n{ 0 }; n < maxFramesInFlight; n++)
@@ -840,8 +968,12 @@ namespace gg
 			) };
 			commandList->ResourceBarrier(1, &barrier);
 
-			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize };
-			float const                   clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
+			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{
+				renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(),
+				frameIndex,
+				rtvDescriptorSize,
+			};
+			float const clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
 			commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 

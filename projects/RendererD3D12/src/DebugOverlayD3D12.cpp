@@ -33,10 +33,16 @@ namespace gg
 			};
 			HRESULT const result{ device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap)) };
 			if (FAILED(result))
+			{
+				auto const message = std::format(
+					"Failed to create the D3D12 ImGui descriptor heap (HRESULT 0x{:08X})",
+					static_cast<uint32_t>(result)
+				);
 				return std::unexpected(Error{
 					.code    = ErrorCode::D3D12DebugOverlayInitializationFailed,
-					.message = std::format("Failed to create the D3D12 ImGui descriptor heap (HRESULT 0x{:08X})", static_cast<uint32_t>(result)),
+					.message = message,
 				});
+			}
 		}
 
 		sdlBackendInitialized  = ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
