@@ -12,6 +12,16 @@ Rules (ID: what it checks):
   error-return     Keep 'return std::unexpected(Error{' together on one line.
   abbreviations    Type and module names don't run two abbreviations together (DebugUID3D12),
                    using the list in tools/naming_abbreviations.txt.
+  float-literal    Whole-number float literals are written '1.f', not '1.0f'.
+  brace-init       Declarations use brace initialization: 'T name{ value };', not 'T name = value;'
+                   (also for-loop counters). Lambdas, default arguments and '= default/delete'
+                   are exempt.
+  debug-name       D3D12 debug names passed to SetName(...) as a literal or std::format(L"...")
+                   follow Kind_Purpose_Owner: PascalCase parts (or a {} placeholder) joined by
+                   '_', starting with the kind, as in PSO_Skybox_{}.
+  error-code-prefix
+                   An ErrorCode used only by one backend (projects/RendererVulkan or
+                   projects/RendererD3D12) starts with that backend's name (Vulkan..., D3D12...).
   if-one-line      'if (...) statement;' is written on two lines. Off by default; enable with
                    --enable if-one-line.
 
@@ -38,9 +48,26 @@ ALL_RULES = [
 	"close-paren",
 	"error-return",
 	"abbreviations",
+	"float-literal",
+	"brace-init",
+	"debug-name",
+	"error-code-prefix",
 	"if-one-line",
 ]
 DEFAULT_OFF = {"if-one-line"}
+
+FLOAT_LITERAL = re.compile(r"\b\d+\.0+f\b")
+# 'T name = value' at the start of a statement: a type (possibly qualified, templated, const, &/*)
+# followed by a name. A single token before '=' is an assignment, not a declaration.
+EQUALS_DECLARATION = re.compile(
+	r"^\s*(?:(?:static|constexpr|inline|thread_local)\s+)*[A-Za-z_][\w:]*(?:<[^;=()]*>)?(?:\s+const)?\s*[&*]*\s+(?:const\s+)?[&*]*"
+	r"[A-Za-z_]\w*\s*=\s*(?P<rest>.*)$"
+)
+FOR_EQUALS_INIT = re.compile(r"\bfor\s*\(\s*[A-Za-z_][\w:<>]*\s+[A-Za-z_]\w*\s*=[^=]")
+NOT_A_DECLARATION = re.compile(r"^\s*(return|else|case|delete|using|typedef|goto|throw|co_return)\b")
+DEBUG_NAME_PART = re.compile(r"[A-Z][A-Za-z0-9]*|\{\}")
+BACKENDS = {"RendererVulkan": "Vulkan", "RendererD3D12": "D3D12"}
+ERROR_CODE_USE = re.compile(r"\bErrorCode::([A-Za-z_]\w*)")
 
 # Operators that should start a continuation line rather than end one.
 # '*' and '&' are left out: at the end of a line they are usually pointer/reference declarators.
@@ -128,6 +155,64 @@ def check_abbreviation_runs(name: str, abbreviations: set[str]) -> str | None:
 	return None
 
 
+def debug_name_literal(raw: str, code: str, set_name_column: int) -> tuple[int, str] | None:
+	"""Return (column, text) of the name literal passed as SetName's second argument, if it is one."""
+	depth = 0
+	for i in range(set_name_column, len(code)):
+		if code[i] in "([{":
+			depth += 1
+		elif code[i] in ")]}":
+			depth -= 1
+			if depth == 0:
+				return None
+		elif code[i] == "," and depth == 1:
+			argument = raw[i + 1 :].lstrip()
+			column = len(raw) - len(argument)
+			match = re.match(r'(?:std::format\(\s*)?L"([^"]*)"', argument)
+			return (column, match.group(1)) if match else None
+	return None
+
+
+def is_valid_debug_name(name: str) -> bool:
+	parts = name.split("_")
+	return parts[0] != "{}" and all(DEBUG_NAME_PART.fullmatch(part) for part in parts)
+
+
+def backend_of(path: Path) -> str | None:
+	relative = path.relative_to(code_checks.ROOT).parts
+	return BACKENDS.get(relative[1]) if len(relative) > 1 else None
+
+
+def check_error_code_prefixes(files: list[Path]) -> list[Finding]:
+	"""Error codes used by only one backend must carry that backend's prefix. Needs every project file
+	to know where a code is used, but only reports uses in the given files."""
+	users: dict[str, set[str | None]] = {}
+	for path in code_checks.project_sources():
+		for name in ERROR_CODE_USE.findall("\n".join(strip_comments_and_strings(path.read_text(encoding="utf-8", errors="replace")))):
+			users.setdefault(name, set()).add(backend_of(path))
+
+	findings = []
+	for path in files:
+		code_lines = strip_comments_and_strings(path.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n"))
+		for index, code in enumerate(code_lines):
+			for match in ERROR_CODE_USE.finditer(code):
+				name = match.group(1)
+				backends = users.get(name, set())
+				if len(backends) == 1:
+					backend = next(iter(backends))
+					if backend and not name.startswith(backend):
+						findings.append(
+							Finding(
+								path,
+								index + 1,
+								match.start(1) + 1,
+								"error-code-prefix",
+								f"ErrorCode::{name} is only used by the {backend} renderer; name it {backend}{name}",
+							)
+						)
+	return findings
+
+
 def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, abbreviations: set[str]) -> list[Finding]:
 	text = path.read_text(encoding="utf-8", errors="replace")
 	raw_lines = text.replace("\r\n", "\n").split("\n")
@@ -181,6 +266,34 @@ def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, ab
 			if run:
 				report(index, match.start(), "abbreviations", f"'{name}' runs abbreviations together ('{run}'); reword the name")
 
+		for match in FLOAT_LITERAL.finditer(code):
+			literal = match.group(0)
+			report(index, match.start(), "float-literal", f"write '{literal}' as '{literal.split('.')[0]}.f'")
+
+		# Declarations with '=': only at statement level (not inside parentheses, which would be default
+		# arguments) and not for lambdas or special member functions.
+		declaration = EQUALS_DECLARATION.match(code)
+		if (
+			declaration
+			and not open_parens
+			and not NOT_A_DECLARATION.match(code)
+			and "operator" not in code
+			and not declaration.group("rest").lstrip().startswith(("[", "default", "delete", "0;", "="))
+		):
+			report(index, code.index("="), "brace-init", "use brace initialization: 'T name{ value };'")
+		elif FOR_EQUALS_INIT.search(code):
+			report(index, code.index("="), "brace-init", "use brace initialization for the loop counter: 'for (T i{ 0 }; ...'")
+
+		for match in re.finditer(r"\bSetName\(", code):
+			literal = debug_name_literal(raw, code, match.end() - 1)
+			if literal and not is_valid_debug_name(literal[1]):
+				report(
+					index,
+					literal[0],
+					"debug-name",
+					f"debug name '{literal[1]}' should be Kind_Purpose_Owner: PascalCase parts joined by '_', kind first",
+				)
+
 		# Parentheses: track where each '(' was opened and how its line ended.
 		for column, char in enumerate(code):
 			if char == "(":
@@ -204,14 +317,19 @@ def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, ab
 	return findings
 
 
-def check_files(files: list[Path], max_columns: int = 140, tab_width: int = 4) -> list[Finding]:
-	"""Check files with the default rules. Used by code_checks.py and the Claude Code hook."""
-	rules = set(ALL_RULES) - DEFAULT_OFF
+def run_checks(files: list[Path], rules: set[str], max_columns: int, tab_width: int) -> list[Finding]:
 	abbreviations = set(naming_abbreviations.read_abbreviations())
 	findings = []
 	for path in files:
 		findings += check_file(path, rules, max_columns, tab_width, abbreviations)
-	return findings
+	if "error-code-prefix" in rules:
+		findings += check_error_code_prefixes(files)
+	return sorted(findings, key=lambda f: (str(f.path), f.line, f.column))
+
+
+def check_files(files: list[Path], max_columns: int = 140, tab_width: int = 4) -> list[Finding]:
+	"""Check files with the default rules. Used by code_checks.py and the Claude Code hook."""
+	return run_checks(files, set(ALL_RULES) - DEFAULT_OFF, max_columns, tab_width)
 
 
 def main() -> int:
@@ -231,10 +349,7 @@ def main() -> int:
 	else:
 		files = code_checks.project_sources()
 
-	abbreviations = set(naming_abbreviations.read_abbreviations())
-	findings = []
-	for path in files:
-		findings += check_file(path, rules, args.max_columns, args.tab_width, abbreviations)
+	findings = run_checks(files, rules, args.max_columns, args.tab_width)
 
 	if args.summary:
 		for rule in ALL_RULES:
