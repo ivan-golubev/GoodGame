@@ -293,7 +293,7 @@ namespace gg
 				.message = std::format("Failed to map Vulkan skybox staging buffer (VkResult {}).", static_cast<int>(mapResult)),
 			});
 		for (size_t i{}; i < textures.size(); ++i)
-			std::memcpy(static_cast<uint8_t*>(mappedData) + layerSize * i, textures[i]->pixels, static_cast<size_t>(layerSize));
+			std::memcpy(static_cast<uint8_t*>(mappedData) + layerSize * i, textures[i]->pixels.get(), static_cast<size_t>(layerSize));
 		vkUnmapMemory(device, staging.memory);
 
 		VkImageCreateInfo imageInfo{

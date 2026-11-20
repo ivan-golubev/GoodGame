@@ -13,15 +13,19 @@ namespace gg
 	{
 	}
 
+	void Texture::PixelsDeleter::operator()(unsigned char* data) const noexcept
+	{
+		stbi_image_free(data);
+	}
+
 	std::expected<void, Error> Texture::Initialize()
 	{
-		stbi_image_free(pixels);
-		pixels   = nullptr;
+		pixels.reset();
 		width    = 0;
 		height   = 0;
 		channels = 0;
 		int imageWidth{}, imageHeight{}, imageChannels{};
-		pixels = stbi_load(textureAbsolutePath.c_str(), &imageWidth, &imageHeight, &imageChannels, STBI_rgb_alpha);
+		pixels.reset(stbi_load(textureAbsolutePath.c_str(), &imageWidth, &imageHeight, &imageChannels, STBI_rgb_alpha));
 		if (!pixels)
 		{
 			auto const message{ std::format(
@@ -49,10 +53,7 @@ namespace gg
 		return L"Texture_" + baseName;
 	}
 
-	Texture::~Texture() noexcept
-	{
-		stbi_image_free(pixels);
-	}
+	Texture::~Texture() noexcept = default;
 
 	uint64_t Texture::SizeBytes() const
 	{

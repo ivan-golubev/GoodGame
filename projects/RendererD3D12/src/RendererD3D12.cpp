@@ -570,7 +570,7 @@ namespace gg
 		textureData.reserve(subresourceCount);
 		for (Texture const* image : images)
 			textureData.push_back(D3D12_SUBRESOURCE_DATA{
-				.pData      = image->pixels,
+				.pData      = image->pixels.get(),
 				.RowPitch   = textureRowPitch,
 				.SlicePitch = textureSlicePitch,
 			});

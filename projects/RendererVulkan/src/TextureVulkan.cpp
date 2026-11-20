@@ -91,7 +91,7 @@ namespace gg
 				.message = std::format("Failed to map staging buffer memory for texture upload (VkResult {})", static_cast<int>(mapResult)),
 			});
 		}
-		memcpy(mappedData, pixels, static_cast<size_t>(imageSizeBytes));
+		memcpy(mappedData, pixels.get(), static_cast<size_t>(imageSizeBytes));
 		vkUnmapMemory(device, staging.memory);
 
 		auto imageResult{ CreateImage(

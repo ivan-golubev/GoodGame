@@ -1,5 +1,6 @@
 module;
 #include <expected>
+#include <memory>
 #include <string>
 export module Texture;
 
@@ -21,10 +22,17 @@ namespace gg
 
 		std::wstring GetName();
 
-		std::string    textureAbsolutePath;
-		uint32_t       width{};
-		uint32_t       height{};
-		uint32_t       channels{}; /* channel count of the source file; pixels in memory are always bytesPerPixel wide */
-		unsigned char* pixels{};
+		/* Frees pixel data allocated by stb_image */
+		struct PixelsDeleter
+		{
+			void operator()(unsigned char* data) const noexcept;
+		};
+
+		std::string textureAbsolutePath;
+		uint32_t    width{};
+		uint32_t    height{};
+		uint32_t    channels{}; /* channel count of the source file; pixels in memory are always bytesPerPixel wide */
+
+		std::unique_ptr<unsigned char, PixelsDeleter> pixels;
 	};
 } // namespace gg
