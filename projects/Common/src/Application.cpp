@@ -24,8 +24,7 @@ namespace gg
 	)
 	{
 		BreakIfFalse(!Application::IsInitialized());
-		Application* app{ new Application(std::move(renderer), timeManager, inputManager) };
-		instance = std::shared_ptr<Application>(app);
+		instance = std::make_shared<Application>(PassKey{}, std::move(renderer), timeManager, inputManager);
 		return instance;
 	}
 
@@ -47,6 +46,7 @@ namespace gg
 	}
 
 	Application::Application(
+		PassKey,
 		std::unique_ptr<Renderer>     renderer,
 		std::shared_ptr<TimeManager>  timeManager,
 		std::shared_ptr<InputManager> inputManager
