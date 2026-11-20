@@ -1,8 +1,8 @@
 module;
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <directx/d3d12.h>
 #include <directx/d3dx12.h>
 #include <dxgi1_6.h>
@@ -11,9 +11,9 @@ module;
 #include <glm/vec4.hpp>
 #include <memory>
 #include <numbers>
-#include <span>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+#include <span>
 #include <vector>
 #include <windows.h>
 #include <WinPixEventRuntime/pix3.h>

@@ -1,7 +1,7 @@
 module;
 #include <cstdint>
-#include <string>
 #include <glm/fwd.hpp>
+#include <string>
 export module SettingsRenderer;
 
 import Lighting;

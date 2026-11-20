@@ -5,8 +5,8 @@ module;
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
-#include <string>
 #include <SDL2/SDL_video.h>
+#include <string>
 export module Renderer;
 
 import Model;

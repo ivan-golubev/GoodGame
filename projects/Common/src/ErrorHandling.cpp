@@ -1,7 +1,6 @@
 module;
 #include <cstdint>
 #include <format>
-#include <format>
 #include <string>
 #include <windows.h>
 module ErrorHandling;

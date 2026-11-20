@@ -1,6 +1,6 @@
 module;
-#include <string>
 #include <expected>
+#include <string>
 export module Texture;
 
 export import ErrorHandling;

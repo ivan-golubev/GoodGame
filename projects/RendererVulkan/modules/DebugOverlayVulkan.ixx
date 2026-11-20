@@ -1,6 +1,6 @@
 module;
-#include <memory>
 #include <expected>
+#include <memory>
 #include <SDL2/SDL_video.h>
 #include <vulkan/vulkan_core.h>
 export module DebugOverlayVulkan;

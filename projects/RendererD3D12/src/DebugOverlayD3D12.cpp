@@ -1,6 +1,6 @@
 module;
-#include <directx/d3d12.h>
 #include <cstdint>
+#include <directx/d3d12.h>
 #include <format>
 #include <imgui/backends/imgui_impl_dx12.h>
 #include <imgui/backends/imgui_impl_sdl2.h>

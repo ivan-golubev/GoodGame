@@ -16,7 +16,10 @@ AllowShortCaseLabelsOnASingleLine: false
 NamespaceIndentation: All
 AccessModifierOffset: -4
 FixNamespaceComments: false
-SortIncludes: Never
+SortIncludes:
+  Enabled: true
+  IgnoreCase: true
+IncludeBlocks: Preserve
 PointerAlignment: Left
 QualifierAlignment: Right
 Cpp11BracedListStyle: false

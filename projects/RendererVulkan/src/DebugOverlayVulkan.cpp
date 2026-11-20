@@ -1,8 +1,8 @@
 module;
+#include <format>
 #include <imgui/backends/imgui_impl_sdl2.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
 #include <memory>
-#include <format>
 #include <vulkan/vulkan_core.h>
 module DebugOverlayVulkan;
 

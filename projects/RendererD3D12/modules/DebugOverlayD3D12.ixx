@@ -1,8 +1,8 @@
 module;
 #include <directx/d3d12.h>
 #include <expected>
-#include <SDL2/SDL_video.h>
 #include <memory>
+#include <SDL2/SDL_video.h>
 #include <wrl.h>
 export module DebugOverlayD3D12;
 
