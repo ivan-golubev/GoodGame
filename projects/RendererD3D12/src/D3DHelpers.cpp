@@ -14,14 +14,8 @@ namespace gg
 {
 
 	/* Taken from Microsoft's DirectX-Graphics-Samples  */
-	void GetHardwareAdapter(
-		_In_ IDXGIFactory1*                       factory,
-		_Outptr_result_maybenull_ IDXGIAdapter1** outAdapter,
-		bool                                      requestHighPerformanceAdapter
-	)
+	ComPtr<IDXGIAdapter1> GetHardwareAdapter(IDXGIFactory1* factory, bool requestHighPerformanceAdapter)
 	{
-		*outAdapter = nullptr;
-
 		ComPtr<IDXGIAdapter1> adapter;
 		ComPtr<IDXGIFactory6> factory6;
 
@@ -77,7 +71,7 @@ namespace gg
 				}
 			}
 		}
-		*outAdapter = adapter.Detach();
+		return adapter;
 	}
 
 	void SetName(ID3D12Object* object, std::wstring const& name)

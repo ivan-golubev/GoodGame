@@ -97,8 +97,7 @@ namespace gg
 		D3D12_CHECK_HRESULT(factoryResult, ErrorCode::D3D12InitializationFailed, "create DXGI factory");
 
 		{ /* Select a hardware adapter and create a D3D12 device */
-			ComPtr<IDXGIAdapter1> hardwareAdapter;
-			GetHardwareAdapter(factory.Get(), &hardwareAdapter, true);
+			ComPtr<IDXGIAdapter1> const hardwareAdapter{ GetHardwareAdapter(factory.Get(), true) };
 
 			HRESULT const deviceResult{ D3D12CreateDevice(
 				hardwareAdapter.Get(),
