@@ -617,8 +617,8 @@ namespace gg
 		result = commandList->Close();
 		if (FAILED(result))
 			return std::unexpected(makeUploadError("close the texture upload command list", result));
-		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
-		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+		ID3D12CommandList* commandLists[]{ commandList.Get() };
+		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
 		/* Wait for the copy to finish before the upload buffer is released. */
 		if (auto const waitResult{ WaitForPreviousFrame() }; !waitResult)
@@ -724,8 +724,8 @@ namespace gg
 		);
 
 		/* Upload Vertex and Index buffers */
-		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
-		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+		ID3D12CommandList* commandLists[]{ commandList.Get() };
+		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
 		if (auto result{ WaitForPreviousFrame() }; !result)
 			return std::unexpected(result.error());
@@ -915,8 +915,8 @@ namespace gg
 			return std::unexpected(result.error());
 
 		/* Execute the command list. */
-		ID3D12CommandList* ppCommandLists[]{ commandList.Get() };
-		commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+		ID3D12CommandList* commandLists[]{ commandList.Get() };
+		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
 		/* Present the frame and inefficiently wait for the frame to render. */
 		HRESULT const d3d12PresentFrameResult{ swapChain->Present(1, 0) };
@@ -983,8 +983,8 @@ namespace gg
 				commandList->SetPipelineState(model->pipelineState.Get());
 				commandList->SetGraphicsRootSignature(rootSignature.Get());
 
-				ID3D12DescriptorHeap* ppHeaps[]{ model->srvHeap.Get() };
-				commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+				ID3D12DescriptorHeap* heaps[]{ model->srvHeap.Get() };
+				commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
 				ModelViewProjection mvpMatrices{
 					CalculateModelViewProjection(model->translation, timeManager->GetCurrentTimeSec(), *camera)

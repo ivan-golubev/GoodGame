@@ -76,8 +76,8 @@ namespace gg
 	{
 		PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"ImGUI");
 
-		ID3D12DescriptorHeap* ppHeaps[]{ imguiSrvDescHeap.Get() };
-		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		ID3D12DescriptorHeap* heaps[]{ imguiSrvDescHeap.Get() };
+		commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
