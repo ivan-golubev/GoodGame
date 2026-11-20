@@ -123,7 +123,7 @@
   <ItemGroup>
     <ClCompile Include="modules\Application.ixx" />
     <ClCompile Include="modules\Camera.ixx" />
-    <ClCompile Include="modules\DebugUI.ixx" />
+    <ClCompile Include="modules\DebugOverlay.ixx" />
     <ClCompile Include="modules\ErrorHandling.ixx" />
     <ClCompile Include="modules\GlobalSettings.ixx" />
     <ClCompile Include="modules\Input.ixx" />
@@ -139,7 +139,7 @@
     <ClCompile Include="modules\Vertex.ixx" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\Camera.cpp" />
-    <ClCompile Include="src\DebugUI.cpp" />
+    <ClCompile Include="src\DebugOverlay.cpp" />
     <ClCompile Include="src\ErrorHandling.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Logging.cpp" />

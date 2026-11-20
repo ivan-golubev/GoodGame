@@ -14,7 +14,7 @@ module;
 export module RendererVulkan;
 
 import Camera;
-import DebugUI_Vulkan;
+import DebugOverlayVulkan;
 import DepthBufferVulkan;
 import GlobalSettings;
 import GraphicsPipelineVulkan;
@@ -155,7 +155,7 @@ namespace gg
 		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager> timeManager;
 		std::shared_ptr<Camera> camera;
-		std::unique_ptr<DebugUI_Vulkan> debugUI;
+		std::unique_ptr<DebugOverlayVulkan> debugOverlay;
 		std::unique_ptr<SkyboxVulkan> skybox;
 
 		VkDevice device{};

@@ -23,7 +23,7 @@ module RendererVulkan;
 
 import Application;
 import Camera;
-import DebugUI_Vulkan;
+import DebugOverlayVulkan;
 import ErrorHandling;
 import GlobalSettings;
 import Input;
@@ -140,7 +140,7 @@ namespace gg
 			QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
 			if (!indices.graphicsFamily)
 				return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "No graphics queue family was found for the Vulkan debug UI." });
-			DebugUI_VulkanCreateInfo debugUI_info{
+			DebugOverlayVulkanCreateInfo debugOverlayInfo{
 				.device = device,
 				.instance = instance,
 				.graphicsQueueFamily = *indices.graphicsFamily,
@@ -151,8 +151,8 @@ namespace gg
 				.renderer = this,
 			};
 
-			debugUI = std::make_unique<DebugUI_Vulkan>();
-			if (auto result{ debugUI->Initialize(debugUI_info) }; !result)
+			debugOverlay = std::make_unique<DebugOverlayVulkan>();
+			if (auto result{ debugOverlay->Initialize(debugOverlayInfo) }; !result)
 				return std::unexpected(result.error());
 		}
 		return {};
@@ -948,7 +948,7 @@ namespace gg
 		models.clear();
 		skybox.reset();
 
-		debugUI.reset();
+		debugOverlay.reset();
 		if (device && descriptorPool) vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
 		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -1118,7 +1118,7 @@ namespace gg
 		if (skybox)
 			skybox->Draw(commandBuffer, currentFrame, *camera);
 
-		debugUI->Render(commandBuffer);
+		debugOverlay->Render(commandBuffer);
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)

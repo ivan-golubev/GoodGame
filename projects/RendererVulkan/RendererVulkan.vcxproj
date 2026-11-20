@@ -120,7 +120,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="modules\DebugUI_Vulkan.ixx" />
+    <ClCompile Include="modules\DebugOverlayVulkan.ixx" />
     <ClCompile Include="modules\DepthBufferVulkan.ixx" />
     <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
     <ClCompile Include="modules\GraphicsPipelineVulkan.ixx" />
@@ -130,7 +130,7 @@
     <ClCompile Include="modules\RendererVulkan.ixx" />
     <ClCompile Include="modules\TextureVulkan.ixx" />
     <ClCompile Include="modules\VertexVulkan.ixx" />
-    <ClCompile Include="src\DebugUI_Vulkan.cpp" />
+    <ClCompile Include="src\DebugOverlayVulkan.cpp" />
     <ClCompile Include="src\DepthBufferVulkan.cpp" />
     <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
     <ClCompile Include="src\ModelVulkan.cpp" />

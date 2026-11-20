@@ -2,7 +2,7 @@ module;
 #include <glm/ext/vector_float3.hpp>
 #include <imgui.h>
 #include <memory>
-module DebugUI;
+module DebugOverlay;
 
 import SettingsRenderer;
 import Camera;
@@ -32,7 +32,7 @@ namespace
 
 namespace gg
 {
-	void RenderDebugUI()
+	void RenderDebugOverlay()
 	{
 		ImGui::NewFrame();
 		ImGui::Begin("Renderer settings");

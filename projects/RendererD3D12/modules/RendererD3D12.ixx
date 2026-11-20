@@ -15,7 +15,7 @@ module;
 export module RendererD3D12;
 
 import Camera;
-import DebugUI_D3D12;
+import DebugOverlayD3D12;
 import ErrorHandling;
 import GlobalSettings;
 import Input;
@@ -132,7 +132,7 @@ namespace gg
 		std::unique_ptr<SkyboxD3D12> skybox;
 		std::shared_ptr<TimeManager> timeManager;
 		std::shared_ptr<Camera> camera;
-		std::unique_ptr<DebugUI_D3D12> debugUI;
+		std::unique_ptr<DebugOverlayD3D12> debugOverlay;
 
 		/* Synchronization objects */
 		ComPtr<ID3D12Fence> fence;

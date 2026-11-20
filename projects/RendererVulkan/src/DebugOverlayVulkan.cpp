@@ -4,10 +4,10 @@ module;
 #include <memory>
 #include <format>
 #include <vulkan/vulkan_core.h>
-module DebugUI_Vulkan;
+module DebugOverlayVulkan;
 
 import Camera;
-import DebugUI;
+import DebugOverlay;
 import ErrorHandling;
 import RendererVulkan;
 import SettingsRenderer;
@@ -19,7 +19,7 @@ namespace gg
 		VkResult imguiVulkanInitResult{ VK_SUCCESS };
 	}
 
-	std::expected<void, Error> DebugUI_Vulkan::Initialize(DebugUI_VulkanCreateInfo const& info)
+	std::expected<void, Error> DebugOverlayVulkan::Initialize(DebugOverlayVulkanCreateInfo const& info)
 	{
 		device = info.device;
 		IMGUI_CHECKVERSION();
@@ -98,7 +98,7 @@ namespace gg
 		return {};
 	}
 
-	DebugUI_Vulkan::~DebugUI_Vulkan() noexcept
+	DebugOverlayVulkan::~DebugOverlayVulkan() noexcept
 	{
 		if (vulkanBackendInitialized)
 			ImGui_ImplVulkan_Shutdown();
@@ -110,12 +110,12 @@ namespace gg
 			vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 	}
 
-	void DebugUI_Vulkan::Render(VkCommandBuffer commandBuffer)
+	void DebugOverlayVulkan::Render(VkCommandBuffer commandBuffer)
 	{
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 
-		RenderDebugUI();
+		RenderDebugOverlay();
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 	}

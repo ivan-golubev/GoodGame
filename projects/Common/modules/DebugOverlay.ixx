@@ -1,8 +1,8 @@
 module;
 #include <memory>
-export module DebugUI;
+export module DebugOverlay;
 
 export namespace gg
 {
-	void RenderDebugUI();
+	void RenderDebugOverlay();
 } // namespace gg

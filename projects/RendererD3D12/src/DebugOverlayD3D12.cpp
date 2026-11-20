@@ -6,10 +6,10 @@ module;
 #include <imgui/backends/imgui_impl_sdl2.h>
 #include <WinPixEventRuntime/pix3.h>
 #include <wrl.h>
-module DebugUI_D3D12;
+module DebugOverlayD3D12;
 
 import Camera;
-import DebugUI;
+import DebugOverlay;
 import ErrorHandling;
 import SettingsD3D12;
 import SettingsRenderer;
@@ -18,7 +18,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace gg
 {
-	std::expected<void, Error> DebugUI_D3D12::Initialize(ComPtr<ID3D12Device4> device, SDL_Window* windowHandleSDL)
+	std::expected<void, Error> DebugOverlayD3D12::Initialize(ComPtr<ID3D12Device4> device, SDL_Window* windowHandleSDL)
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -34,7 +34,7 @@ namespace gg
 			HRESULT const result{ device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&imguiSrvDescHeap)) };
 			if (FAILED(result))
 				return std::unexpected(Error{
-					.code = ErrorCode::D3D12DebugUIInitializationFailed,
+					.code = ErrorCode::D3D12DebugOverlayInitializationFailed,
 					.message = std::format("Failed to create the D3D12 ImGui descriptor heap (HRESULT 0x{:08X})", static_cast<uint32_t>(result)),
 				});
 		}
@@ -46,13 +46,13 @@ namespace gg
 			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 		if (!sdlBackendInitialized || !dx12BackendInitialized)
 			return std::unexpected(Error{
-				.code = ErrorCode::D3D12DebugUIInitializationFailed,
+				.code = ErrorCode::D3D12DebugOverlayInitializationFailed,
 				.message = "Failed to initialize an ImGui D3D12 or SDL backend",
 			});
 		return {};
 	}
 
-	DebugUI_D3D12::~DebugUI_D3D12() noexcept
+	DebugOverlayD3D12::~DebugOverlayD3D12() noexcept
 	{
 		if (dx12BackendInitialized)
 			ImGui_ImplDX12_Shutdown();
@@ -62,7 +62,7 @@ namespace gg
 			ImGui::DestroyContext();
 	}
 
-	void DebugUI_D3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList)
+	void DebugOverlayD3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList)
 	{
 		PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"ImGUI");
 
@@ -72,7 +72,7 @@ namespace gg
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 
-		RenderDebugUI();
+		RenderDebugOverlay();
 
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 	}

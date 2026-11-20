@@ -30,7 +30,7 @@ export namespace gg
 		D3D12ResizeFailed,
 		D3D12PresentationFailed,
 		D3D12SynchronizationFailed,
-		D3D12DebugUIInitializationFailed,
+		D3D12DebugOverlayInitializationFailed,
 		VulkanRendererInitializationFailed,
 		VulkanRendererFrameFailed,
 		VulkanResourceCreationFailed,

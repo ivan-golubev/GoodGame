@@ -23,7 +23,7 @@ module RendererD3D12;
 import Application;
 import Camera;
 import D3DHelpers;
-import DebugUI_D3D12;
+import DebugOverlayD3D12;
 import ErrorHandling;
 import GlobalSettings;
 import Input;
@@ -275,8 +275,8 @@ namespace gg
 			D3D12_CHECK_HRESULT(d3d12CreateRootSignatureResult, ErrorCode::D3D12InitializationFailed, "create root signature");
 			SetName(rootSignature.Get(), L"RootSignature");
 		}
-		debugUI = std::make_unique<DebugUI_D3D12>();
-		if (auto result{ debugUI->Initialize(device, windowHandleSDL) }; !result)
+		debugOverlay = std::make_unique<DebugOverlayD3D12>();
+		if (auto result{ debugOverlay->Initialize(device, windowHandleSDL) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -749,7 +749,7 @@ namespace gg
 		models.clear();
 		skybox.reset();
 
-		debugUI.reset();
+		debugOverlay.reset();
 
 	}
 
@@ -867,7 +867,7 @@ namespace gg
 			if (skybox)
 				skybox->Draw(commandList.Get(), *camera);
 
-			debugUI->Render(commandList);
+			debugOverlay->Render(commandList);
 
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(

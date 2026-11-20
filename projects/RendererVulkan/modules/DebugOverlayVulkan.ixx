@@ -3,7 +3,7 @@ module;
 #include <expected>
 #include <SDL2/SDL_video.h>
 #include <vulkan/vulkan_core.h>
-export module DebugUI_Vulkan;
+export module DebugOverlayVulkan;
 
 import ErrorHandling;
 
@@ -11,7 +11,7 @@ export namespace gg
 {
 	class RendererVulkan;
 
-	struct DebugUI_VulkanCreateInfo
+	struct DebugOverlayVulkanCreateInfo
 	{
 		VkDevice device;
 		VkInstance instance;
@@ -23,11 +23,11 @@ export namespace gg
 		RendererVulkan* renderer;
 	};
 
-	class DebugUI_Vulkan
+	class DebugOverlayVulkan
 	{
 	public:
-		~DebugUI_Vulkan() noexcept;
-		std::expected<void, Error> Initialize(DebugUI_VulkanCreateInfo const&);
+		~DebugOverlayVulkan() noexcept;
+		std::expected<void, Error> Initialize(DebugOverlayVulkanCreateInfo const&);
 		void Render(VkCommandBuffer);
 
 	private:

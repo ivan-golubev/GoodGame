@@ -85,10 +85,10 @@
     <ClCompile Include="modules\SettingsRenderer.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="modules\DebugUI.ixx">
+    <ClCompile Include="modules\DebugOverlay.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="src\DebugUI.cpp">
+    <ClCompile Include="src\DebugOverlay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
