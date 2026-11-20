@@ -1,6 +1,10 @@
 Checks: >
   -*,
-  readability-identifier-naming
+  readability-identifier-naming,
+  google-readability-casting,
+  modernize-use-nullptr,
+  readability-simplify-boolean-expr,
+  performance-avoid-endl
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*[/\\]projects[/\\].*'
 CheckOptions:

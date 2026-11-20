@@ -14,7 +14,7 @@ namespace
 {
 	void ImguiFloat3(char const* label, void* data)
 	{
-		ImGui::InputScalarN(label, ImGuiDataType_Float, data, 3, 0, 0, "%.3f", ImGuiInputTextFlags_CharsScientific);
+		ImGui::InputScalarN(label, ImGuiDataType_Float, data, 3, nullptr, nullptr, "%.3f", ImGuiInputTextFlags_CharsScientific);
 	}
 
 	void ImguiColorEdit3(char const* label, float input[3], glm::vec3* outData)
