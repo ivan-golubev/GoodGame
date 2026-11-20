@@ -36,7 +36,7 @@ namespace gg
 		void UpdateUniformBuffers(uint32_t frame, Camera const&, double currentTimeSec);
 
 		VkDevice device;
-		VkBuffer VB{};
+		VkBuffer vertexBuffer{};
 		VkDeviceMemory vertexBufferMemory{};
 
 		std::array<VkBuffer, maxFramesInFlight> uniformBuffersMVP{};

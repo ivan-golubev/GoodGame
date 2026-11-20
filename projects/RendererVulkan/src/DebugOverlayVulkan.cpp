@@ -28,7 +28,7 @@ namespace gg
 		ImGui::StyleColorsDark();
 
 		{ /* create a descriptor pool for ImGUI data */
-			VkDescriptorPoolSize pool_sizes[] =
+			VkDescriptorPoolSize poolSizes[] =
 			{
 				{ .type = VK_DESCRIPTOR_TYPE_SAMPLER, .descriptorCount = 1000 },
 				{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 1000 },
@@ -46,9 +46,9 @@ namespace gg
 			VkDescriptorPoolCreateInfo poolInfo{
 				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 				.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-				.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes),
-				.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes),
-				.pPoolSizes = pool_sizes,
+				.maxSets = 1000 * IM_ARRAYSIZE(poolSizes),
+				.poolSizeCount = (uint32_t)IM_ARRAYSIZE(poolSizes),
+				.pPoolSizes = poolSizes,
 			};
 
 			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
@@ -60,7 +60,7 @@ namespace gg
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Failed to initialize the ImGui SDL Vulkan backend." });
 
 		{
-			ImGui_ImplVulkan_InitInfo init_info{
+			ImGui_ImplVulkan_InitInfo initInfo{
 				.Instance = info.instance,
 				.PhysicalDevice = info.physicalDevice,
 				.Device = device,
@@ -81,7 +81,7 @@ namespace gg
 			};
 
 			imguiVulkanInitResult = VK_SUCCESS;
-			vulkanBackendInitialized = ImGui_ImplVulkan_Init(&init_info, info.renderPass);
+			vulkanBackendInitialized = ImGui_ImplVulkan_Init(&initInfo, info.renderPass);
 		}
 		if (!vulkanBackendInitialized || imguiVulkanInitResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = std::format("Failed to initialize ImGui Vulkan backend (VkResult {}).", static_cast<int>(imguiVulkanInitResult)) });

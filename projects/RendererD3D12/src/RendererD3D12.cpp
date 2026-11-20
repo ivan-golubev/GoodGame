@@ -341,12 +341,12 @@ namespace gg
 		rasterizerDesc.CullMode = cullMode;
 
 		PipelineStateStream pipelineStateStream{
-			.pRootSignature = pipelineRootSignature,
-			.InputLayout = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(inputLayout),
-			.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-			.BlendState = blendDesc,
-			.RasterizerState = rasterizerDesc,
-			.DepthStencilState = depthStencil,
+			.rootSignature = pipelineRootSignature,
+			.inputLayout = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(inputLayout),
+			.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+			.blendState = blendDesc,
+			.rasterizerState = rasterizerDesc,
+			.depthStencilState = depthStencil,
 			.VS = vertexShader,
 			.PS = pixelShader,
 			.DSVFormat = DXGI_FORMAT_D32_FLOAT,
@@ -397,7 +397,7 @@ namespace gg
 		auto uploadResult{ UploadTexture(images, D3D12_SRV_DIMENSION_TEXTURE2D, srvHeap->GetCPUDescriptorHandleForHeapStart(), textureName, textureRelativePath) };
 		if (!uploadResult)
 			return std::unexpected(std::move(uploadResult.error()));
-		texture->texture_GPU_Resource = std::move(*uploadResult);
+		texture->texture = std::move(*uploadResult);
 
 		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
@@ -426,7 +426,7 @@ namespace gg
 			BreakIfFalse(image->width == width && image->height == height);
 		uint32_t const subresourceCount{ static_cast<uint32_t>(images.size()) };
 
-		std::expected<ComPtr<ID3D12Resource>, Error> gpuResource{ std::in_place };
+		std::expected<ComPtr<ID3D12Resource>, Error> texture{ std::in_place };
 		HRESULT result{};
 		// Describe and create a Texture2D (array) with one slice per image.
 		D3D12_RESOURCE_DESC textureDesc{
@@ -449,12 +449,12 @@ namespace gg
 			&textureDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			nullptr,
-			IID_PPV_ARGS(&*gpuResource)
+			IID_PPV_ARGS(&*texture)
 		);
 		if (FAILED(result))
 			return std::unexpected(makeUploadError("create the GPU texture resource", result));
-		SetName(gpuResource->Get(), resourceName);
-		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(gpuResource->Get(), 0, subresourceCount);
+		SetName(texture->Get(), resourceName);
+		uint64_t const uploadBufferSize = GetRequiredIntermediateSize(texture->Get(), 0, subresourceCount);
 
 		/* Intermediate upload buffer; only needed until the copy has executed. */
 		ComPtr<ID3D12Resource> uploadResource;
@@ -491,7 +491,7 @@ namespace gg
 				.SlicePitch = textureSlicePitch,
 			});
 
-		UINT64 const uploadedBytes{ UpdateSubresources(commandList.Get(), gpuResource->Get(), uploadResource.Get(), 0, 0, subresourceCount, textureData.data()) };
+		UINT64 const uploadedBytes{ UpdateSubresources(commandList.Get(), texture->Get(), uploadResource.Get(), 0, 0, subresourceCount, textureData.data()) };
 		if (uploadedBytes == 0)
 		{
 			HRESULT const closeResult{ commandList->Close() };
@@ -503,7 +503,7 @@ namespace gg
 			});
 		}
 
-		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(gpuResource->Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) };
+		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(texture->Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE) };
 		commandList->ResourceBarrier(1, &barrier);
 		{
 			/* Describe and create a SRV for the texture. */
@@ -516,7 +516,7 @@ namespace gg
 				srvDesc.TextureCube = { .MostDetailedMip = 0, .MipLevels = 1, .ResourceMinLODClamp = 0.0f };
 			else
 				srvDesc.Texture2D = { .MostDetailedMip = 0, .MipLevels = 1, .PlaneSlice = 0, .ResourceMinLODClamp = 0.0f };
-			device->CreateShaderResourceView(gpuResource->Get(), &srvDesc, srvHandle);
+			device->CreateShaderResourceView(texture->Get(), &srvDesc, srvHandle);
 		}
 
 		result = commandList->Close();
@@ -529,7 +529,7 @@ namespace gg
 		if (auto const waitResult{ WaitForPreviousFrame() }; !waitResult)
 			return std::unexpected(waitResult.error());
 
-		return gpuResource;
+		return texture;
 	}
 
 	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const& name, std::string const& shaderName)
@@ -590,9 +590,9 @@ namespace gg
 		HRESULT const d3d12ResetCommandListForVertexUploadResult{ commandList->Reset(commandAllocator.Get(), model->pipelineState.Get()) };
 		D3D12_CHECK_HRESULT(d3d12ResetCommandListForVertexUploadResult, ErrorCode::D3D12CommandRecordingFailed, "reset command list for vertex upload");
 
-		uint64_t const VB_sizeBytes = mesh.VerticesSizeBytes();
+		uint64_t const vertexBufferSizeBytes = mesh.VerticesSizeBytes();
 
-		if (auto result{ CreateBuffer(commandList, model->VB_GPU_Resource, model->VB_CPU_Resource, mesh.vertices.data(), VB_sizeBytes, L"VertexBuffer") }; !result)
+		if (auto result{ CreateBuffer(commandList, model->vertexBuffer, model->vertexBufferUpload, mesh.vertices.data(), vertexBufferSizeBytes, L"VertexBuffer") }; !result)
 			return std::unexpected(result.error());
 		HRESULT const d3d12CloseVertexUploadCommandListResult{ commandList->Close() };
 		D3D12_CHECK_HRESULT(d3d12CloseVertexUploadCommandListResult, ErrorCode::D3D12CommandRecordingFailed, "close vertex upload command list");
@@ -605,8 +605,8 @@ namespace gg
 			return std::unexpected(result.error());
 
 		/* Init the Vertex buffer view */
-		model->vertexBufferView.BufferLocation = model->VB_GPU_Resource->GetGPUVirtualAddress();
-		model->vertexBufferView.SizeInBytes = static_cast<uint32_t>(VB_sizeBytes);
+		model->vertexBufferView.BufferLocation = model->vertexBuffer->GetGPUVirtualAddress();
+		model->vertexBufferView.SizeInBytes = static_cast<uint32_t>(vertexBufferSizeBytes);
 		model->vertexBufferView.StrideInBytes = sizeof(Vertex);
 		return {};
 	}
@@ -851,7 +851,7 @@ namespace gg
 
 				ModelViewProjection mvpMatrices{
 					.MVP = CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					.ViewPosition = camera->GetPositionVec4(),
+					.viewPosition = camera->GetPositionVec4(),
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjection) / sizeof(float), &mvpMatrices, 0);
 				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);

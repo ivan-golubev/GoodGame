@@ -42,7 +42,7 @@ namespace gg
 	private:
 		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
 
-		static std::shared_ptr<Application> INSTANCE;
+		static std::shared_ptr<Application> instance;
 
 		bool isPaused{ false };
 

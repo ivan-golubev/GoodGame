@@ -15,31 +15,31 @@ import ErrorHandling;
 
 namespace gg
 {
-	std::shared_ptr<Application> Application::INSTANCE{ nullptr };
+	std::shared_ptr<Application> Application::instance{ nullptr };
 
 	std::shared_ptr<Application> Application::Init(std::unique_ptr<Renderer> renderer, std::shared_ptr<TimeManager> timeManager, std::shared_ptr<InputManager> inputManager)
 	{
 		BreakIfFalse(!Application::IsInitialized());
 		Application* app = new Application(std::move(renderer), timeManager, inputManager);
-		INSTANCE = std::shared_ptr<Application>(app);
-		return INSTANCE;
+		instance = std::shared_ptr<Application>(app);
+		return instance;
 	}
 
 	void Application::Destroy()
 	{
 		BreakIfFalse(Application::IsInitialized());
-		INSTANCE.reset();
+		instance.reset();
 	}
 
 	bool Application::IsInitialized()
 	{
-		return INSTANCE.get() != nullptr;
+		return instance.get() != nullptr;
 	}
 
 	std::shared_ptr<Application> Application::Get()
 	{
 		BreakIfFalse(Application::IsInitialized());
-		return INSTANCE;
+		return instance;
 	}
 
 	Application::Application(std::unique_ptr<Renderer> renderer, std::shared_ptr<TimeManager> timeManager, std::shared_ptr<InputManager> inputManager)

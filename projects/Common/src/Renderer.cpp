@@ -27,10 +27,10 @@ namespace gg
 	{
 		return SkyboxCamera{
 			/* screen position -> view-space point, used to rebuild the view ray per pixel */
-			.InvProjection = glm::inverse(camera.GetProjectionMatrix()),
+			.invProjection = glm::inverse(camera.GetProjectionMatrix()),
 			/* view-space ray -> world space; rotation only, so the sky ignores the camera position.
 			   The inverse of a pure rotation is its transpose. */
-			.InvViewRotation = glm::mat4x4{ glm::transpose(glm::mat3x3{ camera.GetViewMatrix() }) },
+			.invViewRotation = glm::mat4x4{ glm::transpose(glm::mat3x3{ camera.GetViewMatrix() }) },
 		};
 	}
 } // namespace gg

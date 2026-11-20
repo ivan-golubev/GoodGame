@@ -18,8 +18,8 @@ namespace gg
 		ModelD3D12(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, glm::vec3& position);
 
 	private:
-		ComPtr<ID3D12Resource> VB_GPU_Resource;
-		ComPtr<ID3D12Resource> VB_CPU_Resource;
+		ComPtr<ID3D12Resource> vertexBuffer;
+		ComPtr<ID3D12Resource> vertexBufferUpload;
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 
 		ComPtr<ID3D12DescriptorHeap> srvHeap;

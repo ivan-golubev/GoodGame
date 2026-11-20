@@ -40,8 +40,8 @@ namespace gg
 		if (descriptorSetLayout)
 			vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-		if (VB)
-			vkDestroyBuffer(device, VB, nullptr);
+		if (vertexBuffer)
+			vkDestroyBuffer(device, vertexBuffer, nullptr);
 		if (vertexBufferMemory)
 			vkFreeMemory(device, vertexBufferMemory, nullptr);
 
@@ -85,7 +85,7 @@ namespace gg
 		BreakIfFalse(meshes.size() < 2);
 		Mesh const& mesh{ meshes[0] };
 
-		uint64_t const VB_sizeBytes{ mesh.VerticesSizeBytes() };
+		uint64_t const vertexBufferSizeBytes{ mesh.VerticesSizeBytes() };
 
 		struct StagingResources
 		{
@@ -103,20 +103,20 @@ namespace gg
 		} staging{ device };
 
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		if (auto result{ renderer->CreateBuffer(staging.buffer, staging.memory, VB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
+		if (auto result{ renderer->CreateBuffer(staging.buffer, staging.memory, vertexBufferSizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 			return std::unexpected(result.error());
 
 		void* mappedData{};
-		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, VB_sizeBytes, 0, &mappedData) };
+		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, vertexBufferSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to map staging buffer for vertex data (VkResult {})", static_cast<int>(mapResult)) });
-		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(VB_sizeBytes));
+		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(vertexBufferSizeBytes));
 		vkUnmapMemory(device, staging.memory);
 
 		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-		if (auto result{ renderer->CreateBuffer(VB, vertexBufferMemory, VB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) }; !result)
+		if (auto result{ renderer->CreateBuffer(vertexBuffer, vertexBufferMemory, vertexBufferSizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) }; !result)
 			return std::unexpected(result.error());
-		if (auto result{ renderer->CopyBuffer(staging.buffer, VB, VB_sizeBytes) }; !result)
+		if (auto result{ renderer->CopyBuffer(staging.buffer, vertexBuffer, vertexBufferSizeBytes) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -288,7 +288,7 @@ namespace gg
 		{  /* MVP matrix */
 			ModelViewProjection const mvpMatrices{
 				.MVP = CalculateMVP(translation, currentTimeSec, camera),
-				.ViewPosition = camera.GetPositionVec4(),
+				.viewPosition = camera.GetPositionVec4(),
 			};
 			void* data;
 			vkMapMemory(device, uniformBuffersMemoryMVP[frame], 0, sizeof(ModelViewProjection), 0, &data);
@@ -310,7 +310,7 @@ namespace gg
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.layout, 0, 1, &descriptorSets[frame], 0, nullptr);
 
-		VkBuffer const vertexBuffers[]{ VB };
+		VkBuffer const vertexBuffers[]{ vertexBuffer };
 		VkDeviceSize const offsets[]{ 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 

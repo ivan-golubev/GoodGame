@@ -95,11 +95,11 @@ namespace gg
 		windowHandleSDL = rs.windowHandle;
 		timeManager = rs.timeManager;
 		camera = std::make_shared<Camera>(rs.inputManager);
-		uint32_t extension_count;
-		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extension_count, nullptr))
+		uint32_t extensionCount;
+		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extensionCount, nullptr))
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Could not get the number of required instance extensions from SDL." });
-		std::vector<char const*> extensions(extension_count);
-		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extension_count, extensions.data()))
+		std::vector<char const*> extensions(extensionCount);
+		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extensionCount, extensions.data()))
 			return std::unexpected(Error{ .code = ErrorCode::VulkanRendererInitializationFailed, .message = "Could not get the names of required instance extensions from SDL." });
 
 		std::vector<char const*> layers;
@@ -759,22 +759,22 @@ namespace gg
 			}
 		} resources{ device };
 
-		uint64_t const IB_sizeBytes{ mesh.IndicesSizeBytes() };
+		uint64_t const indexBufferSizeBytes{ mesh.IndicesSizeBytes() };
 
-		if (auto result{ CreateBuffer(resources.stagingBuffer, resources.stagingMemory, IB_sizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
+		if (auto result{ CreateBuffer(resources.stagingBuffer, resources.stagingMemory, indexBufferSizeBytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) }; !result)
 			return std::unexpected(result.error());
 
 		void* mappedData{};
-		VkResult const mapResult{ vkMapMemory(device, resources.stagingMemory, 0, IB_sizeBytes, 0, &mappedData) };
+		VkResult const mapResult{ vkMapMemory(device, resources.stagingMemory, 0, indexBufferSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{ .code = ErrorCode::VulkanResourceCreationFailed, .message = std::format("Failed to map staging buffer for index data (VkResult {})", static_cast<int>(mapResult)) });
-		memcpy(mappedData, mesh.indices.data(), static_cast<size_t>(IB_sizeBytes));
+		memcpy(mappedData, mesh.indices.data(), static_cast<size_t>(indexBufferSizeBytes));
 		vkUnmapMemory(device, resources.stagingMemory);
 
 		VkBufferUsageFlagBits const usage = static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-		if (auto result{ CreateBuffer(resources.buffer, resources.memory, IB_sizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) }; !result)
+		if (auto result{ CreateBuffer(resources.buffer, resources.memory, indexBufferSizeBytes, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) }; !result)
 			return std::unexpected(result.error());
-		if (auto result{ CopyBuffer(resources.stagingBuffer, resources.buffer, IB_sizeBytes) }; !result)
+		if (auto result{ CopyBuffer(resources.stagingBuffer, resources.buffer, indexBufferSizeBytes) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
