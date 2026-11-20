@@ -46,7 +46,7 @@ namespace gg
 				.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 				.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
 				.maxSets       = 1000 * IM_ARRAYSIZE(poolSizes),
-				.poolSizeCount = (uint32_t)IM_ARRAYSIZE(poolSizes),
+				.poolSizeCount = static_cast<uint32_t>(IM_ARRAYSIZE(poolSizes)),
 				.pPoolSizes    = poolSizes,
 			};
 
