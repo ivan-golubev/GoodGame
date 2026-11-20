@@ -22,6 +22,10 @@ Rules (ID: what it checks):
   error-code-prefix
                    An ErrorCode used only by one backend (projects/RendererVulkan or
                    projects/RendererD3D12) starts with that backend's name (Vulkan..., D3D12...).
+  shader-mirror    A struct defined in both HLSL (shaders/) and C++ (projects/) has the same fields
+                   in the same order, with matching types (float4 = glm::vec4,
+                   matrix<float, 4, 4> = glm::mat4x4, ...). Constant buffers are copied byte for
+                   byte, so a drift silently breaks rendering. Reported at the C++ struct.
   if-one-line      'if (...) statement;' is written on two lines. Off by default; enable with
                    --enable if-one-line.
 
@@ -52,6 +56,7 @@ ALL_RULES = [
 	"brace-init",
 	"debug-name",
 	"error-code-prefix",
+	"shader-mirror",
 	"if-one-line",
 ]
 DEFAULT_OFF = {"if-one-line"}
@@ -68,6 +73,28 @@ NOT_A_DECLARATION = re.compile(r"^\s*(return|else|case|delete|using|typedef|goto
 DEBUG_NAME_PART = re.compile(r"[A-Z][A-Za-z0-9]*|\{\}")
 BACKENDS = {"RendererVulkan": "Vulkan", "RendererD3D12": "D3D12"}
 ERROR_CODE_USE = re.compile(r"\bErrorCode::([A-Za-z_]\w*)")
+
+SHADERS_DIR = code_checks.ROOT / "shaders"
+STRUCT_BLOCK = re.compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{(.*?)\n\s*\};", re.S)
+STRUCT_FIELD = re.compile(r"^\s*(?P<type>[A-Za-z_][\w:]*(?:<[^;>]*>)?)\s+(?P<name>[A-Za-z_]\w*)\s*(?:\{[^;]*\}|:\s*\w+)?\s*;")
+# HLSL and C++ spellings of the same type, mapped to one name.
+MIRROR_TYPES = {
+	"float": "float",
+	"float2": "vec2",
+	"float3": "vec3",
+	"float4": "vec4",
+	"float4x4": "mat4",
+	"matrix<float,4,4>": "mat4",
+	"uint": "uint",
+	"int": "int",
+	"glm::vec2": "vec2",
+	"glm::vec3": "vec3",
+	"glm::vec4": "vec4",
+	"glm::mat4": "mat4",
+	"glm::mat4x4": "mat4",
+	"uint32_t": "uint",
+	"int32_t": "int",
+}
 
 # Operators that should start a continuation line rather than end one.
 # '*' and '&' are left out: at the end of a line they are usually pointer/reference declarators.
@@ -213,6 +240,54 @@ def check_error_code_prefixes(files: list[Path]) -> list[Finding]:
 	return findings
 
 
+def struct_fields(path: Path) -> dict[str, tuple[int, list[tuple[int, str, str]]]]:
+	"""Map struct name -> (line, [(line, type, name), ...]) for the data members of each struct in a file."""
+	text = "\n".join(strip_comments_and_strings(path.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")))
+	structs = {}
+	for block in STRUCT_BLOCK.finditer(text):
+		first_line = text.count("\n", 0, block.start()) + 1
+		body_line = text.count("\n", 0, block.start(2)) + 1
+		fields = []
+		for offset, line in enumerate(block.group(2).split("\n")):
+			match = STRUCT_FIELD.match(line)
+			if match and "(" not in line:
+				fields.append((body_line + offset, re.sub(r"\s+", "", match.group("type")), match.group("name")))
+		structs[block.group(1)] = (first_line, fields)
+	return structs
+
+
+def check_shader_mirrors() -> list[Finding]:
+	"""Compare structs that exist in both the shaders and the C++ code, field by field."""
+	hlsl: dict[str, tuple[Path, int, list[tuple[int, str, str]]]] = {}
+	for path in sorted(SHADERS_DIR.glob("*.hlsl*")):
+		for name, (line, fields) in struct_fields(path).items():
+			hlsl[name] = (path, line, fields)
+
+	findings = []
+	for path in code_checks.project_sources():
+		for name, (line, cpp_fields) in struct_fields(path).items():
+			if name not in hlsl:
+				continue
+			hlsl_path, hlsl_line, hlsl_fields = hlsl[name]
+			shown = hlsl_path.relative_to(code_checks.ROOT) if hlsl_path.is_relative_to(code_checks.ROOT) else hlsl_path
+			where = f"{shown.as_posix()}:{hlsl_line}"
+			for index in range(max(len(cpp_fields), len(hlsl_fields))):
+				cpp = cpp_fields[index] if index < len(cpp_fields) else None
+				shader = hlsl_fields[index] if index < len(hlsl_fields) else None
+				problem = None
+				if cpp is None:
+					problem = (line, f"missing field '{shader[2]}' ({shader[1]}) that the HLSL struct has at position {index + 1}")
+				elif shader is None:
+					problem = (cpp[0], f"field '{cpp[2]}' has no counterpart in the HLSL struct")
+				elif cpp[2] != shader[2]:
+					problem = (cpp[0], f"field {index + 1} is '{cpp[2]}' here but '{shader[2]}' in HLSL")
+				elif MIRROR_TYPES.get(cpp[1], cpp[1]) != MIRROR_TYPES.get(shader[1], shader[1]):
+					problem = (cpp[0], f"field '{cpp[2]}' is {cpp[1]} here but {shader[1]} in HLSL")
+				if problem:
+					findings.append(Finding(path, problem[0], 1, "shader-mirror", f"struct {name} differs from {where}: {problem[1]}"))
+	return findings
+
+
 def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, abbreviations: set[str]) -> list[Finding]:
 	text = path.read_text(encoding="utf-8", errors="replace")
 	raw_lines = text.replace("\r\n", "\n").split("\n")
@@ -324,6 +399,9 @@ def run_checks(files: list[Path], rules: set[str], max_columns: int, tab_width: 
 		findings += check_file(path, rules, max_columns, tab_width, abbreviations)
 	if "error-code-prefix" in rules:
 		findings += check_error_code_prefixes(files)
+	if "shader-mirror" in rules:
+		checked = set(files)
+		findings += [f for f in check_shader_mirrors() if f.path in checked]
 	return sorted(findings, key=lambda f: (str(f.path), f.line, f.column))
 
 
