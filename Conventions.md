@@ -9,7 +9,7 @@ These are the naming rules the code follows. Formatting and other conventions ar
 | Types, classes, structs, enums | PascalCase | `RendererD3D12`, `RendererSettings`, `ErrorCode`, `SkyboxCamera`, `ModelViewProjection` |
 | Enumerators | PascalCase | `ErrorCode::ModelImportFailed`, `DebugLevel::Info` |
 | Member functions | PascalCase | `UpdateCamera`, `GetViewMatrix`, `CreateSyncObjects` |
-| Free functions, including helpers in unnamed namespaces | PascalCase | `CalculateMVP`, `ThrowIfFailed`, `MainLoop`, `ReadMesh`, `CreateShaderModule` |
+| Free functions, including helpers in unnamed namespaces | PascalCase | `CalculateModelViewProjection`, `ThrowIfFailed`, `MainLoop`, `ReadMesh`, `CreateShaderModule` |
 | Data members | camelCase, no prefix or suffix | `cameraPosition`, `commandQueue`, `isWindowResized` |
 | Locals and parameters | camelCase | `deltaTimeSeconds`, `hardwareAdapter` |
 | `constexpr` constants | camelCase | `cameraMoveSpeed`, `maxFramesInFlight`, `uvSetNumber` |
@@ -19,6 +19,10 @@ These are the naming rules the code follows. Formatting and other conventions ar
 | GPU object debug names (`SetName`) | `Kind_Purpose_Owner` | `PSO_Skybox_{}`, `RootSignature_Skybox_{}`, `SRV_DescriptorHeap_Skybox_{}` |
 
 C++ types that mirror a constant buffer have **no** suffix. Examples: `SkyboxCamera`, `ModelViewProjection`, `DirectionalLight`.
+
+**No Hungarian notation.** Names don't encode their type: no `p`/`pp`/`lp` for pointers, `sz`, `dw`, `h`, or `m_`/`g_`/`s_` scope prefixes. Write `factory`, `heaps`, `commandLists`, not `pFactory`, `ppHeaps`. Output parameters use an `out` prefix (`outBuffer`). Fields of API structs (`desc.pData`) keep their API names.
+
+**No naked `new`; raw pointers never own.** Create objects with `std::make_unique` / `std::make_shared`. When only one class may create an object, give it a `PassKey` (see `ShaderProgramD3D12`) instead of a private constructor. Own C and COM resources with `std::unique_ptr` and a deleter, or `ComPtr`. Raw pointers are fine for non-owning access (API handles, `.Get()`, observers).
 
 ## Files and modules
 

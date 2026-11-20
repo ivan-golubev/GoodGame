@@ -26,6 +26,10 @@ Rules (ID: what it checks):
                    in the same order, with matching types (float4 = glm::vec4,
                    matrix<float, 4, 4> = glm::mat4x4, ...). Constant buffers are copied byte for
                    byte, so a drift silently breaks rendering. Reported at the C++ struct.
+  naked-new        No 'new' expressions: use std::make_unique / std::make_shared (a PassKey makes
+                   them work with restricted constructors).
+  hungarian        Declared names carry no Hungarian prefixes: p/pp/lp (pointers), sz, dw, h,
+                   m_/g_/s_. API fields such as desc.pData are not declarations and are fine.
   if-one-line      'if (...) statement;' is written on two lines. Off by default; enable with
                    --enable if-one-line.
 
@@ -57,6 +61,8 @@ ALL_RULES = [
 	"debug-name",
 	"error-code-prefix",
 	"shader-mirror",
+	"naked-new",
+	"hungarian",
 	"if-one-line",
 ]
 DEFAULT_OFF = {"if-one-line"}
@@ -73,6 +79,12 @@ NOT_A_DECLARATION = re.compile(r"^\s*(return|else|case|delete|using|typedef|goto
 DEBUG_NAME_PART = re.compile(r"[A-Z][A-Za-z0-9]*|\{\}")
 BACKENDS = {"RendererVulkan": "Vulkan", "RendererD3D12": "D3D12"}
 ERROR_CODE_USE = re.compile(r"\bErrorCode::([A-Za-z_]\w*)")
+
+# A declared name: preceded by a type (word, template, pointer/reference) and followed by what can
+# follow a declarator. Names after '.', '->' or '::' are member accesses, not declarations.
+DECLARED_NAME = re.compile(r"(?<![.\w>:])(?:[A-Za-z_][\w:]*(?:<[^;()]*>)?\s*[*&]*\s+[*&]*|[*&]\s*)(?P<name>[A-Za-z_]\w*)\s*(?=[\[{=;,)]|$)")
+HUNGARIAN_PREFIX = re.compile(r"^(?:(?:pp|p|lp|sz|dw|h)[A-Z]|[mgs]_)")
+NOT_A_TYPE = {"return", "else", "case", "goto", "throw", "delete", "new", "co_return", "co_yield", "using", "namespace", "operator"}
 
 SHADERS_DIR = code_checks.ROOT / "shaders"
 STRUCT_BLOCK = re.compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{(.*?)\n\s*\};", re.S)
@@ -358,6 +370,17 @@ def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, ab
 			report(index, code.index("="), "brace-init", "use brace initialization: 'T name{ value };'")
 		elif FOR_EQUALS_INIT.search(code):
 			report(index, code.index("="), "brace-init", "use brace initialization for the loop counter: 'for (T i{ 0 }; ...'")
+
+		for match in re.finditer(r"\bnew\b", code):
+			report(index, match.start(), "naked-new", "don't use 'new': use std::make_unique / std::make_shared")
+
+		for match in DECLARED_NAME.finditer(code):
+			name = match.group("name")
+			type_word = code[match.start() : match.start("name")].strip().rstrip("*& ").split()[:1]
+			if type_word and type_word[0] in NOT_A_TYPE:
+				continue
+			if HUNGARIAN_PREFIX.match(name):
+				report(index, match.start("name"), "hungarian", f"'{name}' uses a Hungarian prefix; drop it")
 
 		for match in re.finditer(r"\bSetName\(", code):
 			literal = debug_name_literal(raw, code, match.end() - 1)

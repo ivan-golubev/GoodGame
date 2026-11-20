@@ -4,7 +4,9 @@ Checks: >
   google-readability-casting,
   modernize-use-nullptr,
   readability-simplify-boolean-expr,
-  performance-avoid-endl
+  performance-avoid-endl,
+  modernize-make-unique,
+  modernize-make-shared
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*[/\\]projects[/\\].*'
 CheckOptions:
