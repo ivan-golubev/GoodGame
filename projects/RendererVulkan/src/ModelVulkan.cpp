@@ -15,7 +15,6 @@ import ErrorHandling;
 import Lighting;
 import Model;
 import Renderer;
-import RendererVulkan;
 import SettingsRenderer;
 import ShaderProgram;
 import ShaderProgramVulkan;
@@ -24,41 +23,46 @@ import VertexVulkan;
 
 namespace gg
 {
-	ModelVulkan::ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, glm::vec3& position, VkDevice d)
+	ModelVulkan::ModelVulkan(
+		std::string const&                   modelRelativePath,
+		std::shared_ptr<ShaderProgram>       s,
+		glm::vec3&                           position,
+		std::shared_ptr<DeviceContextVulkan> c
+	)
 		: Model{ modelRelativePath, s, position }
-		, device{ d }
+		, context{ c }
 	{
 	}
 
 	ModelVulkan::~ModelVulkan() noexcept
 	{
-		if (!device)
+		if (!context)
 			return;
 
 		DestroyPipeline();
 		if (descriptorSetLayout)
-			vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+			vkDestroyDescriptorSetLayout(context->GetDevice(), descriptorSetLayout, nullptr);
 
 		if (vertexBuffer)
-			vkDestroyBuffer(device, vertexBuffer, nullptr);
+			vkDestroyBuffer(context->GetDevice(), vertexBuffer, nullptr);
 		if (vertexBufferMemory)
-			vkFreeMemory(device, vertexBufferMemory, nullptr);
+			vkFreeMemory(context->GetDevice(), vertexBufferMemory, nullptr);
 
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
 			if (uniformBuffersMVP[i])
-				vkDestroyBuffer(device, uniformBuffersMVP[i], nullptr);
+				vkDestroyBuffer(context->GetDevice(), uniformBuffersMVP[i], nullptr);
 			if (uniformBuffersMemoryMVP[i])
-				vkFreeMemory(device, uniformBuffersMemoryMVP[i], nullptr);
+				vkFreeMemory(context->GetDevice(), uniformBuffersMemoryMVP[i], nullptr);
 
 			if (uniformBuffersDirLight[i])
-				vkDestroyBuffer(device, uniformBuffersDirLight[i], nullptr);
+				vkDestroyBuffer(context->GetDevice(), uniformBuffersDirLight[i], nullptr);
 			if (uniformBuffersMemoryDirLight[i])
-				vkFreeMemory(device, uniformBuffersMemoryDirLight[i], nullptr);
+				vkFreeMemory(context->GetDevice(), uniformBuffersMemoryDirLight[i], nullptr);
 		}
 	}
 
-	std::expected<void, Error> ModelVulkan::Initialize(VkDescriptorPool descriptorPool)
+	std::expected<void, Error> ModelVulkan::Initialize(VkDescriptorPool descriptorPool, RenderTargetVulkan const& target)
 	{
 		if (auto result{ Model::Initialize() }; !result)
 			return std::unexpected(result.error());
@@ -68,7 +72,7 @@ namespace gg
 			return std::unexpected(result.error());
 		if (auto result{ CreateDescriptorSetLayout() }; !result)
 			return std::unexpected(result.error());
-		if (auto result{ CreatePipeline() }; !result)
+		if (auto result{ CreatePipeline(target) }; !result)
 			return std::unexpected(result.error());
 		if (auto result{ CreateUniformBuffers() }; !result)
 			return std::unexpected(result.error());
@@ -98,10 +102,9 @@ namespace gg
 				if (memory)
 					vkFreeMemory(device, memory, nullptr);
 			}
-		} staging{ device };
+		} staging{ context->GetDevice() };
 
-		RendererVulkan& renderer{ RendererVulkan::Get() };
-		auto            stagingBufferResult{ renderer.CreateBuffer(
+		auto stagingBufferResult{ context->CreateBuffer(
 			staging.buffer,
 			staging.memory,
 			vertexBufferSizeBytes,
@@ -112,19 +115,19 @@ namespace gg
 			return std::unexpected(stagingBufferResult.error());
 
 		void*          mappedData{};
-		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, vertexBufferSizeBytes, 0, &mappedData) };
+		VkResult const mapResult{ vkMapMemory(context->GetDevice(), staging.memory, 0, vertexBufferSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanResourceCreationFailed,
 				.message = std::format("Failed to map staging buffer for vertex data (VkResult {})", static_cast<int>(mapResult)),
 			});
 		memcpy(mappedData, mesh.vertices.data(), static_cast<size_t>(vertexBufferSizeBytes));
-		vkUnmapMemory(device, staging.memory);
+		vkUnmapMemory(context->GetDevice(), staging.memory);
 
 		VkBufferUsageFlagBits const usage{ static_cast<VkBufferUsageFlagBits>(
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
 		) };
-		auto                        vertexBufferResult{ renderer.CreateBuffer(
+		auto                        vertexBufferResult{ context->CreateBuffer(
 			vertexBuffer,
 			vertexBufferMemory,
 			vertexBufferSizeBytes,
@@ -133,20 +136,20 @@ namespace gg
 		) };
 		if (!vertexBufferResult)
 			return std::unexpected(vertexBufferResult.error());
-		if (auto result{ renderer.CopyBuffer(staging.buffer, vertexBuffer, vertexBufferSizeBytes) }; !result)
+		if (auto result{ context->CopyBuffer(staging.buffer, vertexBuffer, vertexBufferSizeBytes) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
 
 	std::expected<void, Error> ModelVulkan::LoadTextures()
 	{
-		RendererVulkan& renderer{ RendererVulkan::Get() };
 		for (std::string const& textureName : textureNames)
 		{
-			auto textureResult{ renderer.LoadTexture(textureName) };
-			if (!textureResult)
-				return std::unexpected(textureResult.error());
-			textures.emplace_back(std::move(*textureResult));
+			std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, textureName, texturesExtension) };
+			auto              texture{ std::make_unique<TextureVulkan>(context, textureRelativePath) };
+			if (auto const result{ texture->Initialize() }; !result)
+				return std::unexpected(result.error());
+			textures.emplace_back(std::move(texture));
 		}
 		return {};
 	}
@@ -184,7 +187,7 @@ namespace gg
 			.pBindings    = bindings.data(),
 		};
 
-		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+		if (vkCreateDescriptorSetLayout(context->GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanResourceCreationFailed,
 				.message = "Failed to create Vulkan model descriptor set layout.",
@@ -192,7 +195,7 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> ModelVulkan::CreatePipeline()
+	std::expected<void, Error> ModelVulkan::CreatePipeline(RenderTargetVulkan const& target)
 	{
 		BreakIfFalse(shaderProgram.get());
 		ShaderProgramVulkan* const shader{ dynamic_cast<ShaderProgramVulkan*>(shaderProgram.get()) };
@@ -220,7 +223,8 @@ namespace gg
 			.stencilTestEnable     = VK_FALSE,
 		};
 
-		auto result{ RendererVulkan::Get().CreateGraphicsPipeline(
+		auto result{ context->CreateGraphicsPipeline(
+			target,
 			shader->GetVertexShader(),
 			shader->GetFragmentShader(),
 			vertexInputInfo,
@@ -237,18 +241,17 @@ namespace gg
 	void ModelVulkan::DestroyPipeline()
 	{
 		if (graphicsPipeline.pipeline)
-			vkDestroyPipeline(device, graphicsPipeline.pipeline, nullptr);
+			vkDestroyPipeline(context->GetDevice(), graphicsPipeline.pipeline, nullptr);
 		if (graphicsPipeline.layout)
-			vkDestroyPipelineLayout(device, graphicsPipeline.layout, nullptr);
+			vkDestroyPipelineLayout(context->GetDevice(), graphicsPipeline.layout, nullptr);
 		graphicsPipeline = {};
 	}
 
 	std::expected<void, Error> ModelVulkan::CreateUniformBuffers()
 	{
-		RendererVulkan& renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			auto mvpBufferResult{ renderer.CreateBuffer(
+			auto mvpBufferResult{ context->CreateBuffer(
 				uniformBuffersMVP[i],
 				uniformBuffersMemoryMVP[i],
 				sizeof(ModelViewProjection),
@@ -257,7 +260,7 @@ namespace gg
 			) };
 			if (!mvpBufferResult)
 				return std::unexpected(mvpBufferResult.error());
-			auto dirLightBufferResult{ renderer.CreateBuffer(
+			auto dirLightBufferResult{ context->CreateBuffer(
 				uniformBuffersDirLight[i],
 				uniformBuffersMemoryDirLight[i],
 				sizeof(DirectionalLight),
@@ -281,7 +284,7 @@ namespace gg
 			.pSetLayouts        = layouts.data(),
 		};
 
-		if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
+		if (vkAllocateDescriptorSets(context->GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanResourceCreationFailed,
 				.message = "Failed to allocate Vulkan descriptor sets for model.",
@@ -340,7 +343,13 @@ namespace gg
 				},
 			};
 
-			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			vkUpdateDescriptorSets(
+				context->GetDevice(),
+				static_cast<uint32_t>(descriptorWrites.size()),
+				descriptorWrites.data(),
+				0,
+				nullptr
+			);
 		}
 		return {};
 	}
@@ -350,15 +359,15 @@ namespace gg
 		{ /* MVP matrix */
 			ModelViewProjection const mvpMatrices{ CalculateModelViewProjection(translation, currentTimeSec, camera) };
 			void*                     data;
-			vkMapMemory(device, uniformBuffersMemoryMVP[frame], 0, sizeof(ModelViewProjection), 0, &data);
+			vkMapMemory(context->GetDevice(), uniformBuffersMemoryMVP[frame], 0, sizeof(ModelViewProjection), 0, &data);
 			memcpy(data, &mvpMatrices, sizeof(ModelViewProjection));
-			vkUnmapMemory(device, uniformBuffersMemoryMVP[frame]);
+			vkUnmapMemory(context->GetDevice(), uniformBuffersMemoryMVP[frame]);
 		}
 		{ /* Directional Light */
 			void* data;
-			vkMapMemory(device, uniformBuffersMemoryDirLight[frame], 0, sizeof(DirectionalLight), 0, &data);
+			vkMapMemory(context->GetDevice(), uniformBuffersMemoryDirLight[frame], 0, sizeof(DirectionalLight), 0, &data);
 			memcpy(data, &globalDirectionalLight, sizeof(DirectionalLight));
-			vkUnmapMemory(device, uniformBuffersMemoryDirLight[frame]);
+			vkUnmapMemory(context->GetDevice(), uniformBuffersMemoryDirLight[frame]);
 		}
 	}
 

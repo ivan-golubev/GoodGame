@@ -61,10 +61,16 @@
     <ClCompile Include="modules\DepthBufferVulkan.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\DeviceContextVulkan.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
     <ClCompile Include="src\DebugOverlayVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DepthBufferVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DeviceContextVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

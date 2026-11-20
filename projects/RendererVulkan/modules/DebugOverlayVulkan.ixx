@@ -5,23 +5,22 @@ module;
 #include <vulkan/vulkan_core.h>
 export module DebugOverlayVulkan;
 
+import DeviceContextVulkan;
 import ErrorHandling;
 import Renderer;
 
 export namespace gg
 {
-	class RendererVulkan;
-
 	struct DebugOverlayVulkanCreateInfo
 	{
-		VkDevice         device;
-		VkInstance       instance;
-		uint32_t         graphicsQueueFamily;
-		VkQueue          graphicsQueue;
-		VkPhysicalDevice physicalDevice;
-		VkRenderPass     renderPass;
-		SDL_Window*      windowHandleSDL;
-		RendererVulkan*  renderer;
+		VkDevice                             device;
+		VkInstance                           instance;
+		uint32_t                             graphicsQueueFamily;
+		VkQueue                              graphicsQueue;
+		VkPhysicalDevice                     physicalDevice;
+		VkRenderPass                         renderPass;
+		SDL_Window*                          windowHandleSDL;
+		std::shared_ptr<DeviceContextVulkan> context;
 	};
 
 	class DebugOverlayVulkan

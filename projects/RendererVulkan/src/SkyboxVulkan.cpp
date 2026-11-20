@@ -9,7 +9,6 @@ module SkyboxVulkan;
 import Camera;
 import ErrorHandling;
 import Renderer;
-import RendererVulkan;
 import SettingsRenderer;
 import ShaderProgram;
 import ShaderProgramVulkan;
@@ -19,30 +18,30 @@ import TextureVulkan;
 
 namespace gg
 {
-	SkyboxVulkan::SkyboxVulkan(std::string const& name, std::shared_ptr<ShaderProgram> s, VkDevice device)
+	SkyboxVulkan::SkyboxVulkan(std::string const& name, std::shared_ptr<ShaderProgram> s, std::shared_ptr<DeviceContextVulkan> c)
 		: Skybox{ name, s }
-		, device{ device }
+		, context{ c }
 	{
 	}
 
 	SkyboxVulkan::~SkyboxVulkan() noexcept
 	{
-		if (!device)
+		if (!context)
 			return;
-		if (textureSampler) vkDestroySampler(device, textureSampler, nullptr);
-		if (textureImageView) vkDestroyImageView(device, textureImageView, nullptr);
-		if (textureImage) vkDestroyImage(device, textureImage, nullptr);
-		if (textureImageMemory) vkFreeMemory(device, textureImageMemory, nullptr);
+		if (textureSampler) vkDestroySampler(context->GetDevice(), textureSampler, nullptr);
+		if (textureImageView) vkDestroyImageView(context->GetDevice(), textureImageView, nullptr);
+		if (textureImage) vkDestroyImage(context->GetDevice(), textureImage, nullptr);
+		if (textureImageMemory) vkFreeMemory(context->GetDevice(), textureImageMemory, nullptr);
 		DestroyPipeline();
-		if (descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+		if (descriptorSetLayout) vkDestroyDescriptorSetLayout(context->GetDevice(), descriptorSetLayout, nullptr);
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			if (uniformBuffersCamera[i]) vkDestroyBuffer(device, uniformBuffersCamera[i], nullptr);
-			if (uniformBuffersMemoryCamera[i]) vkFreeMemory(device, uniformBuffersMemoryCamera[i], nullptr);
+			if (uniformBuffersCamera[i]) vkDestroyBuffer(context->GetDevice(), uniformBuffersCamera[i], nullptr);
+			if (uniformBuffersMemoryCamera[i]) vkFreeMemory(context->GetDevice(), uniformBuffersMemoryCamera[i], nullptr);
 		}
 	}
 
-	std::expected<void, Error> SkyboxVulkan::Initialize(VkDescriptorPool descriptorPool)
+	std::expected<void, Error> SkyboxVulkan::Initialize(VkDescriptorPool descriptorPool, RenderTargetVulkan const& target)
 	{
 		if (auto result{ Skybox::Initialize() }; !result)
 			return std::unexpected(result.error());
@@ -51,7 +50,7 @@ namespace gg
 			return std::unexpected(result.error());
 		if (auto result{ CreateTextureImageView() }; !result)
 			return std::unexpected(result.error());
-		auto samplerResult{ RendererVulkan::Get().CreateTextureSampler() };
+		auto samplerResult{ context->CreateTextureSampler() };
 		if (!samplerResult)
 			return std::unexpected(samplerResult.error());
 		textureSampler = *samplerResult;
@@ -62,7 +61,7 @@ namespace gg
 			return std::unexpected(result.error());
 		if (auto result{ CreateDescriptorSets(descriptorPool) }; !result)
 			return std::unexpected(result.error());
-		if (auto result{ CreatePipeline() }; !result)
+		if (auto result{ CreatePipeline(target) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -93,7 +92,7 @@ namespace gg
 			.pBindings    = bindings.data(),
 		};
 
-		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+		if (vkCreateDescriptorSetLayout(context->GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanResourceCreationFailed,
 				.message = "Failed to create Vulkan skybox descriptor set layout.",
@@ -103,10 +102,9 @@ namespace gg
 
 	std::expected<void, Error> SkyboxVulkan::CreateUniformBuffers()
 	{
-		RendererVulkan& renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			auto cameraBufferResult{ renderer.CreateBuffer(
+			auto cameraBufferResult{ context->CreateBuffer(
 				uniformBuffersCamera[i],
 				uniformBuffersMemoryCamera[i],
 				sizeof(SkyboxCamera),
@@ -130,7 +128,7 @@ namespace gg
 			.pSetLayouts        = layouts.data(),
 		};
 
-		if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
+		if (vkAllocateDescriptorSets(context->GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanResourceCreationFailed,
 				.message = "Failed to allocate Vulkan descriptor sets for skybox.",
@@ -171,12 +169,18 @@ namespace gg
 				},
 			};
 
-			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			vkUpdateDescriptorSets(
+				context->GetDevice(),
+				static_cast<uint32_t>(descriptorWrites.size()),
+				descriptorWrites.data(),
+				0,
+				nullptr
+			);
 		}
 		return {};
 	}
 
-	std::expected<void, Error> SkyboxVulkan::CreatePipeline()
+	std::expected<void, Error> SkyboxVulkan::CreatePipeline(RenderTargetVulkan const& target)
 	{
 		BreakIfFalse(shaderProgram.get());
 		ShaderProgramVulkan* const shader{ dynamic_cast<ShaderProgramVulkan*>(shaderProgram.get()) };
@@ -210,7 +214,8 @@ namespace gg
 			.stencilTestEnable     = VK_FALSE,
 		};
 
-		auto result{ RendererVulkan::Get().CreateGraphicsPipeline(
+		auto result{ context->CreateGraphicsPipeline(
+			target,
 			shader->GetVertexShader(),
 			shader->GetFragmentShader(),
 			vertexInputInfo,
@@ -226,8 +231,8 @@ namespace gg
 
 	void SkyboxVulkan::DestroyPipeline()
 	{
-		if (graphicsPipeline.pipeline) vkDestroyPipeline(device, graphicsPipeline.pipeline, nullptr);
-		if (graphicsPipeline.layout) vkDestroyPipelineLayout(device, graphicsPipeline.layout, nullptr);
+		if (graphicsPipeline.pipeline) vkDestroyPipeline(context->GetDevice(), graphicsPipeline.pipeline, nullptr);
+		if (graphicsPipeline.layout) vkDestroyPipelineLayout(context->GetDevice(), graphicsPipeline.layout, nullptr);
 		graphicsPipeline = {};
 	}
 
@@ -235,9 +240,9 @@ namespace gg
 	{
 		SkyboxCamera const skyboxCamera{ CalculateSkyboxCamera(camera) };
 		void*              data;
-		vkMapMemory(device, uniformBuffersMemoryCamera[frame], 0, sizeof(SkyboxCamera), 0, &data);
+		vkMapMemory(context->GetDevice(), uniformBuffersMemoryCamera[frame], 0, sizeof(SkyboxCamera), 0, &data);
 		memcpy(data, &skyboxCamera, sizeof(SkyboxCamera));
-		vkUnmapMemory(device, uniformBuffersMemoryCamera[frame]);
+		vkUnmapMemory(context->GetDevice(), uniformBuffersMemoryCamera[frame]);
 	}
 
 	void SkyboxVulkan::Draw(VkCommandBuffer commandBuffer, uint32_t frame, Camera const& camera)
@@ -261,7 +266,6 @@ namespace gg
 
 	std::expected<void, Error> SkyboxVulkan::CreateTextureImage()
 	{
-		RendererVulkan&    renderer{ RendererVulkan::Get() };
 		VkDeviceSize const layerSize{ textures[0]->SizeBytes() };
 		VkDeviceSize const imageSize{ layerSize * textures.size() };
 		struct StagingResources
@@ -274,8 +278,8 @@ namespace gg
 				if (buffer) vkDestroyBuffer(device, buffer, nullptr);
 				if (memory) vkFreeMemory(device, memory, nullptr);
 			}
-		} staging{ device };
-		auto stagingBufferResult{ renderer.CreateBuffer(
+		} staging{ context->GetDevice() };
+		auto stagingBufferResult{ context->CreateBuffer(
 			staging.buffer,
 			staging.memory,
 			imageSize,
@@ -286,7 +290,7 @@ namespace gg
 			return std::unexpected(stagingBufferResult.error());
 
 		void*          mappedData{};
-		VkResult const mapResult{ vkMapMemory(device, staging.memory, 0, imageSize, 0, &mappedData) };
+		VkResult const mapResult{ vkMapMemory(context->GetDevice(), staging.memory, 0, imageSize, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
@@ -294,7 +298,7 @@ namespace gg
 			});
 		for (size_t i{}; i < textures.size(); ++i)
 			std::memcpy(static_cast<uint8_t*>(mappedData) + layerSize * i, textures[i]->pixels.get(), static_cast<size_t>(layerSize));
-		vkUnmapMemory(device, staging.memory);
+		vkUnmapMemory(context->GetDevice(), staging.memory);
 
 		VkImageCreateInfo imageInfo{
 			.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -310,7 +314,7 @@ namespace gg
 			.sharingMode   = VK_SHARING_MODE_EXCLUSIVE,
 			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 		};
-		VkResult const createResult{ vkCreateImage(device, &imageInfo, nullptr, &textureImage) };
+		VkResult const createResult{ vkCreateImage(context->GetDevice(), &imageInfo, nullptr, &textureImage) };
 		if (createResult != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
@@ -318,8 +322,8 @@ namespace gg
 			});
 
 		VkMemoryRequirements requirements{};
-		vkGetImageMemoryRequirements(device, textureImage, &requirements);
-		auto memoryTypeResult{ renderer.FindMemoryType(requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) };
+		vkGetImageMemoryRequirements(context->GetDevice(), textureImage, &requirements);
+		auto memoryTypeResult{ context->FindMemoryType(requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) };
 		if (!memoryTypeResult)
 			return std::unexpected(memoryTypeResult.error());
 		VkMemoryAllocateInfo allocationInfo{
@@ -327,13 +331,13 @@ namespace gg
 			.allocationSize  = requirements.size,
 			.memoryTypeIndex = *memoryTypeResult,
 		};
-		VkResult const allocateResult{ vkAllocateMemory(device, &allocationInfo, nullptr, &textureImageMemory) };
+		VkResult const allocateResult{ vkAllocateMemory(context->GetDevice(), &allocationInfo, nullptr, &textureImageMemory) };
 		if (allocateResult != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
 				.message = std::format("Failed to allocate Vulkan cubemap memory (VkResult {}).", static_cast<int>(allocateResult)),
 			});
-		VkResult const bindResult{ vkBindImageMemory(device, textureImage, textureImageMemory, 0) };
+		VkResult const bindResult{ vkBindImageMemory(context->GetDevice(), textureImage, textureImageMemory, 0) };
 		if (bindResult != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureResourceCreationFailed,
@@ -360,7 +364,7 @@ namespace gg
 			sourceAccess      = VK_ACCESS_TRANSFER_WRITE_BIT;
 			destinationAccess = VK_ACCESS_SHADER_READ_BIT;
 		}
-		auto commandResult{ RendererVulkan::Get().BeginSingleTimeCommands() };
+		auto commandResult{ context->BeginSingleTimeCommands() };
 		if (!commandResult) return std::unexpected(commandResult.error());
 		VkImageMemoryBarrier barrier{
 			.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -380,12 +384,12 @@ namespace gg
 			},
 		};
 		vkCmdPipelineBarrier(*commandResult, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-		return RendererVulkan::Get().EndSingleTimeCommands(*commandResult);
+		return context->EndSingleTimeCommands(*commandResult);
 	}
 
 	std::expected<void, Error> SkyboxVulkan::CopyBufferToImage(VkBuffer buffer, uint32_t width, uint32_t height)
 	{
-		auto commandResult{ RendererVulkan::Get().BeginSingleTimeCommands() };
+		auto commandResult{ context->BeginSingleTimeCommands() };
 		if (!commandResult) return std::unexpected(commandResult.error());
 		std::array<VkBufferImageCopy, 6> regions{};
 		VkDeviceSize                     layerSize{ textures[0]->SizeBytes() };
@@ -405,7 +409,7 @@ namespace gg
 			static_cast<uint32_t>(regions.size()),
 			regions.data()
 		);
-		return RendererVulkan::Get().EndSingleTimeCommands(*commandResult);
+		return context->EndSingleTimeCommands(*commandResult);
 	}
 
 	std::expected<void, Error> SkyboxVulkan::CreateTextureImageView()
@@ -423,7 +427,7 @@ namespace gg
 				.layerCount     = static_cast<uint32_t>(textures.size()),
 			},
 		};
-		VkResult const result{ vkCreateImageView(device, &viewInfo, nullptr, &textureImageView) };
+		VkResult const result{ vkCreateImageView(context->GetDevice(), &viewInfo, nullptr, &textureImageView) };
 		if (result != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanTextureResourceCreationFailed,

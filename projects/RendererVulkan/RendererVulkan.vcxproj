@@ -122,6 +122,7 @@
   <ItemGroup>
     <ClCompile Include="modules\DebugOverlayVulkan.ixx" />
     <ClCompile Include="modules\DepthBufferVulkan.ixx" />
+    <ClCompile Include="modules\DeviceContextVulkan.ixx" />
     <ClCompile Include="modules\ErrorHandlingVulkan.ixx" />
     <ClCompile Include="modules\GraphicsPipelineVulkan.ixx" />
     <ClCompile Include="modules\ModelVulkan.ixx" />
@@ -132,6 +133,7 @@
     <ClCompile Include="modules\VertexVulkan.ixx" />
     <ClCompile Include="src\DebugOverlayVulkan.cpp" />
     <ClCompile Include="src\DepthBufferVulkan.cpp" />
+    <ClCompile Include="src\DeviceContextVulkan.cpp" />
     <ClCompile Include="src\ErrorHandlingVulkan.cpp" />
     <ClCompile Include="src\ModelVulkan.cpp" />
     <ClCompile Include="src\RendererVulkan.cpp" />

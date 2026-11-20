@@ -1,9 +1,11 @@
 module;
 #include <expected>
+#include <memory>
 #include <string>
 #include <vulkan/vulkan.h>
 export module TextureVulkan;
 
+import DeviceContextVulkan;
 export import ErrorHandling;
 import Texture;
 
@@ -15,7 +17,7 @@ export namespace gg
 	class TextureVulkan : public Texture
 	{
 	public:
-		TextureVulkan(VkDevice, std::string const& textureRelativePath);
+		TextureVulkan(std::shared_ptr<DeviceContextVulkan>, std::string const& textureRelativePath);
 		~TextureVulkan() noexcept;
 		std::expected<void, Error> Initialize();
 
@@ -39,9 +41,9 @@ export namespace gg
 		std::expected<void, Error> TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout);
 		std::expected<void, Error> CopyBufferToImage(VkBuffer, VkImage, uint32_t width, uint32_t height);
 
-		VkDevice       device;
-		VkImage        textureImage{};
-		VkDeviceMemory textureImageMemory{};
+		std::shared_ptr<DeviceContextVulkan> context;
+		VkImage                              textureImage{};
+		VkDeviceMemory                       textureImageMemory{};
 	};
 
 	std::expected<VkImageView, Error> CreateImageView(

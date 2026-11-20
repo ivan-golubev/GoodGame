@@ -8,6 +8,7 @@ module;
 #include <vulkan/vulkan.h>
 export module ModelVulkan;
 
+import DeviceContextVulkan;
 import Camera;
 import ErrorHandling;
 import GraphicsPipelineVulkan;
@@ -19,11 +20,16 @@ namespace gg
 	export struct ModelVulkan : public Model
 	{
 	public:
-		ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, glm::vec3& position, VkDevice);
+		ModelVulkan(
+			std::string const& modelRelativePath,
+			std::shared_ptr<ShaderProgram>,
+			glm::vec3& position,
+			std::shared_ptr<DeviceContextVulkan>
+		);
 		~ModelVulkan() noexcept;
 
-		std::expected<void, Error> Initialize(VkDescriptorPool);
-		std::expected<void, Error> CreatePipeline();
+		std::expected<void, Error> Initialize(VkDescriptorPool, RenderTargetVulkan const&);
+		std::expected<void, Error> CreatePipeline(RenderTargetVulkan const&);
 		void                       Draw(VkCommandBuffer, uint32_t frame, Camera const&, double currentTimeSec);
 
 	private:
@@ -35,9 +41,9 @@ namespace gg
 		void                       DestroyPipeline();
 		void                       UpdateUniformBuffers(uint32_t frame, Camera const&, double currentTimeSec);
 
-		VkDevice       device;
-		VkBuffer       vertexBuffer{};
-		VkDeviceMemory vertexBufferMemory{};
+		std::shared_ptr<DeviceContextVulkan> context;
+		VkBuffer                             vertexBuffer{};
+		VkDeviceMemory                       vertexBufferMemory{};
 
 		std::array<VkBuffer, maxFramesInFlight>       uniformBuffersMVP{};
 		std::array<VkDeviceMemory, maxFramesInFlight> uniformBuffersMemoryMVP{};

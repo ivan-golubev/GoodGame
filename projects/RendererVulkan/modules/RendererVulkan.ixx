@@ -15,6 +15,7 @@ export module RendererVulkan;
 
 import Camera;
 import DebugOverlayVulkan;
+import DeviceContextVulkan;
 import DepthBufferVulkan;
 import GlobalSettings;
 import GraphicsPipelineVulkan;
@@ -36,17 +37,13 @@ namespace gg
 	export class RendererVulkan : public Renderer
 	{
 	public:
-		RendererVulkan();
+		RendererVulkan() = default;
 		~RendererVulkan() noexcept;
 		std::expected<void, Error> Initialize(RendererSettings const&) override;
-
-		/* The live renderer, for the objects it creates. Set by the constructor, cleared by the destructor. */
-		static RendererVulkan& Get();
 
 		RendererVulkan(RendererVulkan const&)            = delete;
 		RendererVulkan& operator=(RendererVulkan const&) = delete;
 
-		/* Not movable: Get() points at this object */
 		RendererVulkan(RendererVulkan&&)            = delete;
 		RendererVulkan& operator=(RendererVulkan&&) = delete;
 
@@ -65,38 +62,7 @@ namespace gg
 
 		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
 
-		VkDevice GetDevice() const;
-
-		std::expected<VkCommandBuffer, Error> BeginSingleTimeCommands();
-		std::expected<void, Error>            EndSingleTimeCommands(VkCommandBuffer);
-
-		std::expected<VkSampler, Error> CreateTextureSampler();
-		std::expected<uint32_t, Error>  FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags) const;
-
-		std::expected<void, Error> CreateBuffer(
-			VkBuffer&       outBuffer,
-			VkDeviceMemory& outMemory,
-			uint64_t        sizeBytes,
-			VkBufferUsageFlagBits,
-			VkMemoryPropertyFlags
-		);
-
-		std::expected<void, Error> CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-		std::expected<GraphicsPipeline, Error> CreateGraphicsPipeline(
-			VkShaderModule vertexShader,
-			VkShaderModule fragmentShader,
-			VkPipelineVertexInputStateCreateInfo const&,
-			VkCullModeFlags,
-			VkPipelineDepthStencilStateCreateInfo const&,
-			VkDescriptorSetLayout const&
-		);
-
-		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
-
 	private:
-		static RendererVulkan* current; /* non-owning */
-
 		struct QueueFamilyIndices
 		{
 			std::optional<uint32_t> graphicsFamily;
@@ -111,12 +77,14 @@ namespace gg
 			std::vector<VkPresentModeKHR>   presentModes;
 		};
 
-		std::expected<void, Error> CreateVkInstance(std::vector<char const*> const& layers, std::vector<char const*> const& extensions);
-		std::expected<void, Error> SelectPhysicalDevice();
-		std::expected<void, Error> CreateLogicalDevice();
-		std::expected<void, Error> CreateSwapChain();
-		std::expected<void, Error> CreateRenderPass();
-		std::expected<void, Error> CreateCommandPool();
+		std::expected<void, Error> CreateVkInstance(
+			std::vector<char const*> const& layers,
+			std::vector<char const*> const& extensions
+		);
+		std::expected<VkPhysicalDevice, Error> SelectPhysicalDevice();
+		std::expected<void, Error>             CreateDeviceContext(VkPhysicalDevice);
+		std::expected<void, Error>             CreateSwapChain();
+		std::expected<void, Error>             CreateRenderPass();
 
 		std::expected<void, Error> CreateImageViews();
 
@@ -131,7 +99,8 @@ namespace gg
 		std::expected<void, Error> RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex);
 		std::expected<void, Error> SubmitCommands(uint32_t imageIndex);
 
-		VkResult Present(uint32_t imageIndex);
+		VkResult           Present(uint32_t imageIndex);
+		RenderTargetVulkan GetRenderTarget() const;
 
 		void                       CleanupSwapChain();
 		std::expected<void, Error> RecreateSwapChain();
@@ -151,7 +120,6 @@ namespace gg
 		uint32_t    height{};
 		SDL_Window* windowHandleSDL{ nullptr };
 
-		VkCommandPool                                  commandPool{};
 		std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers{};
 		VkRenderPass                                   renderPass{};
 
@@ -174,12 +142,10 @@ namespace gg
 		std::unique_ptr<DebugOverlayVulkan>       debugOverlay;
 		std::unique_ptr<SkyboxVulkan>             skybox;
 
-		VkDevice         device{};
-		VkInstance       instance{};
-		VkPhysicalDevice physicalDevice{};
-		VkQueue          graphicsQueue{};
-		VkSurfaceKHR     surface{};
-		VkSwapchainKHR   swapChain{};
+		std::shared_ptr<DeviceContextVulkan> context;
+		VkInstance                           instance{};
+		VkSurfaceKHR                         surface{};
+		VkSwapchainKHR                       swapChain{};
 		/* Synchronization objects */
 		std::array<VkSemaphore, maxFramesInFlight> frameImageAvailableSemaphores{};
 		std::vector<VkSemaphore>                   swapchainImageRenderFinishedSemaphores;

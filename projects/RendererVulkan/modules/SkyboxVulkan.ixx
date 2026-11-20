@@ -7,6 +7,7 @@ module;
 #include <vulkan/vulkan.h>
 export module SkyboxVulkan;
 
+import DeviceContextVulkan;
 import Camera;
 import ErrorHandling;
 import GraphicsPipelineVulkan;
@@ -19,10 +20,10 @@ export namespace gg
 	class SkyboxVulkan : public Skybox
 	{
 	public:
-		SkyboxVulkan(std::string const& name, std::shared_ptr<ShaderProgram>, VkDevice);
+		SkyboxVulkan(std::string const& name, std::shared_ptr<ShaderProgram>, std::shared_ptr<DeviceContextVulkan>);
 		~SkyboxVulkan() noexcept override;
-		std::expected<void, Error> Initialize(VkDescriptorPool);
-		std::expected<void, Error> CreatePipeline();
+		std::expected<void, Error> Initialize(VkDescriptorPool, RenderTargetVulkan const&);
+		std::expected<void, Error> CreatePipeline(RenderTargetVulkan const&);
 		void                       Draw(VkCommandBuffer, uint32_t frame, Camera const&);
 
 	private:
@@ -36,11 +37,11 @@ export namespace gg
 		void                       DestroyPipeline();
 		void                       UpdateCamera(uint32_t frame, Camera const&);
 
-		VkDevice       device{};
-		VkImage        textureImage{};
-		VkDeviceMemory textureImageMemory{};
-		VkImageView    textureImageView{};
-		VkSampler      textureSampler{};
+		std::shared_ptr<DeviceContextVulkan> context;
+		VkImage                              textureImage{};
+		VkDeviceMemory                       textureImageMemory{};
+		VkImageView                          textureImageView{};
+		VkSampler                            textureSampler{};
 
 		VkDescriptorSetLayout descriptorSetLayout{};
 		GraphicsPipeline      graphicsPipeline{};

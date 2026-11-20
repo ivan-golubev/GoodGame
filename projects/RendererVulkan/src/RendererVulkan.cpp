@@ -23,6 +23,7 @@ module RendererVulkan;
 
 import Camera;
 import DebugOverlayVulkan;
+import DeviceContextVulkan;
 import ErrorHandling;
 import GlobalSettings;
 import Input;
@@ -122,14 +123,15 @@ namespace gg
 				.message = "Could not create a Vulkan surface.",
 			});
 
-		if (auto result{ SelectPhysicalDevice() }; !result) return std::unexpected(result.error());
-		if (auto result{ CreateLogicalDevice() }; !result) return std::unexpected(result.error());
+		auto physicalDeviceResult{ SelectPhysicalDevice() };
+		if (!physicalDeviceResult) return std::unexpected(physicalDeviceResult.error());
+		if (auto result{ CreateDeviceContext(*physicalDeviceResult) }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateSwapChain() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
 		{
-			auto depthFormatResult{ DepthBufferVulkan::FindFormat(physicalDevice) };
+			auto depthFormatResult{ DepthBufferVulkan::FindFormat(context->GetPhysicalDevice()) };
 			if (!depthFormatResult) return std::unexpected(depthFormatResult.error());
-			depthBuffer = std::make_unique<DepthBufferVulkan>(device, physicalDevice, *depthFormatResult);
+			depthBuffer = std::make_unique<DepthBufferVulkan>(context->GetDevice(), context->GetPhysicalDevice(), *depthFormatResult);
 		}
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
 		if (auto result{ depthBuffer->Create(swapChainExtent) }; !result) return std::unexpected(result.error());
@@ -137,28 +139,27 @@ namespace gg
 		if (auto result{ CreateDescriptorPool() }; !result) return std::unexpected(result.error());
 
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
-		if (auto result{ CreateCommandPool() }; !result) return std::unexpected(result.error());
 
 		if (auto result{ CreateCommandBuffers() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateSyncObjects() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateRenderFinishedSemaphores() }; !result) return std::unexpected(result.error());
 
 		{ /* ImGUI */
-			QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
+			QueueFamilyIndices indices{ FindQueueFamilies(context->GetPhysicalDevice()) };
 			if (!indices.graphicsFamily)
 				return std::unexpected(Error{
 					.code    = ErrorCode::VulkanRendererInitializationFailed,
 					.message = "No graphics queue family was found for the Vulkan debug UI.",
 				});
 			DebugOverlayVulkanCreateInfo debugOverlayInfo{
-				.device              = device,
+				.device              = context->GetDevice(),
 				.instance            = instance,
 				.graphicsQueueFamily = *indices.graphicsFamily,
-				.graphicsQueue       = graphicsQueue,
-				.physicalDevice      = physicalDevice,
+				.graphicsQueue       = context->GetGraphicsQueue(),
+				.physicalDevice      = context->GetPhysicalDevice(),
 				.renderPass          = renderPass,
 				.windowHandleSDL     = windowHandleSDL,
-				.renderer            = this,
+				.context             = context,
 			};
 
 			debugOverlay = std::make_unique<DebugOverlayVulkan>();
@@ -176,20 +177,6 @@ namespace gg
 	std::shared_ptr<Camera> RendererVulkan::GetCamera()
 	{
 		return camera;
-	}
-
-	RendererVulkan* RendererVulkan::current{ nullptr };
-
-	RendererVulkan::RendererVulkan()
-	{
-		BreakIfFalse(current == nullptr);
-		current = this;
-	}
-
-	RendererVulkan& RendererVulkan::Get()
-	{
-		BreakIfFalse(current != nullptr);
-		return *current;
 	}
 
 	std::expected<void, Error> RendererVulkan::CreateVkInstance(
@@ -246,7 +233,7 @@ namespace gg
 
 	std::expected<void, Error> RendererVulkan::CreateSwapChain()
 	{
-		SwapChainSupportDetails swapChainSupport{ QuerySwapChainSupport(physicalDevice) };
+		SwapChainSupportDetails swapChainSupport{ QuerySwapChainSupport(context->GetPhysicalDevice()) };
 		VkSurfaceFormatKHR      surfaceFormat{ ChooseSwapSurfaceFormat(swapChainSupport.formats) };
 		VkPresentModeKHR        presentMode{ ChooseSwapPresentMode(swapChainSupport.presentModes) };
 		VkExtent2D              extent{ ChooseSwapExtent(swapChainSupport.capabilities) };
@@ -254,7 +241,7 @@ namespace gg
 		uint32_t imageCount{ swapChainSupport.capabilities.minImageCount + 1 };
 		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
 			imageCount = swapChainSupport.capabilities.maxImageCount;
-		QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
+		QueueFamilyIndices indices{ FindQueueFamilies(context->GetPhysicalDevice()) };
 		if (!indices.IsComplete())
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanRendererInitializationFailed,
@@ -279,15 +266,15 @@ namespace gg
 			.presentMode           = presentMode,
 			.clipped               = VK_TRUE,
 		};
-		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
+		if (vkCreateSwapchainKHR(context->GetDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanRendererInitializationFailed,
 				.message = "Failed to create swap chain.",
 			});
 		/* Retrieve the swap chain images to render to */
-		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+		vkGetSwapchainImagesKHR(context->GetDevice(), swapChain, &imageCount, nullptr);
 		swapChainImages.resize(imageCount);
-		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+		vkGetSwapchainImagesKHR(context->GetDevice(), swapChain, &imageCount, swapChainImages.data());
 
 		swapChainImageFormat = surfaceFormat.format;
 		swapChainExtent      = extent;
@@ -299,7 +286,7 @@ namespace gg
 		swapChainImageViews.resize(swapChainImages.size());
 		for (size_t i{ 0 }; i < swapChainImages.size(); ++i)
 		{
-			auto imageViewResult{ CreateImageView(device, swapChainImages[i], swapChainImageFormat) };
+			auto imageViewResult{ CreateImageView(context->GetDevice(), swapChainImages[i], swapChainImageFormat) };
 			if (!imageViewResult)
 				return std::unexpected(Error{
 					.code    = ErrorCode::VulkanRendererInitializationFailed,
@@ -374,7 +361,7 @@ namespace gg
 			.pDependencies   = &dependency,
 		};
 
-		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+		if (vkCreateRenderPass(context->GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		{
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanRendererInitializationFailed,
@@ -382,148 +369,6 @@ namespace gg
 			});
 		}
 		return {};
-	}
-
-	std::expected<GraphicsPipeline, Error> RendererVulkan::CreateGraphicsPipeline(
-		VkShaderModule                               vertexShader,
-		VkShaderModule                               fragmentShader,
-		VkPipelineVertexInputStateCreateInfo const&  vertexInputInfo,
-		VkCullModeFlags                              cullMode,
-		VkPipelineDepthStencilStateCreateInfo const& depthStencil,
-		VkDescriptorSetLayout const&                 setLayout
-	)
-	{
-		std::expected<GraphicsPipeline, Error> result{ std::in_place };
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{
-			.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.stage  = VK_SHADER_STAGE_VERTEX_BIT,
-			.module = vertexShader,
-			.pName  = entryPointVertexShader.data(),
-		};
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{
-			.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
-			.module = fragmentShader,
-			.pName  = entryPointFragmentShader.data(),
-		};
-
-		VkPipelineShaderStageCreateInfo const shaderStages[]{ vertShaderStageInfo, fragShaderStageInfo };
-
-		VkPipelineInputAssemblyStateCreateInfo inputAssembly{
-			.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-			.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-			.primitiveRestartEnable = VK_FALSE,
-		};
-
-		float const viewportY{
-			flipVulkanViewport
-				? static_cast<float>(swapChainExtent.height)
-				: 0.f
-		};
-		float const viewportHeight{
-			flipVulkanViewport
-				? -static_cast<float>(swapChainExtent.height)
-				: static_cast<float>(swapChainExtent.height)
-		};
-		VkViewport viewport{
-			.x        = 0.f,
-			.y        = viewportY,
-			.width    = static_cast<float>(swapChainExtent.width),
-			.height   = viewportHeight,
-			.minDepth = 0.f,
-			.maxDepth = 1.f,
-		};
-		VkRect2D scissor{
-			.offset = { .x = 0, .y = 0 },
-			.extent = swapChainExtent,
-		};
-
-		VkPipelineViewportStateCreateInfo viewportState{
-			.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-			.viewportCount = 1,
-			.pViewports    = &viewport,
-			.scissorCount  = 1,
-			.pScissors     = &scissor,
-		};
-
-		VkPipelineRasterizationStateCreateInfo rasterizer{
-			.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-			.depthClampEnable        = VK_FALSE,
-			.rasterizerDiscardEnable = VK_FALSE,
-			.polygonMode             = VK_POLYGON_MODE_FILL,
-			.cullMode                = cullMode,
-			.frontFace               = VK_FRONT_FACE_CLOCKWISE,
-			.depthBiasEnable         = VK_FALSE,
-			.lineWidth               = 1.f,
-		};
-
-		VkPipelineMultisampleStateCreateInfo multisampling{
-			.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-			.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-			.sampleShadingEnable  = VK_FALSE,
-		};
-
-		VkPipelineColorBlendAttachmentState colorBlendAttachment{
-			.blendEnable         = VK_FALSE,
-			.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-			.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-			.colorBlendOp        = VK_BLEND_OP_ADD,
-			.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-			.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-			.alphaBlendOp        = VK_BLEND_OP_ADD,
-			.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT
-				| VK_COLOR_COMPONENT_G_BIT
-				| VK_COLOR_COMPONENT_B_BIT
-				| VK_COLOR_COMPONENT_A_BIT,
-		};
-
-		VkPipelineColorBlendStateCreateInfo colorBlending{
-			.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-			.logicOpEnable   = VK_FALSE,
-			.logicOp         = VK_LOGIC_OP_COPY,
-			.attachmentCount = 1,
-			.pAttachments    = &colorBlendAttachment,
-		};
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{
-			.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-			.setLayoutCount = 1,
-			.pSetLayouts    = &setLayout,
-		};
-
-		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &result->layout) != VK_SUCCESS)
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanResourceCreationFailed,
-				.message = "Failed to create Vulkan graphics pipeline layout.",
-			});
-
-		VkGraphicsPipelineCreateInfo pipelineInfo{
-			.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-			.stageCount          = 2,
-			.pStages             = shaderStages,
-			.pVertexInputState   = &vertexInputInfo,
-			.pInputAssemblyState = &inputAssembly,
-			.pViewportState      = &viewportState,
-			.pRasterizationState = &rasterizer,
-			.pMultisampleState   = &multisampling,
-			.pDepthStencilState  = &depthStencil,
-			.pColorBlendState    = &colorBlending,
-			.layout              = result->layout,
-			.renderPass          = renderPass,
-			.subpass             = 0,
-		};
-
-		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &result->pipeline) != VK_SUCCESS)
-		{
-			vkDestroyPipelineLayout(device, result->layout, nullptr);
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanResourceCreationFailed,
-				.message = "Failed to create Vulkan graphics pipeline.",
-			});
-		}
-		return result;
 	}
 
 	std::expected<void, Error> RendererVulkan::CreateFrameBuffers()
@@ -542,7 +387,7 @@ namespace gg
 				.height          = swapChainExtent.height,
 				.layers          = 1,
 			};
-			if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS)
+			if (vkCreateFramebuffer(context->GetDevice(), &framebufferInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS)
 				return std::unexpected(Error{
 					.code    = ErrorCode::VulkanResourceCreationFailed,
 					.message = "Failed to create Vulkan framebuffer.",
@@ -551,38 +396,15 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::CreateCommandPool()
-	{
-		QueueFamilyIndices queueFamilyIndices{ FindQueueFamilies(physicalDevice) };
-		if (!queueFamilyIndices.graphicsFamily)
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanRendererInitializationFailed,
-				.message = "No graphics queue family was found while creating the Vulkan command pool.",
-			});
-		VkCommandPoolCreateInfo poolInfo{
-			.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-			.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-			.queueFamilyIndex = *queueFamilyIndices.graphicsFamily,
-		};
-		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
-		{
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanRendererInitializationFailed,
-				.message = "Failed to create Vulkan command pool.",
-			});
-		}
-		return {};
-	}
-
 	std::expected<void, Error> RendererVulkan::CreateCommandBuffers()
 	{
 		VkCommandBufferAllocateInfo allocInfo{
 			.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool        = commandPool,
+			.commandPool        = context->GetCommandPool(),
 			.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 			.commandBufferCount = static_cast<uint32_t>(commandBuffers.size()),
 		};
-		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+		if (vkAllocateCommandBuffers(context->GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanRendererInitializationFailed,
 				.message = "Failed to allocate Vulkan command buffers.",
@@ -602,8 +424,8 @@ namespace gg
 		};
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frameImageAvailableSemaphores[i]) != VK_SUCCESS
-			    || vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+			if (vkCreateSemaphore(context->GetDevice(), &semaphoreInfo, nullptr, &frameImageAvailableSemaphores[i]) != VK_SUCCESS
+			    || vkCreateFence(context->GetDevice(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
 			{
 				return std::unexpected(Error{
 					.code    = ErrorCode::VulkanRendererInitializationFailed,
@@ -622,7 +444,7 @@ namespace gg
 		swapchainImageRenderFinishedSemaphores.resize(swapChainImages.size(), VK_NULL_HANDLE);
 		for (VkSemaphore& semaphore : swapchainImageRenderFinishedSemaphores)
 		{
-			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore) != VK_SUCCESS)
+			if (vkCreateSemaphore(context->GetDevice(), &semaphoreInfo, nullptr, &semaphore) != VK_SUCCESS)
 				return std::unexpected(Error{
 					.code    = ErrorCode::VulkanRendererInitializationFailed,
 					.message = "Failed to create Vulkan swap chain image synchronization semaphore.",
@@ -660,23 +482,6 @@ namespace gg
 			i++;
 		}
 		return indices;
-	}
-
-	std::expected<uint32_t, Error> RendererVulkan::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
-	{
-		VkPhysicalDeviceMemoryProperties memProperties;
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-		for (uint32_t i{ 0 }; i < memProperties.memoryTypeCount; ++i)
-		{
-			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-			{
-				return i;
-			}
-		}
-		return std::unexpected(Error{
-			.code    = ErrorCode::VulkanResourceCreationFailed,
-			.message = "Failed to find a compatible Vulkan memory type.",
-		});
 	}
 
 	RendererVulkan::SwapChainSupportDetails RendererVulkan::QuerySwapChainSupport(VkPhysicalDevice device) const
@@ -731,9 +536,10 @@ namespace gg
 			&& supportedFeatures.samplerAnisotropy;
 	}
 
-	std::expected<void, Error> RendererVulkan::SelectPhysicalDevice()
+	std::expected<VkPhysicalDevice, Error> RendererVulkan::SelectPhysicalDevice()
 	{
-		uint32_t deviceCount = 0;
+		VkPhysicalDevice physicalDevice{ VK_NULL_HANDLE };
+		uint32_t         deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 		if (deviceCount == 0)
 		{
@@ -759,10 +565,10 @@ namespace gg
 				.message = "Failed to find a suitable GPU.",
 			});
 		}
-		return {};
+		return physicalDevice;
 	}
 
-	std::expected<void, Error> RendererVulkan::CreateLogicalDevice()
+	std::expected<void, Error> RendererVulkan::CreateDeviceContext(VkPhysicalDevice physicalDevice)
 	{
 		QueueFamilyIndices indices{ FindQueueFamilies(physicalDevice) };
 		if (!indices.IsComplete())
@@ -810,13 +616,21 @@ namespace gg
 			.ppEnabledExtensionNames = deviceExtensions.data(),
 			.pEnabledFeatures        = &enabledVk10Features,
 		};
+		VkDevice       device{};
 		VkResult const result{ vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) };
 		if (result != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanRendererInitializationFailed,
 				.message = std::format("Failed to create Vulkan logical device (VkResult {}).", static_cast<int>(result)),
 			});
+		VkQueue graphicsQueue{};
 		vkGetDeviceQueue(device, *indices.graphicsFamily, 0, &graphicsQueue);
+
+		/* From here on the context owns the device */
+		auto contextResult{ DeviceContextVulkan::Create(physicalDevice, device, *indices.graphicsFamily, graphicsQueue) };
+		if (!contextResult)
+			return std::unexpected(contextResult.error());
+		context = std::move(*contextResult);
 		return {};
 	}
 
@@ -841,11 +655,11 @@ namespace gg
 				if (memory)
 					vkFreeMemory(device, memory, nullptr);
 			}
-		} resources{ device };
+		} resources{ context->GetDevice() };
 
 		uint64_t const indexBufferSizeBytes{ mesh.IndicesSizeBytes() };
 
-		auto stagingBufferResult{ CreateBuffer(
+		auto stagingBufferResult{ context->CreateBuffer(
 			resources.stagingBuffer,
 			resources.stagingMemory,
 			indexBufferSizeBytes,
@@ -856,19 +670,19 @@ namespace gg
 			return std::unexpected(stagingBufferResult.error());
 
 		void*          mappedData{};
-		VkResult const mapResult{ vkMapMemory(device, resources.stagingMemory, 0, indexBufferSizeBytes, 0, &mappedData) };
+		VkResult const mapResult{ vkMapMemory(context->GetDevice(), resources.stagingMemory, 0, indexBufferSizeBytes, 0, &mappedData) };
 		if (mapResult != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanResourceCreationFailed,
 				.message = std::format("Failed to map staging buffer for index data (VkResult {})", static_cast<int>(mapResult)),
 			});
 		memcpy(mappedData, mesh.indices.data(), static_cast<size_t>(indexBufferSizeBytes));
-		vkUnmapMemory(device, resources.stagingMemory);
+		vkUnmapMemory(context->GetDevice(), resources.stagingMemory);
 
 		VkBufferUsageFlagBits const usage{ static_cast<VkBufferUsageFlagBits>(
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT
 		) };
-		auto                        indexBufferResult{ CreateBuffer(
+		auto                        indexBufferResult{ context->CreateBuffer(
 			resources.buffer,
 			resources.memory,
 			indexBufferSizeBytes,
@@ -877,7 +691,7 @@ namespace gg
 		) };
 		if (!indexBufferResult)
 			return std::unexpected(indexBufferResult.error());
-		if (auto result{ CopyBuffer(resources.stagingBuffer, resources.buffer, indexBufferSizeBytes) }; !result)
+		if (auto result{ context->CopyBuffer(resources.stagingBuffer, resources.buffer, indexBufferSizeBytes) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -902,7 +716,7 @@ namespace gg
 			.pPoolSizes    = poolSizes.data(),
 		};
 
-		if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+		if (vkCreateDescriptorPool(context->GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanResourceCreationFailed,
 				.message = "Failed to create Vulkan descriptor pool.",
@@ -921,25 +735,25 @@ namespace gg
 
 	void RendererVulkan::CleanupSwapChain()
 	{
-		if (!device)
+		if (!context->GetDevice())
 			return;
 		for (auto framebuffer : frameBuffers)
-			if (framebuffer) vkDestroyFramebuffer(device, framebuffer, nullptr);
+			if (framebuffer) vkDestroyFramebuffer(context->GetDevice(), framebuffer, nullptr);
 		frameBuffers.clear();
 		for (auto imageView : swapChainImageViews)
-			if (imageView) vkDestroyImageView(device, imageView, nullptr);
+			if (imageView) vkDestroyImageView(context->GetDevice(), imageView, nullptr);
 		swapChainImageViews.clear();
-		if (renderPass) vkDestroyRenderPass(device, renderPass, nullptr);
+		if (renderPass) vkDestroyRenderPass(context->GetDevice(), renderPass, nullptr);
 		renderPass = VK_NULL_HANDLE;
-		if (swapChain) vkDestroySwapchainKHR(device, swapChain, nullptr);
+		if (swapChain) vkDestroySwapchainKHR(context->GetDevice(), swapChain, nullptr);
 		swapChain = VK_NULL_HANDLE;
 	}
 
 	std::expected<void, Error> RendererVulkan::RecreateSwapChain()
 	{
-		vkDeviceWaitIdle(device);
+		vkDeviceWaitIdle(context->GetDevice());
 		for (VkSemaphore semaphore : swapchainImageRenderFinishedSemaphores)
-			if (semaphore) vkDestroySemaphore(device, semaphore, nullptr);
+			if (semaphore) vkDestroySemaphore(context->GetDevice(), semaphore, nullptr);
 		swapchainImageRenderFinishedSemaphores.clear();
 		CleanupSwapChain();
 
@@ -949,117 +763,31 @@ namespace gg
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
 		if (auto result{ depthBuffer->Create(swapChainExtent) }; !result) return std::unexpected(result.error());
 		if (skybox)
-			if (auto result{ skybox->CreatePipeline() }; !result) return std::unexpected(result.error());
+			if (auto result{ skybox->CreatePipeline(GetRenderTarget()) }; !result) return std::unexpected(result.error());
 		for (auto model : models)
-			if (auto result{ model->CreatePipeline() }; !result) return std::unexpected(result.error());
+			if (auto result{ model->CreatePipeline(GetRenderTarget()) }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::CreateBuffer(
-		VkBuffer&             outBuffer,
-		VkDeviceMemory&       outBufferMemory,
-		uint64_t              sizeBytes,
-		VkBufferUsageFlagBits usage,
-		VkMemoryPropertyFlags properties
-	)
-	{
-		struct BufferResources
-		{
-			VkDevice       device;
-			VkBuffer       buffer{};
-			VkDeviceMemory memory{};
-
-			~BufferResources() noexcept
-			{
-				if (buffer)
-					vkDestroyBuffer(device, buffer, nullptr);
-				if (memory)
-					vkFreeMemory(device, memory, nullptr);
-			}
-		} resources{ device };
-		outBuffer       = VK_NULL_HANDLE;
-		outBufferMemory = VK_NULL_HANDLE;
-
-		VkBufferCreateInfo bufferInfo{
-			.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-			.size        = sizeBytes,
-			.usage       = static_cast<VkBufferUsageFlags>(usage),
-			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		};
-		VkResult const createResult{ vkCreateBuffer(device, &bufferInfo, nullptr, &resources.buffer) };
-		if (createResult != VK_SUCCESS)
-		{
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanResourceCreationFailed,
-				.message = std::format("Failed to create Vulkan buffer (VkResult {})", static_cast<int>(createResult)),
-			});
-		}
-
-		/* allocate and bind memory to this buffer */
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device, resources.buffer, &memRequirements);
-
-		auto memoryTypeResult{ FindMemoryType(memRequirements.memoryTypeBits, properties) };
-		if (!memoryTypeResult)
-			return std::unexpected(memoryTypeResult.error());
-		VkMemoryAllocateInfo allocInfo{
-			.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize  = memRequirements.size,
-			.memoryTypeIndex = *memoryTypeResult,
-		};
-		VkResult const allocationResult{ vkAllocateMemory(device, &allocInfo, nullptr, &resources.memory) };
-		if (allocationResult != VK_SUCCESS)
-		{
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanResourceCreationFailed,
-				.message = std::format("Failed to allocate memory for Vulkan buffer (VkResult {})", static_cast<int>(allocationResult)),
-			});
-		}
-		VkResult const bindResult{ vkBindBufferMemory(device, resources.buffer, resources.memory, 0) };
-		if (bindResult != VK_SUCCESS)
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanResourceCreationFailed,
-				.message = std::format("Failed to bind memory to Vulkan buffer (VkResult {})", static_cast<int>(bindResult)),
-			});
-
-		outBuffer       = std::exchange(resources.buffer, VK_NULL_HANDLE);
-		outBufferMemory = std::exchange(resources.memory, VK_NULL_HANDLE);
-		return {};
-	}
-
-	std::expected<void, Error> RendererVulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-	{
-		auto commandBufferResult{ BeginSingleTimeCommands() };
-		if (!commandBufferResult)
-			return std::unexpected(commandBufferResult.error());
-		VkCommandBuffer commandBuffer{ *commandBufferResult };
-
-		VkBufferCopy copyRegion{ .size = size };
-		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-		return EndSingleTimeCommands(commandBuffer);
-	}
-
 	RendererVulkan::~RendererVulkan() noexcept
 	{
-		if (device)
+		if (context)
 		{
 			/* Ensure that the GPU is no longer referencing resources that are about to be
 			 cleaned up by the destructor. */
-			vkDeviceWaitIdle(device);
+			vkDeviceWaitIdle(context->GetDevice());
 
 			CleanupSwapChain();
 			depthBuffer.reset();
 
 			for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 			{
-				if (frameImageAvailableSemaphores[i]) vkDestroySemaphore(device, frameImageAvailableSemaphores[i], nullptr);
-				if (inFlightFences[i]) vkDestroyFence(device, inFlightFences[i], nullptr);
+				if (frameImageAvailableSemaphores[i]) vkDestroySemaphore(context->GetDevice(), frameImageAvailableSemaphores[i], nullptr);
+				if (inFlightFences[i]) vkDestroyFence(context->GetDevice(), inFlightFences[i], nullptr);
 			}
 			for (VkSemaphore semaphore : swapchainImageRenderFinishedSemaphores)
-				if (semaphore) vkDestroySemaphore(device, semaphore, nullptr);
-			if (commandPool) vkDestroyCommandPool(device, commandPool, nullptr);
+				if (semaphore) vkDestroySemaphore(context->GetDevice(), semaphore, nullptr);
 		}
 
 		/* destroys the associated shaders and textures */
@@ -1067,13 +795,13 @@ namespace gg
 		skybox.reset();
 
 		debugOverlay.reset();
-		if (device && descriptorPool) vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+		if (context && descriptorPool) vkDestroyDescriptorPool(context->GetDevice(), descriptorPool, nullptr);
 
 		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
-		if (device) vkDestroyDevice(device, nullptr);
+		/* The renderer holds the last reference: this destroys the command pool and the context->GetDevice() */
+		BreakIfFalse(!context || context.use_count() == 1);
+		context.reset();
 		if (instance) vkDestroyInstance(instance, nullptr);
-
-		current = nullptr;
 	}
 
 	void RendererVulkan::OnWindowResized(uint32_t width, uint32_t height)
@@ -1083,15 +811,13 @@ namespace gg
 		height          = std::max(8u, height);
 	}
 
-	VkDevice RendererVulkan::GetDevice() const { return device; }
-
 	std::expected<void, Error> RendererVulkan::Render(nanoseconds deltaTime)
 	{
-		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+		vkWaitForFences(context->GetDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 		uint32_t imageIndex;
 		VkResult result{ vkAcquireNextImageKHR(
-			device,
+			context->GetDevice(),
 			swapChain,
 			UINT64_MAX,
 			frameImageAvailableSemaphores[currentFrame],
@@ -1111,7 +837,7 @@ namespace gg
 
 		camera->UpdateCamera(deltaTime);
 
-		vkResetFences(device, 1, &inFlightFences[currentFrame]);
+		vkResetFences(context->GetDevice(), 1, &inFlightFences[currentFrame]);
 
 		/* Record all the commands we need to render the scene into the command list. */
 		if (auto commandResult{ RecordCommandBuffer(commandBuffers[currentFrame], imageIndex) }; !commandResult)
@@ -1150,19 +876,10 @@ namespace gg
 			shaderName,
 			shaderExtensionVulkan
 		) };
-		auto              shader{ std::make_unique<ShaderProgramVulkan>(ShaderProgramVulkan::PassKey{}, device) };
+		auto              shader{ std::make_unique<ShaderProgramVulkan>(ShaderProgramVulkan::PassKey{}, context->GetDevice()) };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
-	}
-
-	std::expected<std::shared_ptr<Texture>, Error> RendererVulkan::LoadTexture(std::string const& name)
-	{
-		std::string const textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
-		auto              texture{ std::make_unique<TextureVulkan>(device, textureRelativePath) };
-		if (auto const result{ texture->Initialize() }; !result)
-			return std::unexpected(result.error());
-		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
 	std::expected<void, Error> RendererVulkan::LoadModel(
@@ -1175,8 +892,8 @@ namespace gg
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		std::shared_ptr<ModelVulkan>   model{ std::make_shared<ModelVulkan>(modelRelativePath, shader, position, device) };
-		if (auto const result{ model->Initialize(descriptorPool) }; !result)
+		std::shared_ptr<ModelVulkan>   model{ std::make_shared<ModelVulkan>(modelRelativePath, shader, position, context) };
+		if (auto const result{ model->Initialize(descriptorPool, GetRenderTarget()) }; !result)
 			return std::unexpected(result.error());
 		models.push_back(model);
 		return {};
@@ -1188,10 +905,15 @@ namespace gg
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		skybox = std::make_unique<SkyboxVulkan>(name, shader, device);
-		if (auto result{ skybox->Initialize(descriptorPool) }; !result)
+		skybox = std::make_unique<SkyboxVulkan>(name, shader, context);
+		if (auto result{ skybox->Initialize(descriptorPool, GetRenderTarget()) }; !result)
 			return std::unexpected(result.error());
 		return {};
+	}
+
+	RenderTargetVulkan RendererVulkan::GetRenderTarget() const
+	{
+		return RenderTargetVulkan{ .renderPass = renderPass, .extent = swapChainExtent };
 	}
 
 	VkResult RendererVulkan::Present(uint32_t imageIndex)
@@ -1206,7 +928,7 @@ namespace gg
 			.pSwapchains        = swapChains,
 			.pImageIndices      = &imageIndex,
 		};
-		return vkQueuePresentKHR(graphicsQueue, &presentInfo);
+		return vkQueuePresentKHR(context->GetGraphicsQueue(), &presentInfo);
 	}
 
 	std::expected<void, Error> RendererVulkan::SubmitCommands(uint32_t imageIndex)
@@ -1224,7 +946,7 @@ namespace gg
 			.signalSemaphoreCount = 1,
 			.pSignalSemaphores    = signalSemaphores,
 		};
-		VkResult const result{ vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) };
+		VkResult const result{ vkQueueSubmit(context->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) };
 		if (result != VK_SUCCESS)
 			return std::unexpected(Error{
 				.code    = ErrorCode::VulkanRendererFrameFailed,
@@ -1279,117 +1001,6 @@ namespace gg
 				.message = "Failed to finish recording Vulkan command buffer.",
 			});
 		return {};
-	}
-
-	std::expected<VkCommandBuffer, Error> RendererVulkan::BeginSingleTimeCommands()
-	{
-		VkCommandBufferAllocateInfo allocInfo{
-			.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool        = commandPool,
-			.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-			.commandBufferCount = 1,
-		};
-
-		VkCommandBuffer commandBuffer{};
-		VkResult const  allocationResult{ vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) };
-		if (allocationResult != VK_SUCCESS)
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanCommandFailed,
-				.message = std::format("Failed to allocate a one-time command buffer (VkResult {})", static_cast<int>(allocationResult)),
-			});
-
-		VkCommandBufferBeginInfo beginInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-		};
-
-		VkResult const beginResult{ vkBeginCommandBuffer(commandBuffer, &beginInfo) };
-		if (beginResult != VK_SUCCESS)
-		{
-			vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanCommandFailed,
-				.message = std::format("Failed to begin a one-time command buffer (VkResult {})", static_cast<int>(beginResult)),
-			});
-		}
-		return commandBuffer;
-	}
-
-	std::expected<void, Error> RendererVulkan::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
-	{
-		VkResult const endResult{ vkEndCommandBuffer(commandBuffer) };
-		if (endResult != VK_SUCCESS)
-		{
-			vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanCommandFailed,
-				.message = std::format("Failed to end a one-time command buffer (VkResult {})", static_cast<int>(endResult)),
-			});
-		}
-
-		VkSubmitInfo submitInfo{
-			.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-			.commandBufferCount = 1,
-			.pCommandBuffers    = &commandBuffer,
-		};
-
-		VkResult const submitResult{ vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) };
-		if (submitResult != VK_SUCCESS)
-		{
-			vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanCommandFailed,
-				.message = std::format("Failed to submit a one-time command buffer (VkResult {})", static_cast<int>(submitResult)),
-			});
-		}
-		VkResult const waitResult{ vkQueueWaitIdle(graphicsQueue) };
-		if (waitResult != VK_SUCCESS)
-		{
-			vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-			auto const message{ std::format(
-				"Failed to wait for a one-time command buffer to finish (VkResult {})",
-				static_cast<int>(waitResult)
-			) };
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanCommandFailed,
-				.message = message,
-			});
-		}
-
-		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-		return {};
-	}
-
-	std::expected<VkSampler, Error> RendererVulkan::CreateTextureSampler()
-	{
-		VkPhysicalDeviceProperties properties{ .apiVersion = 0 };
-		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-		VkSamplerCreateInfo samplerInfo{
-			.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-			.magFilter               = VK_FILTER_LINEAR,
-			.minFilter               = VK_FILTER_LINEAR,
-			.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-			.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.mipLodBias              = 0.f,
-			.anisotropyEnable        = VK_TRUE,
-			.maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
-			.compareEnable           = VK_FALSE,
-			.compareOp               = VK_COMPARE_OP_ALWAYS,
-			.minLod                  = 0.f,
-			.maxLod                  = 0.f,
-			.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-			.unnormalizedCoordinates = VK_FALSE,
-		};
-		VkSampler      textureSampler{};
-		VkResult const result{ vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) };
-		if (result != VK_SUCCESS)
-			return std::unexpected(Error{
-				.code    = ErrorCode::VulkanResourceCreationFailed,
-				.message = std::format("Failed to create texture sampler (VkResult {}).", static_cast<int>(result)),
-			});
-		return textureSampler;
 	}
 
 } // namespace gg

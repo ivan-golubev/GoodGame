@@ -9,7 +9,6 @@ module DebugOverlayVulkan;
 import Camera;
 import DebugOverlay;
 import ErrorHandling;
-import RendererVulkan;
 import SettingsRenderer;
 
 namespace gg
@@ -95,12 +94,12 @@ namespace gg
 			});
 
 		{ /* upload fonts for ImGUI */
-			auto commandBufferResult{ info.renderer->BeginSingleTimeCommands() };
+			auto commandBufferResult{ info.context->BeginSingleTimeCommands() };
 			if (!commandBufferResult)
 				return std::unexpected(commandBufferResult.error());
 			VkCommandBuffer const commandBuffer{ *commandBufferResult };
 			ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-			if (auto result{ info.renderer->EndSingleTimeCommands(commandBuffer) }; !result)
+			if (auto result{ info.context->EndSingleTimeCommands(commandBuffer) }; !result)
 				return std::unexpected(result.error());
 		}
 		return {};
