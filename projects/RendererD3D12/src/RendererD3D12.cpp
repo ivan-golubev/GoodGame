@@ -62,7 +62,6 @@ namespace gg
 		windowHandleSDL = rs.windowHandle;
 		windowHandle    = GetWindowHandle(rs.windowHandle);
 		timeManager     = rs.timeManager;
-		camera          = std::make_shared<Camera>(rs.inputManager);
 		scissorRect     = {
 			D3D12_DEFAULT_SCISSOR_STARTX,
 			D3D12_DEFAULT_SCISSOR_STARTY,
@@ -271,11 +270,6 @@ namespace gg
 	RendererType RendererD3D12::GetType() const
 	{
 		return RendererType::D3D12;
-	}
-
-	std::shared_ptr<Camera> RendererD3D12::GetCamera()
-	{
-		return camera;
 	}
 
 	std::expected<void, Error> RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
@@ -575,18 +569,18 @@ namespace gg
 		height          = std::max(8u, height);
 	}
 
-	std::expected<void, Error> RendererD3D12::Render(nanoseconds deltaTime)
+	std::expected<void, Error> RendererD3D12::Render(nanoseconds deltaTime, Scene& scene)
 	{
 		if (isWindowResized)
 		{
 			if (auto result{ ResizeWindow() }; !result)
 				return std::unexpected(result.error());
-			camera->UpdateProjectionMatrix(width, height);
+			scene.camera.UpdateProjectionMatrix(width, height);
 		}
 
-		camera->UpdateCamera(deltaTime);
+		scene.camera.UpdateCamera(deltaTime);
 		/* Record all the commands we need to render the scene into the command list. */
-		if (auto result{ PopulateCommandList() }; !result)
+		if (auto result{ PopulateCommandList(scene) }; !result)
 			return std::unexpected(result.error());
 
 		/* Execute the command list. */
@@ -665,7 +659,7 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererD3D12::PopulateCommandList()
+	std::expected<void, Error> RendererD3D12::PopulateCommandList(Scene& scene)
 	{
 		HRESULT const d3d12ResetRenderCommandListResult{ commandList->Reset(commandAllocator.Get(), nullptr) };
 		D3D12_CHECK_HRESULT(d3d12ResetRenderCommandListResult, ErrorCode::D3D12CommandRecordingFailed, "reset render command list");
@@ -709,7 +703,7 @@ namespace gg
 				commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
 				ModelViewProjection mvpMatrices{
-					CalculateModelViewProjection(model->translation, timeManager->GetCurrentTimeSec(), *camera)
+					CalculateModelViewProjection(model->translation, timeManager->GetCurrentTimeSec(), scene.camera)
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjection) / sizeof(float), &mvpMatrices, 0);
 				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);
@@ -723,9 +717,9 @@ namespace gg
 
 			/* After the models: the sky only fills pixels the depth test leaves at the far plane. */
 			if (skybox)
-				skybox->Draw(commandList.Get(), *camera);
+				skybox->Draw(commandList.Get(), scene.camera);
 
-			debugOverlay->Render(commandList, *this);
+			debugOverlay->Render(commandList, *this, scene);
 
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(

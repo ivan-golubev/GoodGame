@@ -93,7 +93,6 @@ namespace gg
 		height          = rs.height;
 		windowHandleSDL = rs.windowHandle;
 		timeManager     = rs.timeManager;
-		camera          = std::make_shared<Camera>(rs.inputManager);
 		uint32_t extensionCount;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extensionCount, nullptr))
 			return std::unexpected(Error{
@@ -172,11 +171,6 @@ namespace gg
 	RendererType RendererVulkan::GetType() const
 	{
 		return RendererType::Vulkan;
-	}
-
-	std::shared_ptr<Camera> RendererVulkan::GetCamera()
-	{
-		return camera;
 	}
 
 	std::expected<void, Error> RendererVulkan::CreateVkInstance(
@@ -724,11 +718,11 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::ResizeWindow()
+	std::expected<void, Error> RendererVulkan::ResizeWindow(Scene& scene)
 	{
 		if (auto result{ RecreateSwapChain() }; !result)
 			return std::unexpected(result.error());
-		camera->UpdateProjectionMatrix(width, height);
+		scene.camera.UpdateProjectionMatrix(width, height);
 		isWindowResized = false;
 		return {};
 	}
@@ -811,7 +805,7 @@ namespace gg
 		height          = std::max(8u, height);
 	}
 
-	std::expected<void, Error> RendererVulkan::Render(nanoseconds deltaTime)
+	std::expected<void, Error> RendererVulkan::Render(nanoseconds deltaTime, Scene& scene)
 	{
 		vkWaitForFences(context->GetDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -827,7 +821,7 @@ namespace gg
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
-			return ResizeWindow();
+			return ResizeWindow(scene);
 		}
 		else if (result != VK_SUCCESS)
 			return std::unexpected(Error{
@@ -835,12 +829,12 @@ namespace gg
 				.message = std::format("Failed to acquire swap chain image (VkResult {}).", static_cast<int>(result)),
 			});
 
-		camera->UpdateCamera(deltaTime);
+		scene.camera.UpdateCamera(deltaTime);
 
 		vkResetFences(context->GetDevice(), 1, &inFlightFences[currentFrame]);
 
 		/* Record all the commands we need to render the scene into the command list. */
-		if (auto commandResult{ RecordCommandBuffer(commandBuffers[currentFrame], imageIndex) }; !commandResult)
+		if (auto commandResult{ RecordCommandBuffer(commandBuffers[currentFrame], imageIndex, scene) }; !commandResult)
 			return std::unexpected(commandResult.error());
 		/* Execute the commands */
 		if (auto submitResult{ SubmitCommands(imageIndex) }; !submitResult)
@@ -850,7 +844,7 @@ namespace gg
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isWindowResized)
 		{
-			if (auto resizeResult{ ResizeWindow() }; !resizeResult)
+			if (auto resizeResult{ ResizeWindow(scene) }; !resizeResult)
 				return std::unexpected(resizeResult.error());
 		}
 		else if (result != VK_SUCCESS)
@@ -955,7 +949,7 @@ namespace gg
 		return {};
 	}
 
-	std::expected<void, Error> RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+	std::expected<void, Error> RendererVulkan::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, Scene& scene)
 	{
 		vkResetCommandBuffer(commandBuffer, 0);
 
@@ -986,13 +980,13 @@ namespace gg
 
 		double const currentTimeSec{ timeManager->GetCurrentTimeSec() };
 		for (std::shared_ptr<ModelVulkan> model : models)
-			model->Draw(commandBuffer, currentFrame, *camera, currentTimeSec);
+			model->Draw(commandBuffer, currentFrame, scene.camera, currentTimeSec);
 
 		/* After the models: the sky only fills pixels the depth test leaves at the far plane. */
 		if (skybox)
-			skybox->Draw(commandBuffer, currentFrame, *camera);
+			skybox->Draw(commandBuffer, currentFrame, scene.camera);
 
-		debugOverlay->Render(commandBuffer, *this);
+		debugOverlay->Render(commandBuffer, *this, scene);
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)

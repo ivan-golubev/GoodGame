@@ -30,12 +30,12 @@ namespace
 
 namespace gg
 {
-	void RenderDebugOverlay(Renderer& renderer)
+	void RenderDebugOverlay(Renderer& renderer, Scene& scene)
 	{
 		ImGui::NewFrame();
 		ImGui::Begin("Renderer settings");
 
-		std::shared_ptr<Camera> camera{ renderer.GetCamera() };
+		Camera& camera{ scene.camera };
 
 		RendererType const rendererType{ renderer.GetType() };
 		ImGui::TextColored(rendererNameColor[rendererType], "Renderer: %s", ToString(rendererType).c_str());
@@ -65,9 +65,9 @@ namespace gg
 
 		if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_CollapsingHeader | ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImguiFloat3("Position", camera->GetPosition());
-			ImGui::SliderAngle("Yaw", camera->GetYaw(), -180.f, 180.f);
-			ImGui::SliderAngle("Pitch", camera->GetPitch(), -89.f, 89.f);
+			ImguiFloat3("Position", camera.GetPosition());
+			ImGui::SliderAngle("Yaw", camera.GetYaw(), -180.f, 180.f);
+			ImGui::SliderAngle("Pitch", camera.GetPitch(), -89.f, 89.f);
 			ImGui::TextUnformatted("Tab: toggle mouse look / cursor");
 		}
 

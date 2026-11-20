@@ -8,6 +8,7 @@ export module DebugOverlayVulkan;
 import DeviceContextVulkan;
 import ErrorHandling;
 import Renderer;
+import Scene;
 
 export namespace gg
 {
@@ -28,7 +29,7 @@ export namespace gg
 	public:
 		~DebugOverlayVulkan() noexcept;
 		std::expected<void, Error> Initialize(DebugOverlayVulkanCreateInfo const&);
-		void                       Render(VkCommandBuffer, Renderer&);
+		void                       Render(VkCommandBuffer, Renderer&, Scene&);
 
 	private:
 		VkDevice         device{};

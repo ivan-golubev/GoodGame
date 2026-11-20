@@ -10,6 +10,7 @@ export module Application;
 import Renderer;
 import Input;
 import TimeManager;
+import Scene;
 
 namespace gg
 {
@@ -43,5 +44,7 @@ namespace gg
 		std::shared_ptr<InputManager> inputManager;
 		std::shared_ptr<TimeManager>  timeManager;
 		std::shared_ptr<Renderer>     renderer;
+
+		Scene scene; /* the camera and what the renderer shows */
 	};
 } // namespace gg

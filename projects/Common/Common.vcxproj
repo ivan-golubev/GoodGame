@@ -123,6 +123,7 @@
   <ItemGroup>
     <ClCompile Include="modules\Application.ixx" />
     <ClCompile Include="modules\Camera.ixx" />
+    <ClCompile Include="modules\Scene.ixx" />
     <ClCompile Include="modules\DebugOverlay.ixx" />
     <ClCompile Include="modules\ErrorHandling.ixx" />
     <ClCompile Include="modules\GlobalSettings.ixx" />

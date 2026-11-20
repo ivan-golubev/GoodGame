@@ -48,11 +48,10 @@ namespace gg
 		RendererD3D12(RendererD3D12&&)            = delete;
 		RendererD3D12& operator=(RendererD3D12&&) = delete;
 
-		std::shared_ptr<Camera> GetCamera() override;
-		RendererType            GetType() const override;
+		RendererType GetType() const override;
 
 		void                                                 OnWindowResized(uint32_t width, uint32_t height) override;
-		std::expected<void, Error>                           Render(nanoseconds deltaTime) override;
+		std::expected<void, Error>                           Render(nanoseconds deltaTime, Scene&) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 
 		std::expected<void, Error> LoadModel(
@@ -65,7 +64,7 @@ namespace gg
 
 	private:
 		std::expected<void, Error> CreateDeviceContext(IDXGIFactory4*);
-		std::expected<void, Error> PopulateCommandList();
+		std::expected<void, Error> PopulateCommandList(Scene&);
 		std::expected<void, Error> WaitForPreviousFrame();
 		std::expected<void, Error> ResizeRenderTargets();
 		std::expected<void, Error> ResizeDepthBuffer();
@@ -109,7 +108,6 @@ namespace gg
 		std::vector<std::shared_ptr<ModelD3D12>> models;
 		std::unique_ptr<SkyboxD3D12>             skybox;
 		std::shared_ptr<TimeManager>             timeManager;
-		std::shared_ptr<Camera>                  camera;
 		std::unique_ptr<DebugOverlayD3D12>       debugOverlay;
 
 		/* Synchronization objects */

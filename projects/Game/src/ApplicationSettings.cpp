@@ -25,7 +25,6 @@ namespace gg
 			.height       = s.height,
 			.windowHandle = s.windowHandle,
 			.timeManager  = timeManager,
-			.inputManager = inputManager,
 		};
 
 		std::unique_ptr<Renderer> renderer{

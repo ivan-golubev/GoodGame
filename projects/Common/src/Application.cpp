@@ -23,6 +23,7 @@ namespace gg
 		: renderer{ std::move(renderer) }
 		, inputManager{ inputManager }
 		, timeManager{ timeManager }
+		, scene{ this->inputManager }
 	{
 	}
 
@@ -49,7 +50,7 @@ namespace gg
 	std::expected<void, Error> Application::Tick()
 	{
 		if (!isPaused)
-			return renderer->Render(timeManager->Tick());
+			return renderer->Render(timeManager->Tick(), scene);
 		return {};
 	}
 

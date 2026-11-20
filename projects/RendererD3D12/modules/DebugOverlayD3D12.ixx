@@ -8,6 +8,7 @@ export module DebugOverlayD3D12;
 
 import ErrorHandling;
 import Renderer;
+import Scene;
 
 using Microsoft::WRL::ComPtr;
 
@@ -18,7 +19,7 @@ export namespace gg
 	public:
 		~DebugOverlayD3D12() noexcept;
 		std::expected<void, Error> Initialize(ComPtr<ID3D12Device4>, SDL_Window*);
-		void                       Render(ComPtr<ID3D12GraphicsCommandList>, Renderer&);
+		void                       Render(ComPtr<ID3D12GraphicsCommandList>, Renderer&, Scene&);
 
 	private:
 		ComPtr<ID3D12DescriptorHeap> imguiSrvDescHeap;

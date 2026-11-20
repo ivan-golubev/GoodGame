@@ -117,12 +117,12 @@ namespace gg
 			vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 	}
 
-	void DebugOverlayVulkan::Render(VkCommandBuffer commandBuffer, Renderer& renderer)
+	void DebugOverlayVulkan::Render(VkCommandBuffer commandBuffer, Renderer& renderer, Scene& scene)
 	{
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 
-		RenderDebugOverlay(renderer);
+		RenderDebugOverlay(renderer, scene);
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 	}

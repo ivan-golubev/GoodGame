@@ -47,11 +47,10 @@ namespace gg
 		RendererVulkan(RendererVulkan&&)            = delete;
 		RendererVulkan& operator=(RendererVulkan&&) = delete;
 
-		std::shared_ptr<Camera> GetCamera() override;
-		RendererType            GetType() const override;
+		RendererType GetType() const override;
 
 		void                                                 OnWindowResized(uint32_t width, uint32_t height) override;
-		std::expected<void, Error>                           Render(nanoseconds deltaTime) override;
+		std::expected<void, Error>                           Render(nanoseconds deltaTime, Scene&) override;
 		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
 
 		std::expected<void, Error> LoadModel(
@@ -96,7 +95,7 @@ namespace gg
 		std::expected<void, Error> CreateIndexBuffer(Mesh const&);
 		std::expected<void, Error> CreateDescriptorPool();
 
-		std::expected<void, Error> RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex);
+		std::expected<void, Error> RecordCommandBuffer(VkCommandBuffer, uint32_t imageIndex, Scene&);
 		std::expected<void, Error> SubmitCommands(uint32_t imageIndex);
 
 		VkResult           Present(uint32_t imageIndex);
@@ -104,7 +103,7 @@ namespace gg
 
 		void                       CleanupSwapChain();
 		std::expected<void, Error> RecreateSwapChain();
-		std::expected<void, Error> ResizeWindow();
+		std::expected<void, Error> ResizeWindow(Scene&);
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice const) const;
 		bool               IsDeviceSuitable(VkPhysicalDevice const) const;
@@ -138,7 +137,6 @@ namespace gg
 
 		std::vector<std::shared_ptr<ModelVulkan>> models;
 		std::shared_ptr<TimeManager>              timeManager;
-		std::shared_ptr<Camera>                   camera;
 		std::unique_ptr<DebugOverlayVulkan>       debugOverlay;
 		std::unique_ptr<SkyboxVulkan>             skybox;
 

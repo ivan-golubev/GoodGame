@@ -3,8 +3,9 @@ module;
 export module DebugOverlay;
 
 import Renderer;
+import Scene;
 
 export namespace gg
 {
-	void RenderDebugOverlay(Renderer&);
+	void RenderDebugOverlay(Renderer&, Scene&);
 } // namespace gg

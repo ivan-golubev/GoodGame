@@ -15,6 +15,7 @@ import Input;
 import ShaderProgram;
 import Texture;
 import Camera;
+import Scene;
 export import ErrorHandling;
 import SettingsRenderer;
 
@@ -24,11 +25,10 @@ export namespace gg
 {
 	struct RendererSettings
 	{
-		uint32_t                      width;
-		uint32_t                      height;
-		SDL_Window*                   windowHandle;
-		std::shared_ptr<TimeManager>  timeManager;
-		std::shared_ptr<InputManager> inputManager;
+		uint32_t                     width;
+		uint32_t                     height;
+		SDL_Window*                  windowHandle;
+		std::shared_ptr<TimeManager> timeManager;
 	};
 
 	class Renderer
@@ -43,12 +43,11 @@ export namespace gg
 		Renderer(Renderer&&) noexcept            = default;
 		Renderer& operator=(Renderer&&) noexcept = default;
 
-		virtual std::shared_ptr<Camera>    GetCamera()                         = 0;
 		virtual RendererType               GetType() const                     = 0;
 		virtual std::expected<void, Error> Initialize(RendererSettings const&) = 0;
 
 		virtual void                                                 OnWindowResized(uint32_t width, uint32_t height) = 0;
-		virtual std::expected<void, Error>                           Render(nanoseconds deltaTime)                    = 0;
+		virtual std::expected<void, Error>                           Render(nanoseconds deltaTime, Scene&)            = 0;
 		virtual std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName)        = 0;
 
 		virtual std::expected<void, Error> LoadModel(

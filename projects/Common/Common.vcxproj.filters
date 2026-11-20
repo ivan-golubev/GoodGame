@@ -16,6 +16,9 @@
     <ClCompile Include="modules\Camera.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\Scene.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
     <ClCompile Include="modules\ErrorHandling.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
