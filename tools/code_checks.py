@@ -150,6 +150,12 @@ def run_format(clang_format: str, files: list[Path], fix: bool, jobs: int) -> bo
 
 
 def run_tidy(clang_tidy: str, files: list[Path], build_path: str | None, jobs: int) -> bool:
+	import naming_abbreviations
+
+	if not naming_abbreviations.is_up_to_date():
+		print("clang-tidy: .clang-tidy is out of date with tools/naming_abbreviations.txt; run python tools/naming_abbreviations.py")
+		return False
+
 	compiler_args = read_tidy_args()
 	print(f"clang-tidy: checking {len(files)} file(s) with {jobs} job(s)")
 	with ThreadPoolExecutor(jobs) as pool:

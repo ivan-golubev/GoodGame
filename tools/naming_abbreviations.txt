@@ -1,0 +1,39 @@
+# Abbreviations allowed at the start of camelBack names (variables, parameters, members),
+# e.g. MVP, VB, DSVFormat, GPUHandle.
+# One per line, uppercase letters and digits. After editing, run:
+#   python tools/naming_abbreviations.py
+# which regenerates the matching section of .clang-tidy.
+
+# hardware / general
+API
+CPU
+GPU
+FPS
+ID
+IO
+UI
+
+# graphics
+D3D12
+HDR
+LOD
+MVP
+PSO
+RGB
+RGBA
+UV
+
+# buffers and views
+CB
+CBV
+DSV
+IB
+RTV
+SRV
+UAV
+VB
+
+# shader stages
+CS
+PS
+VS
