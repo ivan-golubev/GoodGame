@@ -35,7 +35,7 @@ State belongs to an object that is passed to whoever needs it: `Application` (ow
 - No function-local `static` variables that hold state.
 - No singletons or global accessors (`Get()` / `Instance()` returning a shared object).
 
-An exception needs a reason written next to it and a marker the checks recognise: `// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)` for a namespace-scope variable, `// conventions: allow global-state` for a static. The only one today is `imguiVulkanInitResult` in `DebugOverlayVulkan.cpp`: ImGui's `CheckVkResultFn` is a C function pointer with no user data, so the callback can only report back through it.
+An exception needs a reason written next to it and a marker the checks recognise: `// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)` for a namespace-scope variable, `// conventions: allow global-state` for a static (on the line itself or on a comment line directly above it). The only one today is `imguiVulkanInitResult` in `DebugOverlayVulkan.cpp`: ImGui's `CheckVkResultFn` is a C function pointer with no user data, so the callback can only report back through it.
 
 State inside libraries (the ImGui context, SDL, stb_image's last error) is outside this rule; only its lifetime is ours to manage.
 
@@ -49,6 +49,8 @@ Write string constants as `constexpr std::string_view` (`std::wstring_view` for 
 Where a C API needs a null-terminated string, pass `.data()` of a view of a string literal (literals are null-terminated). Example: `.pName = entryPointVertexShader.data()`.
 
 Strings computed at run time inside functions (`std::string const path{ std::format(...) }`) are not constants and are fine.
+
+An API that takes an array of C strings (Vulkan's `ppEnabledExtensionNames`) needs an array of `char const*`; mark that constant with `// conventions: allow string-constant` and the reason, as `deviceExtensions` in `RendererVulkan.cpp` does.
 
 ### No exceptions: errors are values
 

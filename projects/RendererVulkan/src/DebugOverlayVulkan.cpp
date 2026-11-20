@@ -19,7 +19,7 @@ namespace gg
 		   receives only the VkResult (no user data). The captureless lambda passed to it can therefore only
 		   report back through file-scope state. Initialize() resets this before ImGui_ImplVulkan_Init and
 		   checks it right after; later calls from ImGui are not read. */
-		VkResult imguiVulkanInitResult{ VK_SUCCESS };
+		VkResult imguiVulkanInitResult{ VK_SUCCESS }; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables): see above
 	}
 
 	std::expected<void, Error> DebugOverlayVulkan::Initialize(DebugOverlayVulkanCreateInfo const& info)

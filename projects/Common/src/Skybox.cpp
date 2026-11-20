@@ -3,6 +3,7 @@ module;
 #include <format>
 #include <memory>
 #include <string>
+#include <string_view>
 module Skybox;
 
 import ErrorHandling;
@@ -16,7 +17,7 @@ namespace gg
 	{
 		// Cube map layers are ordered +X, -X, +Y, -Y, +Z, -Z in both Vulkan (VkImageSubresourceRange)
 		// and D3D12 (TextureCube array slices).
-		constexpr std::array<char const*, Skybox::faceCount> skyboxFaceNames{ "right", "left", "top", "bottom", "front", "back" };
+		constexpr std::array<std::string_view, Skybox::faceCount> skyboxFaceNames{ "right", "left", "top", "bottom", "front", "back" };
 	}
 
 	Skybox::Skybox(std::string const& name, std::shared_ptr<ShaderProgram> s)

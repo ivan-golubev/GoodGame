@@ -6,7 +6,8 @@ Checks: >
   readability-simplify-boolean-expr,
   performance-avoid-endl,
   modernize-make-unique,
-  modernize-make-shared
+  modernize-make-shared,
+  cppcoreguidelines-avoid-non-const-global-variables
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*[/\\]projects[/\\].*'
 CheckOptions:

@@ -28,6 +28,13 @@ Rules (ID: what it checks):
                    byte, so a drift silently breaks rendering. Reported at the C++ struct.
   naked-new        No 'new' expressions: use std::make_unique / std::make_shared (a PassKey makes
                    them work with restricted constructors).
+  global-state     No function-local statics and no non-const static data members (state belongs to
+                   an object that is passed around). Namespace-scope variables are checked by
+                   clang-tidy (cppcoreguidelines-avoid-non-const-global-variables).
+  string-constant  String constants at namespace or class scope, and static ones in functions, are
+                   constexpr std::string_view: not std::string const, not char const* (also not in
+                   arrays). Strings built at run time inside functions are fine.
+  no-throw         No throw expressions: failures return std::expected<T, Error>.
   hungarian        Declared names carry no Hungarian prefixes: p/pp/lp (pointers), sz, dw, h,
                    m_/g_/s_. API fields such as desc.pData are not declarations and are fine.
   if-one-line      'if (...) statement;' is written on two lines. Off by default; enable with
@@ -37,6 +44,11 @@ Usage:
 	python tools/check_conventions.py [FILES...] [--max-columns N] [--disable RULE ...] [--enable RULE ...]
 
 With no FILES, every C++ file under projects/ is checked. Exit code is 1 if anything is reported.
+
+A justified exception is marked with a comment naming the rule and the reason, on the line itself or
+on a comment line directly above it, e.g.
+	// conventions: allow string-constant (ppEnabledExtensionNames takes char pointers)
+	constexpr std::array<char const*, 2> deviceExtensions{
 """
 
 import argparse
@@ -63,6 +75,9 @@ ALL_RULES = [
 	"shader-mirror",
 	"naked-new",
 	"hungarian",
+	"global-state",
+	"string-constant",
+	"no-throw",
 	"if-one-line",
 ]
 DEFAULT_OFF = {"if-one-line"}
@@ -85,6 +100,50 @@ ERROR_CODE_USE = re.compile(r"\bErrorCode::([A-Za-z_]\w*)")
 DECLARED_NAME = re.compile(r"(?<![.\w>:])(?:[A-Za-z_][\w:]*(?:<[^;()]*>)?\s*[*&]*\s+[*&]*|[*&]\s*)(?P<name>[A-Za-z_]\w*)\s*(?=[\[{=;,)]|$)")
 HUNGARIAN_PREFIX = re.compile(r"^(?:(?:pp|p|lp|sz|dw|h)[A-Z]|[mgs]_)")
 NOT_A_TYPE = {"return", "else", "case", "goto", "throw", "delete", "new", "co_return", "co_yield", "using", "namespace", "operator"}
+
+ALLOW_MARKER = re.compile(r"conventions:\s*allow\s+([\w-]+)")
+# char const* / const char* / wchar_t const* (the pointed-to characters are const)
+CHAR_POINTER = r"(?:(?:w?char|wchar_t)\s+const|const\s+(?:w?char|wchar_t))\s*\*"
+STD_STRING_CONST = r"(?:std::w?string\s+const|const\s+std::w?string)\b"
+STRING_CONSTANT = re.compile(
+	rf"^(?:export\s+)?(?:(?:inline|static|constexpr|const)\s+)*"
+	rf"(?:{STD_STRING_CONST}|{CHAR_POINTER}(?:\s*const)?|std::array<\s*{CHAR_POINTER}\s*(?:const\s*)?,[^>]*>(?:\s*const)?)"
+	rf"\s+[A-Za-z_]\w*\s*(?:\[[^\]]*\])?\s*(?:\{{|=)"
+)
+STATIC_STATE = re.compile(r"^static\s+(?!constexpr\b|const\b|_assert\b|inline\s+constexpr\b)(?!.*\bconst\b(?![^<]*>))")
+
+
+def scope_kinds(code_lines: list[str]) -> list[tuple[str, bool]]:
+	"""For each line: (innermost scope at the start of the line, whether it is inside a function body).
+	Scopes are 'file', 'ns' (namespace / extern block), 'type' (class body), 'func' (function, lambda or
+	block inside one) and 'init' (braced initializer)."""
+	stack: list[str] = []
+	previous = ""
+	out = []
+	for code in code_lines:
+		out.append((stack[-1] if stack else "file", "func" in stack))
+		for column, char in enumerate(code):
+			if char == "{":
+				before = code[:column].strip() or previous
+				if stack and stack[-1] == "init":
+					kind = "init"
+				elif re.search(r"\bnamespace\b[^;{]*$|extern\s+\"C(\+\+)?\"\s*$", before):
+					kind = "ns"
+				elif re.match(r"^(?:export\s+)?(?:template\s*<.*>\s*)?(?:class|struct|union|enum)\b[^=;(]*$", before):
+					kind = "type"
+				elif re.search(r"(\)|\bconst|\bnoexcept|\boverride|\bfinal|\belse|\btry|\bdo|->\s*[\w:<>]+)\s*$", before):
+					kind = "func"
+				elif not code[:column].strip() and (previous.endswith(";") or previous.endswith("}") or previous.endswith("{")):
+					kind = "func" if "func" in stack else (stack[-1] if stack else "file")
+				else:
+					kind = "init"
+				stack.append(kind)
+			elif char == "}" and stack:
+				stack.pop()
+		if code.strip():
+			previous = code.strip()
+	return out
+
 
 SHADERS_DIR = code_checks.ROOT / "shaders"
 STRUCT_BLOCK = re.compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{(.*?)\n\s*\};", re.S)
@@ -308,8 +367,16 @@ def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, ab
 	findings: list[Finding] = []
 
 	def report(line_index: int, column: int, rule: str, message: str) -> None:
-		if rule in rules:
-			findings.append(Finding(path, line_index + 1, column + 1, rule, message))
+		if rule not in rules:
+			return
+		if rule in ALLOW_MARKER.findall(raw_lines[line_index]):
+			return
+		# ...or on a comment-only line directly above (clang-format moves comments after an opening brace)
+		if line_index > 0 and raw_lines[line_index - 1].strip().startswith("//") and rule in ALLOW_MARKER.findall(raw_lines[line_index - 1]):
+			return
+		findings.append(Finding(path, line_index + 1, column + 1, rule, message))
+
+	scopes = scope_kinds(code_lines)
 
 	in_initializer_list = False
 	# Stack of open parentheses: (line index, layout, is a control-statement condition), where layout is
@@ -373,6 +440,18 @@ def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, ab
 
 		for match in re.finditer(r"\bnew\b", code):
 			report(index, match.start(), "naked-new", "don't use 'new': use std::make_unique / std::make_shared")
+
+		for match in re.finditer(r"\bthrow\b", code):
+			report(index, match.start(), "no-throw", "don't throw: return std::expected<T, Error> instead")
+
+		scope, in_function = scopes[index]
+		if STATIC_STATE.match(stripped) and "(" not in stripped.split("{")[0].split("=")[0]:
+			if in_function:
+				report(index, code.index("static"), "global-state", "function-local static holds state across calls; keep it in an object")
+			elif scope == "type":
+				report(index, code.index("static"), "global-state", "non-const static data member is global state; keep it in an object")
+		if (not in_function or stripped.startswith("static")) and scope != "init" and STRING_CONSTANT.match(stripped):
+			report(index, len(code) - len(code.lstrip()), "string-constant", "make string constants constexpr std::string_view")
 
 		for match in DECLARED_NAME.finditer(code):
 			name = match.group("name")

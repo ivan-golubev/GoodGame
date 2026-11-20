@@ -44,6 +44,7 @@ namespace
 
 	constexpr uint32_t maxDescriptorSets{ 1000 };
 
+	// conventions: allow string-constant (ppEnabledExtensionNames takes char pointers)
 	constexpr std::array<char const*, 2> deviceExtensions{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 		VK_KHR_MAINTENANCE1_EXTENSION_NAME // required for using negative viewport heights
