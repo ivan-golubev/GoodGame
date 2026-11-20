@@ -67,11 +67,12 @@ namespace gg
 			faces[i] = textures[i].get();
 
 		auto uploadResult{ RendererD3D12::Get()->UploadTexture(
-			faces
-			, D3D12_SRV_DIMENSION_TEXTURECUBE
-			, srvHeap->GetCPUDescriptorHandleForHeapStart()
-			, std::format(L"Texture_Skybox_{}", nameW)
-			, std::format("skybox '{}'", name)) };
+			faces,
+			D3D12_SRV_DIMENSION_TEXTURECUBE,
+			srvHeap->GetCPUDescriptorHandleForHeapStart(),
+			std::format(L"Texture_Skybox_{}", nameW),
+			std::format("skybox '{}'", name)
+		) };
 		if (!uploadResult)
 			return std::unexpected(std::move(uploadResult.error()));
 		cubeTexture = std::move(*uploadResult);
@@ -89,10 +90,10 @@ namespace gg
 
 		/* No vertex input: the fullscreen triangle is generated from SV_VertexID. Only the pixel shader reads resources. */
 		D3D12_ROOT_SIGNATURE_FLAGS const rootSignatureFlags =
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS
+			| D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS
+			| D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS
+			| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
 		/* t0: the cube map SRV */
 		CD3DX12_DESCRIPTOR_RANGE1 cubeMapRange;
@@ -169,13 +170,14 @@ namespace gg
 
 		std::wstring const nameW{ name.begin(), name.end() };
 		auto result{ RendererD3D12::Get()->CreateGraphicsPipeline(
-			CD3DX12_SHADER_BYTECODE(shader->GetVertexShader().Get())
-			, CD3DX12_SHADER_BYTECODE(shader->GetFragmentShader().Get())
-			, inputLayout
-			, D3D12_CULL_MODE_NONE /* one triangle that always faces the viewer; nothing to cull */
-			, depthStencil
-			, rootSignature.Get()
-			, std::format(L"PSO_Skybox_{}", nameW)) };
+			CD3DX12_SHADER_BYTECODE(shader->GetVertexShader().Get()),
+			CD3DX12_SHADER_BYTECODE(shader->GetFragmentShader().Get()),
+			inputLayout,
+			D3D12_CULL_MODE_NONE /* one triangle that always faces the viewer; nothing to cull */,
+			depthStencil,
+			rootSignature.Get(),
+			std::format(L"PSO_Skybox_{}", nameW)
+		) };
 		if (!result)
 			return std::unexpected(std::move(result.error()));
 		pipelineState = std::move(*result);

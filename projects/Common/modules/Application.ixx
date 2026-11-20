@@ -39,6 +39,7 @@ namespace gg
 		std::shared_ptr<InputManager> GetInputManager();
 		std::shared_ptr<TimeManager> GetTimeManager();
 		std::shared_ptr<Renderer> GetRenderer();
+
 	private:
 		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
 

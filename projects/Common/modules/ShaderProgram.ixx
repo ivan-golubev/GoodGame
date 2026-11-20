@@ -4,7 +4,6 @@ module;
 #include <string>
 export module ShaderProgram;
 
-
 export namespace gg
 {
 	std::string const entryPointVertexShader{ "vs_main" };

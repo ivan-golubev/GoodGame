@@ -12,7 +12,8 @@ export namespace gg
 	void GetHardwareAdapter(
 		_In_ IDXGIFactory1* pFactory,
 		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
-		bool requestHighPerformanceAdapter = false);
+		bool requestHighPerformanceAdapter = false
+	);
 
 	void SetName(ID3D12Object*, std::wstring const&);
 	std::wstring GetName(ID3D12Object*);

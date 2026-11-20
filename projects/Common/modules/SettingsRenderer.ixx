@@ -8,8 +8,7 @@ import Lighting;
 
 namespace
 {
-	std::string const rendererName[2]
-	{
+	std::string const rendererName[2]{
 		"Vulkan",
 		"D3D12"
 	};
@@ -35,7 +34,7 @@ export namespace gg
 		glm::vec3(-1.0f, -1.0f, 1.0f), // light direction xyz
 		1.0f, // specular shininess // TODO: WTF, this value does not work as expected ?
 
-		glm::vec3(1.0f, 1.0f, 1.0f)   // diffuse color, rgb
+		glm::vec3(1.0f, 1.0f, 1.0f) // diffuse color, rgb
 	};
 
 	enum RendererType

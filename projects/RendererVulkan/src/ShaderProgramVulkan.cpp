@@ -19,7 +19,7 @@ namespace
 		VkShaderModuleCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 			.codeSize = shaderBlob.size(),
-			.pCode = reinterpret_cast<const uint32_t*>(shaderBlob.data()),
+			.pCode = reinterpret_cast<uint32_t const*>(shaderBlob.data()),
 		};
 		VkShaderModule shaderModule{};
 		VkResult const result{ vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) };

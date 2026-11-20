@@ -22,7 +22,7 @@ export namespace gg
 
 		/* direct accessors */
 		glm::vec3* GetPosition();
-		float* GetYaw();   /* radians, 0 = looking along +Z, positive = turned right */
+		float* GetYaw(); /* radians, 0 = looking along +Z, positive = turned right */
 		float* GetPitch(); /* radians, 0 = level, positive = looking up */
 	private:
 		glm::mat4x4 projectionMatrix{};

@@ -36,7 +36,7 @@ namespace gg
 
 		double const deltaTimeSeconds{ deltaTime / 1.0s };
 
-		{	/* look: mouse motion (not scaled by frame time) plus arrow keys (scaled by frame time) */
+		{ /* look: mouse motion (not scaled by frame time) plus arrow keys (scaled by frame time) */
 			MouseDelta const mouse{ inputManager->ConsumeMouseDelta() };
 			yaw += mouse.x * mouseSensitivity;
 			pitch -= mouse.y * mouseSensitivity; // screen y grows downwards
@@ -61,7 +61,7 @@ namespace gg
 		float const cosPitch{ std::cos(pitch) };
 		glm::vec3 const lookDirection{ sinYaw * cosPitch, std::sin(pitch), cosYaw * cosPitch };
 
-		{	/* move: forward/back and strafe stay on the horizontal plane; Q/E move along world up */
+		{ /* move: forward/back and strafe stay on the horizontal plane; Q/E move along world up */
 			glm::vec3 const moveForward{ sinYaw, 0.f, cosYaw };
 			glm::vec3 const moveRight{ cosYaw, 0.f, -sinYaw };
 

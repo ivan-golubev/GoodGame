@@ -12,7 +12,6 @@ import ShaderProgram;
 import Texture;
 export import ErrorHandling;
 
-
 export namespace gg
 {
 	struct Mesh

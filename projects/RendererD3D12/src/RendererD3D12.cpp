@@ -41,14 +41,14 @@ import Vertex;
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
 
-#define D3D12_CHECK_HRESULT(hr, errorCode, operation) \
-	do \
-	{ \
-		if (FAILED(hr)) \
-			return std::unexpected(gg::Error{ \
-				.code = errorCode, \
+#define D3D12_CHECK_HRESULT(hr, errorCode, operation)                                                                  \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		if (FAILED(hr))                                                                                                \
+			return std::unexpected(gg::Error{                                                                          \
+				.code = errorCode,                                                                                     \
 				.message = std::format("D3D12 {} failed with HRESULT 0x{:08X}", operation, static_cast<uint32_t>(hr)), \
-			}); \
+			});                                                                                                        \
 	} while (false)
 
 namespace
@@ -222,10 +222,10 @@ namespace gg
 			}
 			/* Create the root signature */
 			D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-				D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-				D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-				D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+				| D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS
+				| D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS
+				| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
 			CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
@@ -258,20 +258,20 @@ namespace gg
 			ComPtr<ID3DBlob> rootSignatureBlob;
 			ComPtr<ID3DBlob> errorBlob;
 			HRESULT const d3d12SerializeRootSignatureResult{ D3DX12SerializeVersionedRootSignature(
-					&rootSignatureDescription,
-					featureData.HighestVersion,
-					&rootSignatureBlob,
-					&errorBlob
-				) };
+				&rootSignatureDescription,
+				featureData.HighestVersion,
+				&rootSignatureBlob,
+				&errorBlob
+			) };
 			D3D12_CHECK_HRESULT(d3d12SerializeRootSignatureResult, ErrorCode::D3D12InitializationFailed, "serialize root signature");
 
 			// Create the root signature.
 			HRESULT const d3d12CreateRootSignatureResult{ device->CreateRootSignature(
-					0,
-					rootSignatureBlob->GetBufferPointer(),
-					rootSignatureBlob->GetBufferSize(),
-					IID_PPV_ARGS(&rootSignature)
-				) };
+				0,
+				rootSignatureBlob->GetBufferPointer(),
+				rootSignatureBlob->GetBufferSize(),
+				IID_PPV_ARGS(&rootSignature)
+			) };
 			D3D12_CHECK_HRESULT(d3d12CreateRootSignatureResult, ErrorCode::D3D12InitializationFailed, "create root signature");
 			SetName(rootSignature.Get(), L"RootSignature");
 		}
@@ -307,13 +307,14 @@ namespace gg
 		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
 
 		auto result{ CreateGraphicsPipeline(
-			CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get())
-			, CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get())
-			, D3D12_INPUT_LAYOUT_DESC{ .pInputElementDescs = inputLayout, .NumElements = _countof(inputLayout) }
-			, D3D12_CULL_MODE_BACK
-			, CD3DX12_DEPTH_STENCIL_DESC1{ D3D12_DEFAULT }
-			, rootSignature.Get()
-			, psoNameW) };
+			CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get()),
+			CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get()),
+			D3D12_INPUT_LAYOUT_DESC{ .pInputElementDescs = inputLayout, .NumElements = _countof(inputLayout) },
+			D3D12_CULL_MODE_BACK,
+			CD3DX12_DEPTH_STENCIL_DESC1{ D3D12_DEFAULT },
+			rootSignature.Get(),
+			psoNameW
+		) };
 		if (!result)
 			return std::unexpected(std::move(result.error()));
 		model->pipelineState = std::move(*result);
@@ -321,13 +322,14 @@ namespace gg
 	}
 
 	std::expected<ComPtr<ID3D12PipelineState>, Error> RendererD3D12::CreateGraphicsPipeline(
-		D3D12_SHADER_BYTECODE const& vertexShader
-		, D3D12_SHADER_BYTECODE const& pixelShader
-		, D3D12_INPUT_LAYOUT_DESC const& inputLayout
-		, D3D12_CULL_MODE cullMode
-		, CD3DX12_DEPTH_STENCIL_DESC1 const& depthStencil
-		, ID3D12RootSignature* pipelineRootSignature
-		, std::wstring const& name)
+		D3D12_SHADER_BYTECODE const& vertexShader,
+		D3D12_SHADER_BYTECODE const& pixelShader,
+		D3D12_INPUT_LAYOUT_DESC const& inputLayout,
+		D3D12_CULL_MODE cullMode,
+		CD3DX12_DEPTH_STENCIL_DESC1 const& depthStencil,
+		ID3D12RootSignature* pipelineRootSignature,
+		std::wstring const& name
+	)
 	{
 		std::expected<ComPtr<ID3D12PipelineState>, Error> result{ std::in_place };
 
@@ -403,11 +405,12 @@ namespace gg
 	}
 
 	std::expected<ComPtr<ID3D12Resource>, Error> RendererD3D12::UploadTexture(
-		std::span<Texture const* const> images
-		, D3D12_SRV_DIMENSION srvDimension
-		, D3D12_CPU_DESCRIPTOR_HANDLE srvHandle
-		, std::wstring const& resourceName
-		, std::string const& sourceName)
+		std::span<Texture const* const> images,
+		D3D12_SRV_DIMENSION srvDimension,
+		D3D12_CPU_DESCRIPTOR_HANDLE srvHandle,
+		std::wstring const& resourceName,
+		std::string const& sourceName
+	)
 	{
 		auto makeUploadError = [&sourceName](char const* operation, HRESULT result)
 		{
@@ -466,7 +469,8 @@ namespace gg
 			&bufferResDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&uploadResource));
+			IID_PPV_ARGS(&uploadResource)
+		);
 		if (FAILED(result))
 			return std::unexpected(makeUploadError("create the texture upload resource", result));
 
@@ -699,7 +703,8 @@ namespace gg
 			&uploadResourceProps,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&cpuResource)) };
+			IID_PPV_ARGS(&cpuResource)
+		) };
 		D3D12_CHECK_HRESULT(d3d12CreateUploadBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create upload buffer resource");
 		SetName(cpuResource.Get(), std::format(L"{}_CPU", resourceName));
 
@@ -712,7 +717,8 @@ namespace gg
 			&gpuResourceProps,
 			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
-			IID_PPV_ARGS(&gpuResource)) };
+			IID_PPV_ARGS(&gpuResource)
+		) };
 		D3D12_CHECK_HRESULT(d3d12CreateGPUBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create GPU buffer resource");
 		SetName(gpuResource.Get(), std::format(L"{}_GPU", resourceName));
 
@@ -750,7 +756,6 @@ namespace gg
 		skybox.reset();
 
 		debugOverlay.reset();
-
 	}
 
 	std::shared_ptr<RendererD3D12> RendererD3D12::Get()

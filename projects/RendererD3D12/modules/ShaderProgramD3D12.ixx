@@ -37,4 +37,4 @@ export namespace gg
 		ComPtr<ID3DBlob> fragmentShaderBlob;
 	};
 
-} //namespace gg
+} // namespace gg

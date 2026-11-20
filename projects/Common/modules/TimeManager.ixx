@@ -18,6 +18,7 @@ namespace gg
 		nanoseconds GetCurrentTimeUs() const;
 		milliseconds GetCurrentTimeMs() const;
 		double GetCurrentTimeSec() const;
+
 	private:
 		time_point<steady_clock> startTime{ steady_clock::now() };
 		time_point<steady_clock> currentTime{ startTime };

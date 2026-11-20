@@ -182,12 +182,13 @@ namespace gg
 		};
 
 		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
-			shader->GetVertexShader()
-			, shader->GetFragmentShader()
-			, vertexInputInfo
-			, cullMode
-			, depthStencil
-			, descriptorSetLayout) };
+			shader->GetVertexShader(),
+			shader->GetFragmentShader(),
+			vertexInputInfo,
+			cullMode,
+			depthStencil,
+			descriptorSetLayout
+		) };
 		if (!result)
 			return std::unexpected(std::move(result.error()));
 		graphicsPipeline = *result;

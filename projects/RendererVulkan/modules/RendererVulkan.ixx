@@ -75,8 +75,14 @@ namespace gg
 
 		std::expected<void, Error> CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-		std::expected<GraphicsPipeline, Error> CreateGraphicsPipeline(VkShaderModule vertexShader, VkShaderModule fragmentShader
-			, VkPipelineVertexInputStateCreateInfo const&, VkCullModeFlags, VkPipelineDepthStencilStateCreateInfo const&, VkDescriptorSetLayout const&);
+		std::expected<GraphicsPipeline, Error> CreateGraphicsPipeline(
+			VkShaderModule vertexShader,
+			VkShaderModule fragmentShader,
+			VkPipelineVertexInputStateCreateInfo const&,
+			VkCullModeFlags,
+			VkPipelineDepthStencilStateCreateInfo const&,
+			VkDescriptorSetLayout const&
+		);
 
 		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 

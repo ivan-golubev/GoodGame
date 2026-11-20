@@ -63,4 +63,4 @@ namespace gg
 	{
 		return fragmentShaderBlob;
 	}
-} //namespace gg
+} // namespace gg

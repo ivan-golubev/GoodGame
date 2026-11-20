@@ -39,6 +39,7 @@ export namespace gg
 		void ClearKeys();
 		bool IsKeyDown(InputAction a) const;
 		float GetPlayerSpeed(milliseconds delta) const;
+
 	private:
 		bool keys[InputAction::Count]{};
 		MouseDelta mouseDelta{};

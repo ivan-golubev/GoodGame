@@ -22,7 +22,6 @@ import ShaderProgramVulkan;
 import TextureVulkan;
 import VertexVulkan;
 
-
 namespace gg
 {
 	ModelVulkan::ModelVulkan(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, glm::vec3& position, VkDevice d)
@@ -57,7 +56,6 @@ namespace gg
 			if (uniformBuffersMemoryDirLight[i])
 				vkFreeMemory(device, uniformBuffersMemoryDirLight[i], nullptr);
 		}
-
 	}
 
 	std::expected<void, Error> ModelVulkan::Initialize(VkDescriptorPool descriptorPool)
@@ -201,12 +199,13 @@ namespace gg
 		};
 
 		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
-			shader->GetVertexShader()
-			, shader->GetFragmentShader()
-			, vertexInputInfo
-			, VK_CULL_MODE_BACK_BIT
-			, depthStencil
-			, descriptorSetLayout) };
+			shader->GetVertexShader(),
+			shader->GetFragmentShader(),
+			vertexInputInfo,
+			VK_CULL_MODE_BACK_BIT,
+			depthStencil,
+			descriptorSetLayout
+		) };
 		if (!result)
 			return std::unexpected(std::move(result.error()));
 		graphicsPipeline = *result;
@@ -285,7 +284,7 @@ namespace gg
 
 	void ModelVulkan::UpdateUniformBuffers(uint32_t frame, Camera const& camera, double currentTimeSec)
 	{
-		{  /* MVP matrix */
+		{ /* MVP matrix */
 			ModelViewProjection const mvpMatrices{
 				.MVP = CalculateMVP(translation, currentTimeSec, camera),
 				.viewPosition = camera.GetPositionVec4(),
@@ -295,7 +294,7 @@ namespace gg
 			memcpy(data, &mvpMatrices, sizeof(ModelViewProjection));
 			vkUnmapMemory(device, uniformBuffersMemoryMVP[frame]);
 		}
-		{  /* Directional Light */
+		{ /* Directional Light */
 			void* data;
 			vkMapMemory(device, uniformBuffersMemoryDirLight[frame], 0, sizeof(DirectionalLight), 0, &data);
 			memcpy(data, &globalDirectionalLight, sizeof(DirectionalLight));
@@ -317,4 +316,4 @@ namespace gg
 		for (auto const& mesh : meshes)
 			vkCmdDraw(commandBuffer, mesh.GetVertexCount(), 1, 0, 0);
 	}
-} //namespace gg
+} // namespace gg

@@ -18,7 +18,7 @@ module;
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <windows.h>
-#include <WinPixEventRuntime/pix3.h> 
+#include <WinPixEventRuntime/pix3.h>
 module RendererVulkan;
 
 import Application;
@@ -45,8 +45,7 @@ namespace
 
 	constexpr uint32_t maxDescriptorSets = 1000;
 
-	constexpr std::array<char const*, 2> deviceExtensions
-	{
+	constexpr std::array<char const*, 2> deviceExtensions{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 		VK_KHR_MAINTENANCE1_EXTENSION_NAME // required for using negative viewport heights
 	};
@@ -212,8 +211,7 @@ namespace gg
 		int width, height;
 		SDL_Vulkan_GetDrawableSize(windowHandleSDL, &width, &height);
 
-		return
-		{
+		return {
 			.width = std::clamp(static_cast<uint32_t>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
 			.height = std::clamp(static_cast<uint32_t>(height), capabilities.minImageExtent.height, capabilities.maxImageExtent.height),
 		};
@@ -348,12 +346,13 @@ namespace gg
 	}
 
 	std::expected<GraphicsPipeline, Error> RendererVulkan::CreateGraphicsPipeline(
-		VkShaderModule vertexShader
-		, VkShaderModule fragmentShader
-		, VkPipelineVertexInputStateCreateInfo const& vertexInputInfo
-		, VkCullModeFlags cullMode
-		, VkPipelineDepthStencilStateCreateInfo const& depthStencil
-		, VkDescriptorSetLayout const& setLayout)
+		VkShaderModule vertexShader,
+		VkShaderModule fragmentShader,
+		VkPipelineVertexInputStateCreateInfo const& vertexInputInfo,
+		VkCullModeFlags cullMode,
+		VkPipelineDepthStencilStateCreateInfo const& depthStencil,
+		VkDescriptorSetLayout const& setLayout
+	)
 	{
 		std::expected<GraphicsPipeline, Error> result{ std::in_place };
 
@@ -697,9 +696,9 @@ namespace gg
 		{
 			VkDeviceQueueCreateInfo queueCreateInfo{
 				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-			.queueFamilyIndex = queueFamily,
-			.queueCount = 1,
-			.pQueuePriorities = &queuePriority,
+				.queueFamilyIndex = queueFamily,
+				.queueCount = 1,
+				.pQueuePriorities = &queuePriority,
 			};
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
@@ -954,7 +953,6 @@ namespace gg
 		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
 		if (device) vkDestroyDevice(device, nullptr);
 		if (instance) vkDestroyInstance(instance, nullptr);
-
 	}
 
 	void RendererVulkan::OnWindowResized(uint32_t width, uint32_t height)

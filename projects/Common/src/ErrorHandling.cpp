@@ -10,7 +10,8 @@ import GlobalSettings;
 
 namespace gg
 {
-	ComException::ComException(HRESULT hr) : returnCode{ hr }
+	ComException::ComException(HRESULT hr)
+		: returnCode{ hr }
 	{
 	}
 

@@ -28,8 +28,7 @@ namespace gg
 		ImGui::StyleColorsDark();
 
 		{ /* create a descriptor pool for ImGUI data */
-			VkDescriptorPoolSize poolSizes[] =
-			{
+			VkDescriptorPoolSize poolSizes[] = {
 				{ .type = VK_DESCRIPTOR_TYPE_SAMPLER, .descriptorCount = 1000 },
 				{ .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .descriptorCount = 1000 },
 				{ .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, .descriptorCount = 1000 },
@@ -119,4 +118,4 @@ namespace gg
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 	}
-} //namespace gg
+} // namespace gg

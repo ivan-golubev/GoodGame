@@ -33,7 +33,7 @@ export namespace gg
 		ComPtr<ID3D12Device> device;
 
 		ComPtr<ID3D12DescriptorHeap> srvHeap; /* shader-visible, holds the cube map SRV */
-		ComPtr<ID3D12Resource> cubeTexture;   /* 2D texture array with one slice per face */
+		ComPtr<ID3D12Resource> cubeTexture; /* 2D texture array with one slice per face */
 
 		ComPtr<ID3D12RootSignature> rootSignature;
 		ComPtr<ID3D12PipelineState> pipelineState;

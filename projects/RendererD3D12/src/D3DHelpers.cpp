@@ -17,7 +17,8 @@ namespace gg
 	void GetHardwareAdapter(
 		_In_ IDXGIFactory1* pFactory,
 		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
-		bool requestHighPerformanceAdapter)
+		bool requestHighPerformanceAdapter
+	)
 	{
 		*ppAdapter = nullptr;
 
@@ -31,7 +32,8 @@ namespace gg
 				SUCCEEDED(factory6->EnumAdapterByGpuPreference(
 					adapterIndex,
 					requestHighPerformanceAdapter == true ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED,
-					IID_PPV_ARGS(&adapter)));
+					IID_PPV_ARGS(&adapter)
+				));
 				++adapterIndex)
 			{
 				DXGI_ADAPTER_DESC1 desc;

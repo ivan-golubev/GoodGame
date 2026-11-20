@@ -38,4 +38,4 @@ namespace gg
 
 		return Application::Get();
 	}
-} // namespace gg 
+} // namespace gg

@@ -23,8 +23,7 @@ namespace
 			*outData = glm::vec3{ input[0], input[1], input[2] };
 	}
 
-	constexpr ImVec4 rendererNameColor[2]
-	{
+	constexpr ImVec4 rendererNameColor[2]{
 		ImVec4(1.f, 0.f, 0.f, 1.f),
 		ImVec4(0.f, 1.f, 0.f, 1.f)
 	};

@@ -5,8 +5,8 @@ module;
 #include <windows.h>
 module TimeManager;
 
-using std::chrono::nanoseconds;
 using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
 using std::chrono::steady_clock;
 using std::chrono::time_point;
 

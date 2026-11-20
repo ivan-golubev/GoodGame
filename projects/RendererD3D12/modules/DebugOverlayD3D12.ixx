@@ -26,4 +26,4 @@ export namespace gg
 		bool dx12BackendInitialized{};
 	};
 
-} //namespace gg
+} // namespace gg

@@ -40,10 +40,14 @@ namespace gg
 		}
 
 		sdlBackendInitialized = ImGui_ImplSDL2_InitForD3D(windowHandleSDL);
-		dx12BackendInitialized = ImGui_ImplDX12_Init(device.Get(), maxFramesInFlight, rtvFormat,
+		dx12BackendInitialized = ImGui_ImplDX12_Init(
+			device.Get(),
+			maxFramesInFlight,
+			rtvFormat,
 			imguiSrvDescHeap.Get(),
 			imguiSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+			imguiSrvDescHeap->GetGPUDescriptorHandleForHeapStart()
+		);
 		if (!sdlBackendInitialized || !dx12BackendInitialized)
 			return std::unexpected(Error{
 				.code = ErrorCode::D3D12DebugOverlayInitializationFailed,
@@ -76,4 +80,4 @@ namespace gg
 
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 	}
-} //namespace gg
+} // namespace gg

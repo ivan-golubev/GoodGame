@@ -101,4 +101,4 @@ namespace gg
 		inputManager->OnMouseMoved(deltaX, deltaY);
 	}
 
-} // namespace gg 
+} // namespace gg

@@ -20,4 +20,4 @@ export namespace gg
 	};
 
 	std::expected<std::shared_ptr<Application>, Error> MakeApplication(ApplicationSettings const&);
-} // namespace gg 
+} // namespace gg

@@ -38,4 +38,4 @@ export namespace gg
 		bool vulkanBackendInitialized{};
 	};
 
-} //namespace gg
+} // namespace gg

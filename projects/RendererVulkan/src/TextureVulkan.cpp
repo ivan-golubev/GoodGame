@@ -47,7 +47,6 @@ namespace gg
 			vkFreeMemory(device, textureImageMemory, nullptr);
 	}
 
-
 	std::expected<void, Error> TextureVulkan::CreateTextureImage()
 	{
 		if (!pixels)
@@ -73,11 +72,12 @@ namespace gg
 			}
 		} staging{ device };
 		VkDeviceSize imageSizeBytes = SizeBytes();
-		auto bufferResult{ renderer->CreateBuffer(staging.buffer
-			, staging.memory
-			, imageSizeBytes
-			, VK_BUFFER_USAGE_TRANSFER_SRC_BIT
-			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		auto bufferResult{ renderer->CreateBuffer(
+			staging.buffer,
+			staging.memory,
+			imageSizeBytes,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		) };
 		if (!bufferResult)
 			return std::unexpected(bufferResult.error());
@@ -94,14 +94,16 @@ namespace gg
 		memcpy(mappedData, pixels, static_cast<size_t>(imageSizeBytes));
 		vkUnmapMemory(device, staging.memory);
 
-		auto imageResult{ CreateImage(width
-			, height
-			, textureFormat
-			, VK_IMAGE_TILING_OPTIMAL
-			, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
-			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-			, textureImage
-			, textureImageMemory) };
+		auto imageResult{ CreateImage(
+			width,
+			height,
+			textureFormat,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			textureImage,
+			textureImageMemory
+		) };
 		if (!imageResult)
 			return std::unexpected(imageResult.error());
 
@@ -118,14 +120,15 @@ namespace gg
 	}
 
 	std::expected<void, Error> TextureVulkan::CreateImage(
-		uint32_t width
-		, uint32_t height
-		, VkFormat format
-		, VkImageTiling tiling
-		, VkImageUsageFlags usage
-		, VkMemoryPropertyFlags properties
-		, VkImage& image
-		, VkDeviceMemory& imageMemory)
+		uint32_t width,
+		uint32_t height,
+		VkFormat format,
+		VkImageTiling tiling,
+		VkImageUsageFlags usage,
+		VkMemoryPropertyFlags properties,
+		VkImage& image,
+		VkDeviceMemory& imageMemory
+	)
 	{
 		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
 		VkDevice device = renderer->GetDevice();

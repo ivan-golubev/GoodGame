@@ -50,4 +50,4 @@ namespace gg
 
 		GraphicsPipeline graphicsPipeline{};
 	};
-} //namespace gg
+} // namespace gg

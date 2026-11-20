@@ -26,6 +26,5 @@ namespace gg
 		uint32_t height{};
 		uint32_t channels{}; /* channel count of the source file; pixels in memory are always bytesPerPixel wide */
 		unsigned char* pixels{};
-
 	};
 } // namespace gg

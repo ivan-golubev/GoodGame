@@ -49,6 +49,7 @@ export namespace gg
 		ComException(HRESULT hr);
 		std::wstring WhatString() const;
 		char const* what() const override;
+
 	private:
 		HRESULT returnCode;
 	};

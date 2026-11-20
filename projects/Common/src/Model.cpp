@@ -23,11 +23,12 @@ namespace
 	std::expected<aiScene const*, gg::Error> ReadScene(std::string const& modelAbsolutePath, Assimp::Importer& importer)
 	{
 		// Assimp is throwing a DeadlyImportError because of a bug in glb2.0 reader. Does not affect anything.
-		aiScene const* scene = importer.ReadFile(modelAbsolutePath,
+		aiScene const* scene = importer.ReadFile(
+			modelAbsolutePath,
 			aiProcess_Triangulate
-			| aiProcess_JoinIdenticalVertices
-			| aiProcess_SortByPType
-			| aiProcess_FlipUVs
+				| aiProcess_JoinIdenticalVertices
+				| aiProcess_SortByPType
+				| aiProcess_FlipUVs
 		);
 		if (!scene)
 			return std::unexpected(gg::Error{
