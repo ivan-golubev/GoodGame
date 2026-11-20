@@ -1,6 +1,6 @@
-# GG Engine naming conventions
+# GG Engine conventions
 
-These are the naming rules the code follows. Formatting and other conventions are in `claude/coding-conventions.md` in the GG Engine project.
+These are the rules the code follows. Most of them are checked automatically: formatting by `.clang-format`, naming and several of the rules below by `.clang-tidy`, and the rest by `tools/check_conventions.py`. Run all three with `python tools/code_checks.py`.
 
 ## C++
 
@@ -9,7 +9,7 @@ These are the naming rules the code follows. Formatting and other conventions ar
 | Types, classes, structs, enums | PascalCase | `RendererD3D12`, `RendererSettings`, `ErrorCode`, `SkyboxCamera`, `ModelViewProjection` |
 | Enumerators | PascalCase | `ErrorCode::ModelImportFailed`, `DebugLevel::Info` |
 | Member functions | PascalCase | `UpdateCamera`, `GetViewMatrix`, `CreateSyncObjects` |
-| Free functions, including helpers in unnamed namespaces | PascalCase | `CalculateModelViewProjection`, `ThrowIfFailed`, `MainLoop`, `ReadMesh`, `CreateShaderModule` |
+| Free functions, including helpers in unnamed namespaces | PascalCase | `CalculateModelViewProjection`, `BreakIfFalse`, `MainLoop`, `ReadMesh`, `CreateShaderModule` |
 | Data members | camelCase, no prefix or suffix | `cameraPosition`, `commandQueue`, `isWindowResized` |
 | Locals and parameters | camelCase | `deltaTimeSeconds`, `hardwareAdapter` |
 | `constexpr` constants | camelCase | `cameraMoveSpeed`, `maxFramesInFlight`, `uvSetNumber` |
@@ -23,6 +23,46 @@ C++ types that mirror a constant buffer have **no** suffix. Examples: `SkyboxCam
 **No Hungarian notation.** Names don't encode their type: no `p`/`pp`/`lp` for pointers, `sz`, `dw`, `h`, or `m_`/`g_`/`s_` scope prefixes. Write `factory`, `heaps`, `commandLists`, not `pFactory`, `ppHeaps`. Output parameters use an `out` prefix (`outBuffer`). Fields of API structs (`desc.pData`) keep their API names.
 
 **No naked `new`; raw pointers never own.** Create objects with `std::make_unique` / `std::make_shared`. When only one class may create an object, give it a `PassKey` (see `ShaderProgramD3D12`) instead of a private constructor. Own C and COM resources with `std::unique_ptr` and a deleter, or `ComPtr`. Raw pointers are fine for non-owning access (API handles, `.Get()`, observers).
+
+## State, constants and errors
+
+### No global mutable state
+
+State belongs to an object that is passed to whoever needs it: `Application` (owned by `main`), `Scene` (camera, light), the renderers (GPU resources) and the device contexts (device, uploads). That means:
+
+- No non-`const` variables at namespace scope, including unnamed namespaces.
+- No non-`const` `static` data members.
+- No function-local `static` variables that hold state.
+- No singletons or global accessors (`Get()` / `Instance()` returning a shared object).
+
+An exception needs a reason written next to it and a marker the checks recognise: `// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)` for a namespace-scope variable, `// conventions: allow global-state` for a static. The only one today is `imguiVulkanInitResult` in `DebugOverlayVulkan.cpp`: ImGui's `CheckVkResultFn` is a C function pointer with no user data, so the callback can only report back through it.
+
+State inside libraries (the ImGui context, SDL, stb_image's last error) is outside this rule; only its lifetime is ours to manage.
+
+### String constants are `constexpr std::string_view`
+
+Write string constants as `constexpr std::string_view` (`std::wstring_view` for wide strings):
+
+- not `std::string const`: it is constructed when the program starts, so it is exposed to the static initialization order problem;
+- not `char const*` / `wchar_t const*`.
+
+Where a C API needs a null-terminated string, pass `.data()` of a view of a string literal (literals are null-terminated). Example: `.pName = entryPointVertexShader.data()`.
+
+Strings computed at run time inside functions (`std::string const path{ std::format(...) }`) are not constants and are fine.
+
+### No exceptions: errors are values
+
+The code does not throw. A function that can fail returns `std::expected<T, Error>` (`std::expected<void, Error>` when there is no value), and the caller checks it:
+
+```cpp
+if (auto result{ CreateSwapChain() }; !result)
+	return std::unexpected(result.error());
+```
+
+- `Error` holds an `ErrorCode` and a human-readable `message` (built with `std::format`, including the failing call's result code).
+- `ErrorCode` values that only one backend raises carry its prefix (`Vulkan...`, `D3D12...`).
+- `BreakIfFalse` is for programmer errors (broken assumptions), not for runtime failures: it stops in the debugger and does nothing in release builds.
+- `main` keeps one `catch (std::exception const&)` as a safety net for exceptions thrown by the standard library or third-party code. Our code adds no `throw`.
 
 ## Files and modules
 
