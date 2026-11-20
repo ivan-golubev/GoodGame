@@ -12,6 +12,15 @@ export namespace gg
 	class ShaderProgramVulkan : public ShaderProgram
 	{
 	public:
+		/* Only RendererVulkan can make a PassKey, so only it can create a ShaderProgramVulkan,
+		   while std::make_unique can still call the public constructor. */
+		class PassKey
+		{
+			friend class RendererVulkan;
+			PassKey() = default;
+		};
+		ShaderProgramVulkan(PassKey, VkDevice);
+
 		ShaderProgramVulkan(ShaderProgramVulkan&&) noexcept;
 		ShaderProgramVulkan& operator=(ShaderProgramVulkan&&) noexcept;
 
@@ -25,9 +34,8 @@ export namespace gg
 		VkShaderModule GetFragmentShader() const;
 
 	private:
-		/* Only Vulkan Renderer can create ShaderProgramVulkan */
+		/* Only RendererVulkan initializes the shaders */
 		friend class RendererVulkan;
-		explicit ShaderProgramVulkan(VkDevice);
 		std::expected<void, Error> Initialize(std::string const& vertexShaderRelativePath, std::string const& fragmentShaderRelativePath);
 
 		std::string vertexShaderBlob;

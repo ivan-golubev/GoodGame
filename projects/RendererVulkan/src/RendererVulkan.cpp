@@ -1130,19 +1130,19 @@ namespace gg
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererVulkan::LoadShader(std::string const& shaderName)
 	{
-		std::string const                    vertexShaderRelativePath{ std::format(
+		std::string const vertexShaderRelativePath{ std::format(
 			"{}/{}_VS.{}",
 			shadersLocation,
 			shaderName,
 			shaderExtensionVulkan
 		) };
-		std::string const                    fragmentShaderRelativePath{ std::format(
+		std::string const fragmentShaderRelativePath{ std::format(
 			"{}/{}_PS.{}",
 			shadersLocation,
 			shaderName,
 			shaderExtensionVulkan
 		) };
-		std::unique_ptr<ShaderProgramVulkan> shader{ new ShaderProgramVulkan(device) };
+		auto              shader{ std::make_unique<ShaderProgramVulkan>(ShaderProgramVulkan::PassKey{}, device) };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };

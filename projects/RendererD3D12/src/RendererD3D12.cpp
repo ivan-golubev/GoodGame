@@ -426,19 +426,19 @@ namespace gg
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
-		std::string const                   vertexShaderRelativePath{ std::format(
+		std::string const vertexShaderRelativePath{ std::format(
 			"{}/{}_VS.{}",
 			shadersLocation,
 			shaderName,
 			shaderExtensionD3D12
 		) };
-		std::string const                   fragmentShaderRelativePath{ std::format(
+		std::string const fragmentShaderRelativePath{ std::format(
 			"{}/{}_PS.{}",
 			shadersLocation,
 			shaderName,
 			shaderExtensionD3D12
 		) };
-		std::unique_ptr<ShaderProgramD3D12> shader{ new ShaderProgramD3D12() };
+		auto              shader{ std::make_unique<ShaderProgramD3D12>(ShaderProgramD3D12::PassKey{}) };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
