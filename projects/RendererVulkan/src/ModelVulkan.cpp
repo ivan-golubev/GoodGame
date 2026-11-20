@@ -354,7 +354,7 @@ namespace gg
 		return {};
 	}
 
-	void ModelVulkan::UpdateUniformBuffers(uint32_t frame, Camera const& camera, double currentTimeSec)
+	void ModelVulkan::UpdateUniformBuffers(uint32_t frame, Camera const& camera, DirectionalLight const& light, double currentTimeSec)
 	{
 		{ /* MVP matrix */
 			ModelViewProjection const mvpMatrices{ CalculateModelViewProjection(translation, currentTimeSec, camera) };
@@ -366,14 +366,20 @@ namespace gg
 		{ /* Directional Light */
 			void* data;
 			vkMapMemory(context->GetDevice(), uniformBuffersMemoryDirLight[frame], 0, sizeof(DirectionalLight), 0, &data);
-			memcpy(data, &globalDirectionalLight, sizeof(DirectionalLight));
+			memcpy(data, &light, sizeof(DirectionalLight));
 			vkUnmapMemory(context->GetDevice(), uniformBuffersMemoryDirLight[frame]);
 		}
 	}
 
-	void ModelVulkan::Draw(VkCommandBuffer commandBuffer, uint32_t frame, Camera const& camera, double currentTimeSec)
+	void ModelVulkan::Draw(
+		VkCommandBuffer         commandBuffer,
+		uint32_t                frame,
+		Camera const&           camera,
+		DirectionalLight const& light,
+		double                  currentTimeSec
+	)
 	{
-		UpdateUniformBuffers(frame, camera, currentTimeSec);
+		UpdateUniformBuffers(frame, camera, light, currentTimeSec);
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
 		vkCmdBindDescriptorSets(

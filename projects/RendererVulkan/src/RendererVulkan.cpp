@@ -980,7 +980,7 @@ namespace gg
 
 		double const currentTimeSec{ timeManager->GetCurrentTimeSec() };
 		for (std::shared_ptr<ModelVulkan> model : models)
-			model->Draw(commandBuffer, currentFrame, scene.camera, currentTimeSec);
+			model->Draw(commandBuffer, currentFrame, scene.camera, scene.light, currentTimeSec);
 
 		/* After the models: the sky only fills pixels the depth test leaves at the far plane. */
 		if (skybox)

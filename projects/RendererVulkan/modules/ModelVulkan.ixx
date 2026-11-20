@@ -10,6 +10,7 @@ export module ModelVulkan;
 
 import DeviceContextVulkan;
 import Camera;
+import Lighting;
 import ErrorHandling;
 import GraphicsPipelineVulkan;
 import Model;
@@ -30,7 +31,7 @@ namespace gg
 
 		std::expected<void, Error> Initialize(VkDescriptorPool, RenderTargetVulkan const&);
 		std::expected<void, Error> CreatePipeline(RenderTargetVulkan const&);
-		void                       Draw(VkCommandBuffer, uint32_t frame, Camera const&, double currentTimeSec);
+		void                       Draw(VkCommandBuffer, uint32_t frame, Camera const&, DirectionalLight const&, double currentTimeSec);
 
 	private:
 		std::expected<void, Error> CreateVertexBuffer();
@@ -39,7 +40,7 @@ namespace gg
 		std::expected<void, Error> CreateUniformBuffers();
 		std::expected<void, Error> CreateDescriptorSets(VkDescriptorPool);
 		void                       DestroyPipeline();
-		void                       UpdateUniformBuffers(uint32_t frame, Camera const&, double currentTimeSec);
+		void                       UpdateUniformBuffers(uint32_t frame, Camera const&, DirectionalLight const&, double currentTimeSec);
 
 		std::shared_ptr<DeviceContextVulkan> context;
 		VkBuffer                             vertexBuffer{};

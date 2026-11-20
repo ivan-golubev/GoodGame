@@ -706,7 +706,7 @@ namespace gg
 					CalculateModelViewProjection(model->translation, timeManager->GetCurrentTimeSec(), scene.camera)
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjection) / sizeof(float), &mvpMatrices, 0);
-				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);
+				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &scene.light, 0);
 				commandList->SetGraphicsRootDescriptorTable(2, model->srvHeap->GetGPUDescriptorHandleForHeapStart());
 				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
 

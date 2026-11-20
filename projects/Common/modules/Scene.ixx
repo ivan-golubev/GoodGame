@@ -4,6 +4,8 @@ export module Scene;
 
 export import Camera;
 import Input;
+export import Lighting;
+import SettingsRenderer;
 
 export namespace gg
 {
@@ -16,6 +18,7 @@ export namespace gg
 		{
 		}
 
-		Camera camera;
+		Camera           camera;
+		DirectionalLight light{ defaultDirectionalLight };
 	};
 } // namespace gg

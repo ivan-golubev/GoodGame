@@ -16,12 +16,6 @@ namespace
 		ImGui::InputScalarN(label, ImGuiDataType_Float, data, 3, nullptr, nullptr, "%.3f", ImGuiInputTextFlags_CharsScientific);
 	}
 
-	void ImguiColorEdit3(char const* label, float input[3], glm::vec3* outData)
-	{
-		if (ImGui::ColorEdit3(label, input))
-			*outData = glm::vec3{ input[0], input[1], input[2] };
-	}
-
 	constexpr ImVec4 rendererNameColor[2]{
 		ImVec4(1.f, 0.f, 0.f, 1.f),
 		ImVec4(0.f, 1.f, 0.f, 1.f)
@@ -42,20 +36,17 @@ namespace gg
 
 		if (ImGui::CollapsingHeader("Light settings", ImGuiTreeNodeFlags_CollapsingHeader | ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			DirectionalLight& d{ globalDirectionalLight };
+			DirectionalLight& d{ scene.light };
 			ImguiFloat3("Direction", &d.lightDirection);
 
-			static float diffuseColor[3]{ d.diffuseColor.r, d.diffuseColor.g, d.diffuseColor.b };
-			ImguiColorEdit3("Diffuse Color", diffuseColor, &d.diffuseColor);
+			ImGui::ColorEdit3("Diffuse Color", &d.diffuseColor.r);
 
 			ImGui::NewLine();
-			static float ambientColor[3]{ d.ambientColor.r, d.ambientColor.g, d.ambientColor.b };
-			ImguiColorEdit3("Ambient Color", ambientColor, &d.ambientColor);
+			ImGui::ColorEdit3("Ambient Color", &d.ambientColor.r);
 			ImGui::SliderFloat("Ambient Strength", &d.ambientStrength, 0.f, 10.f);
 
 			ImGui::NewLine();
-			static float specularColor[3]{ d.specularColor.r, d.specularColor.g, d.specularColor.b };
-			ImguiColorEdit3("Specular Color", specularColor, &d.specularColor);
+			ImGui::ColorEdit3("Specular Color", &d.specularColor.r);
 
 			ImGui::SliderFloat("Specular Strength", &d.specularStrength, 0.f, 1.f);
 			ImGui::SliderFloat("Specular Shininess", &d.specularShininess, 1.f, 256.f);
