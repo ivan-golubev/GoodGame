@@ -106,7 +106,7 @@ namespace gg
 				IID_PPV_ARGS(&device)
 			) };
 			D3D12_CHECK_HRESULT(deviceResult, ErrorCode::D3D12InitializationFailed, "create D3D12 device");
-			SetName(device.Get(), L"DefaultDevice");
+			SetName(device.Get(), L"Device");
 		}
 
 		if constexpr (IsDebug())
@@ -128,7 +128,7 @@ namespace gg
 
 			HRESULT const commandQueueResult{ device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)) };
 			D3D12_CHECK_HRESULT(commandQueueResult, ErrorCode::D3D12InitializationFailed, "create command queue");
-			SetName(commandQueue.Get(), L"MainCommandQueue");
+			SetName(commandQueue.Get(), L"CommandQueue_Direct");
 		}
 
 		{ /* Create a swap chain */
@@ -175,7 +175,7 @@ namespace gg
 				ErrorCode::D3D12InitializationFailed,
 				"create render target descriptor heap"
 			);
-			SetName(renderTargetViewHeap.Get(), L"RTV_DescriptorHeap");
+			SetName(renderTargetViewHeap.Get(), L"RTV_DescriptorHeap_SwapChain");
 			rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		}
 
@@ -189,7 +189,7 @@ namespace gg
 			IID_PPV_ARGS(&commandAllocator)
 		) };
 		D3D12_CHECK_HRESULT(d3d12CreateCommandAllocatorResult, ErrorCode::D3D12InitializationFailed, "create command allocator");
-		SetName(commandAllocator.Get(), L"DefaultAllocator");
+		SetName(commandAllocator.Get(), L"CommandAllocator_Direct");
 		HRESULT const d3d12CreateCommandListResult{ device->CreateCommandList1(
 			0,
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -197,13 +197,13 @@ namespace gg
 			IID_PPV_ARGS(&commandList)
 		) };
 		D3D12_CHECK_HRESULT(d3d12CreateCommandListResult, ErrorCode::D3D12InitializationFailed, "create command list");
-		SetName(commandList.Get(), L"DefaultCommandList");
+		SetName(commandList.Get(), L"CommandList_Direct");
 		auto name = GetName(commandList.Get());
 
 		{ /* Create synchronization objects */
 			HRESULT const d3d12CreateFenceResult{ device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)) };
 			D3D12_CHECK_HRESULT(d3d12CreateFenceResult, ErrorCode::D3D12InitializationFailed, "create fence");
-			SetName(fence.Get(), L"DefaultFence");
+			SetName(fence.Get(), L"Fence_Frame");
 			fenceValue = 1;
 
 			// Create an event handle to use for frame synchronization.
@@ -300,7 +300,7 @@ namespace gg
 				IID_PPV_ARGS(&rootSignature)
 			) };
 			D3D12_CHECK_HRESULT(d3d12CreateRootSignatureResult, ErrorCode::D3D12InitializationFailed, "create root signature");
-			SetName(rootSignature.Get(), L"RootSignature");
+			SetName(rootSignature.Get(), L"RootSignature_Model");
 		}
 		debugOverlay = std::make_unique<DebugOverlayD3D12>();
 		if (auto result{ debugOverlay->Initialize(device, windowHandleSDL) }; !result)
@@ -354,7 +354,7 @@ namespace gg
 			}
 		};
 
-		std::string const  psoName{ std::format("PSO_{}", model->name) };
+		std::string const  psoName{ std::format("PSO_Model_{}", model->name) };
 		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
 
 		auto result{ CreateGraphicsPipeline(
@@ -676,7 +676,7 @@ namespace gg
 			);
 
 			std::wstring const resourceName{ model->name.begin(), model->name.end() };
-			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_{}", resourceName));
+			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_Model_{}", resourceName));
 		}
 		if (auto const result{ LoadTextures(model) }; !result)
 			return std::unexpected(result.error());
@@ -712,7 +712,7 @@ namespace gg
 			model->vertexBufferUpload,
 			mesh.vertices.data(),
 			vertexBufferSizeBytes,
-			L"VertexBuffer"
+			std::format(L"Vertex_Model_{}", std::wstring{ model->name.begin(), model->name.end() })
 		) };
 		if (!vertexBufferResult)
 			return std::unexpected(vertexBufferResult.error());
@@ -768,7 +768,7 @@ namespace gg
 			D3D12_CHECK_HRESULT(d3d12GetResizedSwapChainBufferResult, ErrorCode::D3D12ResizeFailed, "get resized swap chain buffer");
 			rtvHandles[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), n, rtvDescriptorSize);
 			device->CreateRenderTargetView(renderTargets[n].Get(), nullptr, rtvHandles[n]);
-			SetName(renderTargets[n].Get(), std::format(L"SwapChainBuffer[{}]", n));
+			SetName(renderTargets[n].Get(), std::format(L"RenderTarget_SwapChain_{}", n));
 		}
 		return {};
 	}
@@ -799,7 +799,7 @@ namespace gg
 			IID_PPV_ARGS(&depthBuffer)
 		) };
 		D3D12_CHECK_HRESULT(d3d12CreateDepthBufferResourceResult, ErrorCode::D3D12ResizeFailed, "create depth buffer resource");
-		SetName(depthBuffer.Get(), std::format(L"{}_GPU", L"DepthStencilTexture"));
+		SetName(depthBuffer.Get(), L"Texture_DepthStencil");
 
 		/* create the DSV */
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{
@@ -834,7 +834,7 @@ namespace gg
 			IID_PPV_ARGS(&cpuResource)
 		) };
 		D3D12_CHECK_HRESULT(d3d12CreateUploadBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create upload buffer resource");
-		SetName(cpuResource.Get(), std::format(L"{}_CPU", resourceName));
+		SetName(cpuResource.Get(), std::format(L"UploadBuffer_{}", resourceName));
 
 		/* create the target resource on the GPU */
 		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
@@ -848,7 +848,7 @@ namespace gg
 			IID_PPV_ARGS(&gpuResource)
 		) };
 		D3D12_CHECK_HRESULT(d3d12CreateGPUBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create GPU buffer resource");
-		SetName(gpuResource.Get(), std::format(L"{}_GPU", resourceName));
+		SetName(gpuResource.Get(), std::format(L"Buffer_{}", resourceName));
 
 		/* transfer the data */
 		D3D12_SUBRESOURCE_DATA subresourceData{
