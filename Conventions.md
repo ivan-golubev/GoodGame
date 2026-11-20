@@ -32,8 +32,13 @@ C++ types that mirror a constant buffer have **no** suffix. Examples: `SkyboxCam
 | Kind | Rule | Examples |
 |---|---|---|
 | Structs | PascalCase, no suffix. Matches the C++ mirror type. | `SkyboxCamera`, `ModelViewProjection`, `VSOutput` |
+| Struct members | camelCase. Same names, in the same order, as the C++ mirror. | `viewPosition`, `invProjection`, `specularColor`, `MVP` (abbreviation) |
 | Constant buffer variables | `CB` suffix | `SkyboxCameraCB`, `ModelViewProjectionCB`, `DirectionalLightCB` |
-| Textures and samplers | Current names: `texture0`, `sampler0` | |
-| Entry points | `vs_main`, `ps_main` | |
+| Textures and samplers | Descriptive camelCase | `diffuseTexture`, `skyboxTexture`, `linearSampler` |
+| Functions | PascalCase | `BlinnPhong` |
+| Entry points | PascalCase `VSMain` / `PSMain` | |
+| Locals and parameters | camelCase. Single letters are fine for standard lighting math. | `viewDirection`, `N`, `V`, `L` |
+| Semantics | UPPERCASE | `POSITION`, `TEXCOORD`, `SV_Position`, `SV_Target` |
+| Macros | UPPER_SNAKE | `VK_BINDING` |
 
 The C++ side has no suffix on the type, but the HLSL constant buffer variable keeps `CB`. This is intentional. The shader cannot use the same name for both the type and the variable.
