@@ -51,7 +51,7 @@ namespace gg
 				auto& outStream{ (debugLevel == DebugLevel::Info) ? std::cout : std::cerr };
 				// Keep logging failures in the stream state instead of throwing.
 				outStream.exceptions(std::ios::goodbit);
-				outStream << message << std::endl;
+				outStream << message << '\n';
 			}
 		}
 	}
