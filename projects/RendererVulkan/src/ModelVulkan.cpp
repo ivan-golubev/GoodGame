@@ -348,11 +348,8 @@ namespace gg
 	void ModelVulkan::UpdateUniformBuffers(uint32_t frame, Camera const& camera, double currentTimeSec)
 	{
 		{ /* MVP matrix */
-			ModelViewProjection const mvpMatrices{
-				.MVP          = CalculateMVP(translation, currentTimeSec, camera),
-				.viewPosition = camera.GetPositionVec4(),
-			};
-			void* data;
+			ModelViewProjection const mvpMatrices{ CalculateModelViewProjection(translation, currentTimeSec, camera) };
+			void*                     data;
 			vkMapMemory(device, uniformBuffersMemoryMVP[frame], 0, sizeof(ModelViewProjection), 0, &data);
 			memcpy(data, &mvpMatrices, sizeof(ModelViewProjection));
 			vkUnmapMemory(device, uniformBuffersMemoryMVP[frame]);

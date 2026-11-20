@@ -988,8 +988,7 @@ namespace gg
 				commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 				ModelViewProjection mvpMatrices{
-					.MVP          = CalculateMVP(model->translation, timeManager->GetCurrentTimeSec(), *camera),
-					.viewPosition = camera->GetPositionVec4(),
+					CalculateModelViewProjection(model->translation, timeManager->GetCurrentTimeSec(), *camera)
 				};
 				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjection) / sizeof(float), &mvpMatrices, 0);
 				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &globalDirectionalLight, 0);

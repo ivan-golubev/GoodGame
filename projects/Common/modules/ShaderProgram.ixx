@@ -18,6 +18,7 @@ export namespace gg
 	struct ModelViewProjection
 	{
 		glm::mat4x4 MVP;
+		glm::mat4x4 model; // model to world space, for world-space normals and positions
 		glm::vec4   viewPosition;
 	};
 

@@ -15,6 +15,7 @@
 struct ModelViewProjection
 {
 	matrix<float, 4, 4> MVP;
+	matrix<float, 4, 4> model; // model to world space, for world-space normals and positions
 	float4 viewPosition;
 };
 

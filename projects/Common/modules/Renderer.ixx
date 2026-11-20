@@ -60,6 +60,6 @@ export namespace gg
 		virtual std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) = 0;
 	};
 
-	glm::mat4x4  CalculateMVP(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);
-	SkyboxCamera CalculateSkyboxCamera(Camera const&);
+	ModelViewProjection CalculateModelViewProjection(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);
+	SkyboxCamera        CalculateSkyboxCamera(Camera const&);
 } // namespace gg
