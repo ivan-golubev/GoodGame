@@ -1,4 +1,5 @@
 module;
+#include "D3D12CheckHResult.h"
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -23,6 +24,7 @@ module RendererD3D12;
 import Camera;
 import D3DHelpers;
 import DebugOverlayD3D12;
+import DeviceContextD3D12;
 import ErrorHandling;
 import GlobalSettings;
 import Input;
@@ -39,16 +41,6 @@ import Vertex;
 
 using Microsoft::WRL::ComPtr;
 using std::chrono::nanoseconds;
-
-#define D3D12_CHECK_HRESULT(hr, errorCode, operation)                                                                  \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		if (FAILED(hr))                                                                                                \
-			return std::unexpected(gg::Error{                                                                          \
-				.code    = errorCode,                                                                                  \
-				.message = std::format("D3D12 {} failed with HRESULT 0x{:08X}", operation, static_cast<uint32_t>(hr)), \
-			});                                                                                                        \
-	} while (false)
 
 namespace
 {
@@ -95,39 +87,8 @@ namespace gg
 		HRESULT const         factoryResult{ CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)) };
 		D3D12_CHECK_HRESULT(factoryResult, ErrorCode::D3D12InitializationFailed, "create DXGI factory");
 
-		{ /* Select a hardware adapter and create a D3D12 device */
-			ComPtr<IDXGIAdapter1> const hardwareAdapter{ GetHardwareAdapter(factory.Get(), true) };
-
-			HRESULT const deviceResult{ D3D12CreateDevice(
-				hardwareAdapter.Get(),
-				D3D_FEATURE_LEVEL_11_0,
-				IID_PPV_ARGS(&device)
-			) };
-			D3D12_CHECK_HRESULT(deviceResult, ErrorCode::D3D12InitializationFailed, "create D3D12 device");
-			SetName(device.Get(), L"Device");
-		}
-
-		if constexpr (IsDebug())
-		{ /* enabled debug breakpoints */
-			ComPtr<ID3D12InfoQueue> infoQueue;
-			if (SUCCEEDED(device.As(&infoQueue)))
-			{
-				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-			}
-		}
-
-		{ /* Create a command queue */
-			D3D12_COMMAND_QUEUE_DESC queueDesc{
-				.Type  = D3D12_COMMAND_LIST_TYPE_DIRECT,
-				.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
-			};
-
-			HRESULT const commandQueueResult{ device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)) };
-			D3D12_CHECK_HRESULT(commandQueueResult, ErrorCode::D3D12InitializationFailed, "create command queue");
-			SetName(commandQueue.Get(), L"CommandQueue_Direct");
-		}
+		if (auto result{ CreateDeviceContext(factory.Get()) }; !result)
+			return std::unexpected(result.error());
 
 		{ /* Create a swap chain */
 			DXGI_SWAP_CHAIN_DESC1 swapChainDesc{
@@ -142,7 +103,7 @@ namespace gg
 
 			ComPtr<IDXGISwapChain1> swapChain1;
 			HRESULT const           swapChainResult{ factory->CreateSwapChainForHwnd(
-				commandQueue.Get(),
+				context->GetCommandQueue(),
 				windowHandle,
 				&swapChainDesc,
 				nullptr,
@@ -164,7 +125,7 @@ namespace gg
 				.NumDescriptors = maxFramesInFlight,
 				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
-			HRESULT const d3d12CreateRenderTargetDescriptorHeapResult{ device->CreateDescriptorHeap(
+			HRESULT const d3d12CreateRenderTargetDescriptorHeapResult{ context->GetDevice()->CreateDescriptorHeap(
 				&rtvHeapDesc,
 				IID_PPV_ARGS(&renderTargetViewHeap)
 			) };
@@ -174,7 +135,7 @@ namespace gg
 				"create render target descriptor heap"
 			);
 			SetName(renderTargetViewHeap.Get(), L"RTV_DescriptorHeap_SwapChain");
-			rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			rtvDescriptorSize = context->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		}
 
 		/* Create render targets */
@@ -182,13 +143,13 @@ namespace gg
 			return std::unexpected(result.error());
 
 		/* Create a command allocator and a command list */
-		HRESULT const d3d12CreateCommandAllocatorResult{ device->CreateCommandAllocator(
+		HRESULT const d3d12CreateCommandAllocatorResult{ context->GetDevice()->CreateCommandAllocator(
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
 			IID_PPV_ARGS(&commandAllocator)
 		) };
 		D3D12_CHECK_HRESULT(d3d12CreateCommandAllocatorResult, ErrorCode::D3D12InitializationFailed, "create command allocator");
 		SetName(commandAllocator.Get(), L"CommandAllocator_Direct");
-		HRESULT const d3d12CreateCommandListResult{ device->CreateCommandList1(
+		HRESULT const d3d12CreateCommandListResult{ context->GetDevice()->CreateCommandList1(
 			0,
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
 			D3D12_COMMAND_LIST_FLAG_NONE,
@@ -199,7 +160,7 @@ namespace gg
 		auto name{ GetName(commandList.Get()) };
 
 		{ /* Create synchronization objects */
-			HRESULT const d3d12CreateFenceResult{ device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)) };
+			HRESULT const d3d12CreateFenceResult{ context->GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)) };
 			D3D12_CHECK_HRESULT(d3d12CreateFenceResult, ErrorCode::D3D12InitializationFailed, "create fence");
 			SetName(fence.Get(), L"Fence_Frame");
 			fenceValue = 1;
@@ -219,7 +180,7 @@ namespace gg
 				.NumDescriptors = 1,
 				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 			};
-			HRESULT const d3d12CreateDepthStencilDescriptorHeapResult{ device->CreateDescriptorHeap(
+			HRESULT const d3d12CreateDepthStencilDescriptorHeapResult{ context->GetDevice()->CreateDescriptorHeap(
 				&dsvHeapDesc,
 				IID_PPV_ARGS(&depthStencilHeap)
 			) };
@@ -229,7 +190,7 @@ namespace gg
 				"create depth stencil descriptor heap"
 			);
 
-			dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+			dsvDescriptorSize = context->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		}
 		/* Create depth buffer */
 		if (auto result{ ResizeDepthBuffer() }; !result)
@@ -241,7 +202,7 @@ namespace gg
 			D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData{
 				.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1,
 			};
-			if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+			if (FAILED(context->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
 			{
 				featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 			}
@@ -292,7 +253,7 @@ namespace gg
 			D3D12_CHECK_HRESULT(d3d12SerializeRootSignatureResult, ErrorCode::D3D12InitializationFailed, "serialize root signature");
 
 			// Create the root signature.
-			HRESULT const d3d12CreateRootSignatureResult{ device->CreateRootSignature(
+			HRESULT const d3d12CreateRootSignatureResult{ context->GetDevice()->CreateRootSignature(
 				0,
 				rootSignatureBlob->GetBufferPointer(),
 				rootSignatureBlob->GetBufferSize(),
@@ -302,7 +263,7 @@ namespace gg
 			SetName(rootSignature.Get(), L"RootSignature_Model");
 		}
 		debugOverlay = std::make_unique<DebugOverlayD3D12>();
-		if (auto result{ debugOverlay->Initialize(device, windowHandleSDL) }; !result)
+		if (auto result{ debugOverlay->Initialize(context->GetDevice(), windowHandleSDL) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
@@ -356,7 +317,7 @@ namespace gg
 		std::string const  psoName{ std::format("PSO_Model_{}", model->name) };
 		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
 
-		auto result{ CreateGraphicsPipeline(
+		auto result{ context->CreateGraphicsPipeline(
 			CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get()),
 			CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get()),
 			D3D12_INPUT_LAYOUT_DESC{ .pInputElementDescs = inputLayout, .NumElements = _countof(inputLayout) },
@@ -369,57 +330,6 @@ namespace gg
 			return std::unexpected(std::move(result.error()));
 		model->pipelineState = std::move(*result);
 		return {};
-	}
-
-	std::expected<ComPtr<ID3D12PipelineState>, Error> RendererD3D12::CreateGraphicsPipeline(
-		D3D12_SHADER_BYTECODE const&       vertexShader,
-		D3D12_SHADER_BYTECODE const&       pixelShader,
-		D3D12_INPUT_LAYOUT_DESC const&     inputLayout,
-		D3D12_CULL_MODE                    cullMode,
-		CD3DX12_DEPTH_STENCIL_DESC1 const& depthStencil,
-		ID3D12RootSignature*               pipelineRootSignature,
-		std::wstring const&                name
-	)
-	{
-		std::expected<ComPtr<ID3D12PipelineState>, Error> result{ std::in_place };
-
-		D3D12_RT_FORMAT_ARRAY rtvFormats{
-			.RTFormats        = { rtvFormat },
-			.NumRenderTargets = 1,
-		};
-
-		CD3DX12_BLEND_DESC      blendDesc{ D3D12_DEFAULT };
-		CD3DX12_RASTERIZER_DESC rasterizerDesc{ D3D12_DEFAULT };
-		rasterizerDesc.CullMode = cullMode;
-
-		PipelineStateStream pipelineStateStream{
-			.rootSignature         = pipelineRootSignature,
-			.inputLayout           = CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT(inputLayout),
-			.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-			.blendState            = blendDesc,
-			.rasterizerState       = rasterizerDesc,
-			.depthStencilState     = depthStencil,
-			.VS                    = vertexShader,
-			.PS                    = pixelShader,
-			.DSVFormat             = DXGI_FORMAT_D32_FLOAT,
-			.RTVFormats            = rtvFormats,
-		};
-
-		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc{
-			.SizeInBytes                   = sizeof(PipelineStateStream),
-			.pPipelineStateSubobjectStream = &pipelineStateStream,
-		};
-		HRESULT const d3d12CreateGraphicsPipelineStateResult{ device->CreatePipelineState(
-			&pipelineStateStreamDesc,
-			IID_PPV_ARGS(&*result)
-		) };
-		D3D12_CHECK_HRESULT(
-			d3d12CreateGraphicsPipelineStateResult,
-			ErrorCode::D3D12PipelineCreationFailed,
-			"create graphics pipeline state"
-		);
-		SetName(result->Get(), name);
-		return result;
 	}
 
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)
@@ -463,7 +373,7 @@ namespace gg
 			return std::unexpected(result.error());
 
 		std::array<Texture const*, 1> const images{ texture.get() };
-		auto                                uploadResult{ UploadTexture(
+		auto                                uploadResult{ context->UploadTexture(
 			images,
 			D3D12_SRV_DIMENSION_TEXTURE2D,
 			srvHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -477,162 +387,13 @@ namespace gg
 		return std::shared_ptr<Texture>{ std::move(texture) };
 	}
 
-	std::expected<ComPtr<ID3D12Resource>, Error> RendererD3D12::UploadTexture(
-		std::span<Texture const* const> images,
-		D3D12_SRV_DIMENSION             srvDimension,
-		D3D12_CPU_DESCRIPTOR_HANDLE     srvHandle,
-		std::wstring const&             resourceName,
-		std::string const&              sourceName
-	)
-	{
-		auto makeUploadError = [&sourceName](char const* operation, HRESULT result)
-		{
-			return Error{
-				.code    = ErrorCode::D3D12TextureUploadFailed,
-				.message = std::format(
-					"Failed to {} for texture '{}': HRESULT 0x{:08X}",
-					operation,
-					sourceName,
-					static_cast<uint32_t>(result)
-				),
-			};
-		};
-
-		BreakIfFalse(!images.empty());
-		BreakIfFalse(srvDimension == D3D12_SRV_DIMENSION_TEXTURE2D ? images.size() == 1 : true);
-		BreakIfFalse(srvDimension == D3D12_SRV_DIMENSION_TEXTURECUBE ? images.size() == 6 : true);
-		uint32_t const width{ images[0]->width };
-		uint32_t const height{ images[0]->height };
-		for (Texture const* image : images)
-			BreakIfFalse(image->width == width && image->height == height);
-		uint32_t const subresourceCount{ static_cast<uint32_t>(images.size()) };
-
-		std::expected<ComPtr<ID3D12Resource>, Error> texture{ std::in_place };
-		HRESULT                                      result{};
-		// Describe and create a Texture2D (array) with one slice per image.
-		D3D12_RESOURCE_DESC textureDesc{
-			.Dimension        = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-			.Alignment        = 0,
-			.Width            = width,
-			.Height           = height,
-			.DepthOrArraySize = static_cast<UINT16>(subresourceCount),
-			.MipLevels        = 1,
-			.Format           = DXGI_FORMAT_R8G8B8A8_UNORM,
-			.SampleDesc       = { .Count = 1, .Quality = 0 },
-			.Layout           = D3D12_TEXTURE_LAYOUT_UNKNOWN,
-			.Flags            = D3D12_RESOURCE_FLAG_NONE,
-		};
-
-		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-		result = device->CreateCommittedResource(
-			&defaultHeapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&textureDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			nullptr,
-			IID_PPV_ARGS(&*texture)
-		);
-		if (FAILED(result))
-			return std::unexpected(makeUploadError("create the GPU texture resource", result));
-		SetName(texture->Get(), resourceName);
-		uint64_t const uploadBufferSize{ GetRequiredIntermediateSize(texture->Get(), 0, subresourceCount) };
-
-		/* Intermediate upload buffer; only needed until the copy has executed. */
-		ComPtr<ID3D12Resource>        uploadResource;
-		CD3DX12_HEAP_PROPERTIES const uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
-		CD3DX12_RESOURCE_DESC const   bufferResDesc{ CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize) };
-		result = device->CreateCommittedResource(
-			&uploadHeapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&bufferResDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&uploadResource)
-		);
-		if (FAILED(result))
-			return std::unexpected(makeUploadError("create the texture upload resource", result));
-
-		/* Record the upload only after all resource creation has succeeded. */
-		result = commandAllocator->Reset();
-		if (FAILED(result))
-			return std::unexpected(makeUploadError("reset the command allocator", result));
-		result = commandList->Reset(commandAllocator.Get(), nullptr);
-		if (FAILED(result))
-			return std::unexpected(makeUploadError("reset the command list", result));
-
-		/* Copy data to the intermediate upload heap and then schedule a copy
-		   from the upload heap to the texture, one subresource per image. */
-		LONG_PTR const                      textureRowPitch{ width * Texture::bytesPerPixel };
-		LONG_PTR const                      textureSlicePitch{ textureRowPitch * height };
-		std::vector<D3D12_SUBRESOURCE_DATA> textureData;
-		textureData.reserve(subresourceCount);
-		for (Texture const* image : images)
-			textureData.push_back(D3D12_SUBRESOURCE_DATA{
-				.pData      = image->pixels.get(),
-				.RowPitch   = textureRowPitch,
-				.SlicePitch = textureSlicePitch,
-			});
-
-		UINT64 const uploadedBytes{ UpdateSubresources(
-			commandList.Get(),
-			texture->Get(),
-			uploadResource.Get(),
-			0,
-			0,
-			subresourceCount,
-			textureData.data()
-		) };
-		if (uploadedBytes == 0)
-		{
-			HRESULT const closeResult{ commandList->Close() };
-			if (FAILED(closeResult))
-				return std::unexpected(makeUploadError("close the command list after texture upload failed", closeResult));
-			return std::unexpected(Error{
-				.code    = ErrorCode::D3D12TextureUploadFailed,
-				.message = std::format("Failed to copy texture '{}' into the D3D12 upload resource", sourceName),
-			});
-		}
-
-		CD3DX12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(
-			texture->Get(),
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-		) };
-		commandList->ResourceBarrier(1, &barrier);
-		{
-			/* Describe and create a SRV for the texture. */
-			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{
-				.Format                  = textureDesc.Format,
-				.ViewDimension           = srvDimension,
-				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-			};
-			if (srvDimension == D3D12_SRV_DIMENSION_TEXTURECUBE)
-				srvDesc.TextureCube = { .MostDetailedMip = 0, .MipLevels = 1, .ResourceMinLODClamp = 0.f };
-			else
-				srvDesc.Texture2D = { .MostDetailedMip = 0, .MipLevels = 1, .PlaneSlice = 0, .ResourceMinLODClamp = 0.f };
-			device->CreateShaderResourceView(texture->Get(), &srvDesc, srvHandle);
-		}
-
-		result = commandList->Close();
-		if (FAILED(result))
-			return std::unexpected(makeUploadError("close the texture upload command list", result));
-		ID3D12CommandList* commandLists[]{ commandList.Get() };
-		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
-
-		/* Wait for the copy to finish before the upload buffer is released. */
-		if (auto const waitResult{ WaitForPreviousFrame() }; !waitResult)
-			return std::unexpected(waitResult.error());
-
-		return texture;
-	}
-
 	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const& name, std::string const& shaderName)
 	{
 		auto shaderResult{ LoadShader(shaderName) };
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 
-		std::unique_ptr<SkyboxD3D12> newSkybox{ std::make_unique<SkyboxD3D12>(name, std::move(*shaderResult), device.Get()) };
+		std::unique_ptr<SkyboxD3D12> newSkybox{ std::make_unique<SkyboxD3D12>(name, std::move(*shaderResult), context) };
 		if (auto result{ newSkybox->Initialize() }; !result)
 			return std::unexpected(result.error());
 		skybox = std::move(newSkybox);
@@ -664,7 +425,7 @@ namespace gg
 				.NumDescriptors = 1,
 				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 			};
-			HRESULT const d3d12CreateModelTextureDescriptorHeapResult{ device->CreateDescriptorHeap(
+			HRESULT const d3d12CreateModelTextureDescriptorHeapResult{ context->GetDevice()->CreateDescriptorHeap(
 				&srvHeapDesc,
 				IID_PPV_ARGS(&model->srvHeap)
 			) };
@@ -690,43 +451,15 @@ namespace gg
 		BreakIfFalse(model->meshes.size() < 2);
 		Mesh const& mesh{ model->meshes[0] };
 
-		HRESULT const d3d12ResetCommandAllocatorForVertexUploadResult{ commandAllocator->Reset() };
-		D3D12_CHECK_HRESULT(
-			d3d12ResetCommandAllocatorForVertexUploadResult,
-			ErrorCode::D3D12CommandRecordingFailed,
-			"reset command allocator for vertex upload"
-		);
-		HRESULT const d3d12ResetCommandListForVertexUploadResult{ commandList->Reset(commandAllocator.Get(), model->pipelineState.Get()) };
-		D3D12_CHECK_HRESULT(
-			d3d12ResetCommandListForVertexUploadResult,
-			ErrorCode::D3D12CommandRecordingFailed,
-			"reset command list for vertex upload"
-		);
-
 		uint64_t const vertexBufferSizeBytes{ mesh.VerticesSizeBytes() };
-
-		auto vertexBufferResult{ CreateBuffer(
-			commandList,
-			model->vertexBuffer,
-			model->vertexBufferUpload,
-			mesh.vertices.data(),
-			vertexBufferSizeBytes,
-			std::format(L"Vertex_Model_{}", std::wstring{ model->name.begin(), model->name.end() })
-		) };
-		if (!vertexBufferResult)
-			return std::unexpected(vertexBufferResult.error());
-		HRESULT const d3d12CloseVertexUploadCommandListResult{ commandList->Close() };
-		D3D12_CHECK_HRESULT(
-			d3d12CloseVertexUploadCommandListResult,
-			ErrorCode::D3D12CommandRecordingFailed,
-			"close vertex upload command list"
-		);
-
-		/* Upload Vertex and Index buffers */
-		ID3D12CommandList* commandLists[]{ commandList.Get() };
-		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
-
-		if (auto result{ WaitForPreviousFrame() }; !result)
+		if (auto result{ context->UploadBuffer(
+				model->vertexBuffer,
+				model->vertexBufferUpload,
+				mesh.vertices.data(),
+				vertexBufferSizeBytes,
+				std::format(L"Vertex_Model_{}", std::wstring{ model->name.begin(), model->name.end() })
+			) };
+		    !result)
 			return std::unexpected(result.error());
 
 		/* Init the Vertex buffer view */
@@ -766,7 +499,7 @@ namespace gg
 			HRESULT const d3d12GetResizedSwapChainBufferResult{ swapChain->GetBuffer(n, IID_PPV_ARGS(&renderTargets[n])) };
 			D3D12_CHECK_HRESULT(d3d12GetResizedSwapChainBufferResult, ErrorCode::D3D12ResizeFailed, "get resized swap chain buffer");
 			rtvHandles[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), n, rtvDescriptorSize);
-			device->CreateRenderTargetView(renderTargets[n].Get(), nullptr, rtvHandles[n]);
+			context->GetDevice()->CreateRenderTargetView(renderTargets[n].Get(), nullptr, rtvHandles[n]);
 			SetName(renderTargets[n].Get(), std::format(L"RenderTarget_SwapChain_{}", n));
 		}
 		return {};
@@ -789,7 +522,7 @@ namespace gg
 			DXGI_FORMAT_D32_FLOAT, width, height,
 			1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
 		) };
-		HRESULT const                 d3d12CreateDepthBufferResourceResult{ device->CreateCommittedResource(
+		HRESULT const                 d3d12CreateDepthBufferResourceResult{ context->GetDevice()->CreateCommittedResource(
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&resourceDesc,
@@ -808,61 +541,7 @@ namespace gg
 			.Texture2D     = { .MipSlice = 0 },
 		};
 		dsvHandle = { depthStencilHeap->GetCPUDescriptorHandleForHeapStart() };
-		device->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHandle);
-		return {};
-	}
-
-	std::expected<void, Error> RendererD3D12::CreateBuffer(
-		ComPtr<ID3D12GraphicsCommandList> const& commandList,
-		ComPtr<ID3D12Resource>&                  gpuResource,
-		ComPtr<ID3D12Resource>&                  cpuResource,
-		void const*                              data,
-		uint64_t                                 sizeBytes,
-		std::wstring const&                      resourceName
-	)
-	{
-		/* create an intermediate resource */
-		CD3DX12_HEAP_PROPERTIES uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
-		CD3DX12_RESOURCE_DESC   uploadResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes) };
-		HRESULT const           d3d12CreateUploadBufferResourceResult{ device->CreateCommittedResource(
-			&uploadHeapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&uploadResourceProps,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&cpuResource)
-		) };
-		D3D12_CHECK_HRESULT(d3d12CreateUploadBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create upload buffer resource");
-		SetName(cpuResource.Get(), std::format(L"UploadBuffer_{}", resourceName));
-
-		/* create the target resource on the GPU */
-		CD3DX12_HEAP_PROPERTIES const defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
-		CD3DX12_RESOURCE_DESC const   gpuResourceProps{ CD3DX12_RESOURCE_DESC::Buffer(sizeBytes, D3D12_RESOURCE_FLAG_NONE) };
-		HRESULT const                 d3d12CreateGPUBufferResourceResult{ device->CreateCommittedResource(
-			&defaultHeapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&gpuResourceProps,
-			D3D12_RESOURCE_STATE_COMMON,
-			nullptr,
-			IID_PPV_ARGS(&gpuResource)
-		) };
-		D3D12_CHECK_HRESULT(d3d12CreateGPUBufferResourceResult, ErrorCode::D3D12BufferCreationFailed, "create GPU buffer resource");
-		SetName(gpuResource.Get(), std::format(L"Buffer_{}", resourceName));
-
-		/* transfer the data */
-		D3D12_SUBRESOURCE_DATA subresourceData{
-			.pData      = data,
-			.RowPitch   = static_cast<LONG_PTR>(sizeBytes),
-			.SlicePitch = static_cast<LONG_PTR>(sizeBytes),
-		};
-
-		UpdateSubresources(
-			commandList.Get(),
-			gpuResource.Get(),
-			cpuResource.Get(),
-			0, 0, 1,
-			&subresourceData
-		);
+		context->GetDevice()->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHandle);
 		return {};
 	}
 
@@ -870,7 +549,7 @@ namespace gg
 	{
 		/* Ensure that the GPU is no longer referencing resources that are about to be
 		 cleaned up by the destructor. */
-		if (commandQueue && fence && fenceEvent)
+		if (context && fence && fenceEvent)
 		{
 			if (auto const result{ WaitForPreviousFrame() }; !result)
 				DebugLog(DebugLevel::Error, result.error().message);
@@ -884,21 +563,9 @@ namespace gg
 
 		debugOverlay.reset();
 
-		current = nullptr;
-	}
-
-	RendererD3D12* RendererD3D12::current{ nullptr };
-
-	RendererD3D12::RendererD3D12()
-	{
-		BreakIfFalse(current == nullptr);
-		current = this;
-	}
-
-	RendererD3D12& RendererD3D12::Get()
-	{
-		BreakIfFalse(current != nullptr);
-		return *current;
+		/* The renderer holds the last reference to the context */
+		BreakIfFalse(!context || context.use_count() == 1);
+		context.reset();
 	}
 
 	void RendererD3D12::OnWindowResized(uint32_t width, uint32_t height)
@@ -924,7 +591,7 @@ namespace gg
 
 		/* Execute the command list. */
 		ID3D12CommandList* commandLists[]{ commandList.Get() };
-		commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+		context->GetCommandQueue()->ExecuteCommandLists(_countof(commandLists), commandLists);
 
 		/* Present the frame and inefficiently wait for the frame to render. */
 		HRESULT const d3d12PresentFrameResult{ swapChain->Present(1, 0) };
@@ -937,7 +604,7 @@ namespace gg
 	std::expected<void, Error> RendererD3D12::WaitForPreviousFrame()
 	{
 		uint64_t const fencePrevValue{ fenceValue };
-		HRESULT const  d3d12SignalFrameFenceResult{ commandQueue->Signal(fence.Get(), fencePrevValue) };
+		HRESULT const  d3d12SignalFrameFenceResult{ context->GetCommandQueue()->Signal(fence.Get(), fencePrevValue) };
 		D3D12_CHECK_HRESULT(d3d12SignalFrameFenceResult, ErrorCode::D3D12SynchronizationFailed, "signal frame fence");
 		fenceValue++;
 
@@ -947,6 +614,53 @@ namespace gg
 			HRESULT const d3d12SetFenceCompletionEventResult{ fence->SetEventOnCompletion(fencePrevValue, fenceEvent) };
 			D3D12_CHECK_HRESULT(d3d12SetFenceCompletionEventResult, ErrorCode::D3D12SynchronizationFailed, "set fence completion event");
 			WaitForSingleObject(fenceEvent, INFINITE);
+		}
+		return {};
+	}
+
+	std::expected<void, Error> RendererD3D12::CreateDeviceContext(IDXGIFactory4* factory)
+	{
+		/* Created here and handed to the context, which owns them from then on */
+		ComPtr<ID3D12Device4>      device;
+		ComPtr<ID3D12CommandQueue> commandQueue;
+
+		{ /* Select a hardware adapter and create a D3D12 device */
+			ComPtr<IDXGIAdapter1> const hardwareAdapter{ GetHardwareAdapter(factory, true) };
+
+			HRESULT const deviceResult{ D3D12CreateDevice(
+				hardwareAdapter.Get(),
+				D3D_FEATURE_LEVEL_11_0,
+				IID_PPV_ARGS(&device)
+			) };
+			D3D12_CHECK_HRESULT(deviceResult, ErrorCode::D3D12InitializationFailed, "create D3D12 device");
+			SetName(device.Get(), L"Device");
+		}
+
+		if constexpr (IsDebug())
+		{ /* enabled debug breakpoints */
+			ComPtr<ID3D12InfoQueue> infoQueue;
+			if (SUCCEEDED(device.As(&infoQueue)))
+			{
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+			}
+		}
+
+		{ /* Create a command queue */
+			D3D12_COMMAND_QUEUE_DESC queueDesc{
+				.Type  = D3D12_COMMAND_LIST_TYPE_DIRECT,
+				.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
+			};
+
+			HRESULT const commandQueueResult{ device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)) };
+			D3D12_CHECK_HRESULT(commandQueueResult, ErrorCode::D3D12InitializationFailed, "create command queue");
+			SetName(commandQueue.Get(), L"CommandQueue_Direct");
+
+			auto contextResult{ DeviceContextD3D12::Create(device, commandQueue) };
+			if (!contextResult)
+				return std::unexpected(contextResult.error());
+			context = std::move(*contextResult);
 		}
 		return {};
 	}

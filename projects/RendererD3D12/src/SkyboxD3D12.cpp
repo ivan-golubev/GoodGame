@@ -15,7 +15,6 @@ import Camera;
 import D3DHelpers;
 import ErrorHandling;
 import Renderer;
-import RendererD3D12;
 import ShaderProgram;
 import ShaderProgramD3D12;
 import Skybox;
@@ -25,10 +24,10 @@ using Microsoft::WRL::ComPtr;
 
 namespace gg
 {
-	SkyboxD3D12::SkyboxD3D12(std::string const& name, std::shared_ptr<ShaderProgram> s, ID3D12Device* device)
+	SkyboxD3D12::SkyboxD3D12(std::string const& name, std::shared_ptr<ShaderProgram> s, std::shared_ptr<DeviceContextD3D12> c)
 		: Skybox{ name, s }
 		, name{ name }
-		, device{ device }
+		, context{ std::move(c) }
 	{
 	}
 
@@ -54,7 +53,7 @@ namespace gg
 			.NumDescriptors = 1,
 			.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 		};
-		HRESULT const heapResult{ device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap)) };
+		HRESULT const heapResult{ context->GetDevice()->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap)) };
 		if (FAILED(heapResult))
 		{
 			auto const message{ std::format(
@@ -72,7 +71,7 @@ namespace gg
 		for (size_t i{}; i < faceCount; ++i)
 			faces[i] = textures[i].get();
 
-		auto uploadResult{ RendererD3D12::Get().UploadTexture(
+		auto uploadResult{ context->UploadTexture(
 			faces,
 			D3D12_SRV_DIMENSION_TEXTURECUBE,
 			srvHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -91,7 +90,7 @@ namespace gg
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData{
 			.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1,
 		};
-		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+		if (FAILED(context->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
 			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 
 		/* No vertex input: the fullscreen triangle is generated from SV_VertexID. Only the pixel shader reads resources. */
@@ -157,7 +156,7 @@ namespace gg
 			});
 		}
 
-		HRESULT const createResult{ device->CreateRootSignature(
+		HRESULT const createResult{ context->GetDevice()->CreateRootSignature(
 			0,
 			rootSignatureBlob->GetBufferPointer(),
 			rootSignatureBlob->GetBufferSize(),
@@ -195,7 +194,7 @@ namespace gg
 		depthStencil.DepthFunc      = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
 		std::wstring const nameW{ name.begin(), name.end() };
-		auto               result{ RendererD3D12::Get().CreateGraphicsPipeline(
+		auto               result{ context->CreateGraphicsPipeline(
 			CD3DX12_SHADER_BYTECODE(shader->GetVertexShader().Get()),
 			CD3DX12_SHADER_BYTECODE(shader->GetFragmentShader().Get()),
 			inputLayout,

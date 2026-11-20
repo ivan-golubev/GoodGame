@@ -7,6 +7,7 @@ module;
 export module SkyboxD3D12;
 
 import Camera;
+import DeviceContextD3D12;
 import ErrorHandling;
 import ShaderProgram;
 import Skybox;
@@ -18,7 +19,7 @@ export namespace gg
 	class SkyboxD3D12 : public Skybox
 	{
 	public:
-		SkyboxD3D12(std::string const& name, std::shared_ptr<ShaderProgram>, ID3D12Device*);
+		SkyboxD3D12(std::string const& name, std::shared_ptr<ShaderProgram>, std::shared_ptr<DeviceContextD3D12>);
 		~SkyboxD3D12() noexcept override = default;
 
 		std::expected<void, Error> Initialize();
@@ -29,8 +30,8 @@ export namespace gg
 		std::expected<void, Error> CreateRootSignature();
 		std::expected<void, Error> CreatePipeline();
 
-		std::string          name;
-		ComPtr<ID3D12Device> device;
+		std::string                         name;
+		std::shared_ptr<DeviceContextD3D12> context;
 
 		ComPtr<ID3D12DescriptorHeap> srvHeap; /* shader-visible, holds the cube map SRV */
 		ComPtr<ID3D12Resource>       cubeTexture; /* 2D texture array with one slice per face */

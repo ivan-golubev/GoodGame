@@ -6,7 +6,6 @@ module TextureD3D12;
 
 import Texture;
 import ErrorHandling;
-import RendererD3D12;
 
 namespace gg
 {
