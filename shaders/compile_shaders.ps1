@@ -60,6 +60,6 @@ foreach($file in Get-ChildItem -Path $PSScriptRoot -Filter *.hlsl) {
 		$AdditionalParamsVS += , $DebugParams
 	}
 
-	& $Compiler -T vs_${ShaderModel} -E vs_main @AdditionalParamsVS $file -Fo ${OutputDir}\${Entry}_VS.${Extention}
-	& $Compiler -T ps_${ShaderModel} -E ps_main @AdditionalParamsPS $file -Fo ${OutputDir}\${Entry}_PS.${Extention}
+	& $Compiler -T vs_${ShaderModel} -E VSMain @AdditionalParamsVS $file -Fo ${OutputDir}\${Entry}_VS.${Extention}
+	& $Compiler -T ps_${ShaderModel} -E PSMain @AdditionalParamsPS $file -Fo ${OutputDir}\${Entry}_PS.${Extention}
 }

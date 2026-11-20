@@ -20,7 +20,7 @@ struct VSOutput
 	float2 texCoord : TEXCOORD;
 };
 
-VSOutput vs_main(VSInput input)
+VSOutput VSMain(VSInput input)
 {
 	VSOutput output;
 	output.position = mul(ModelViewProjectionCB.MVP, input.position);
@@ -37,7 +37,7 @@ struct PSInput
 	float2 texCoord : TEXCOORD;
 };
 
-float4 ps_main(PSInput input) : SV_Target
+float4 PSMain(PSInput input) : SV_Target
 {
 	float4 textureColor = diffuseTexture.Sample(linearSampler, input.texCoord);
 

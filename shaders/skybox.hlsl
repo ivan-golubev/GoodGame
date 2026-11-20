@@ -17,7 +17,7 @@ struct VSOutput
 };
 
 // Called with vkCmdDraw(3, 1, 0, 0): vertexID is 0, 1, 2.
-VSOutput vs_main(uint vertexID : SV_VertexID)
+VSOutput VSMain(uint vertexID : SV_VertexID)
 {
 	// Map the vertex index to a corner without a lookup table:
 	// id 0 -> (0, 0), id 1 -> (2, 0), id 2 -> (0, 2).
@@ -35,7 +35,7 @@ VSOutput vs_main(uint vertexID : SV_VertexID)
 	return output;
 }
 
-float4 ps_main(VSOutput input) : SV_Target
+float4 PSMain(VSOutput input) : SV_Target
 {
 	// Undo the projection: this pixel's screen position on the far plane, back in view space (homogeneous).
 	float4 viewPosition = mul(SkyboxCameraCB.invProjection, float4(input.ndc, 1.0, 1.0));
