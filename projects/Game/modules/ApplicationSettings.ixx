@@ -19,5 +19,5 @@ export namespace gg
 		RendererType rendererType;
 	};
 
-	std::expected<std::shared_ptr<Application>, Error> MakeApplication(ApplicationSettings const&);
+	std::expected<std::unique_ptr<Application>, Error> MakeApplication(ApplicationSettings const&);
 } // namespace gg

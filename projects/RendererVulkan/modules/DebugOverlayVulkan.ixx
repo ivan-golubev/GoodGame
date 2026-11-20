@@ -6,6 +6,7 @@ module;
 export module DebugOverlayVulkan;
 
 import ErrorHandling;
+import Renderer;
 
 export namespace gg
 {
@@ -28,7 +29,7 @@ export namespace gg
 	public:
 		~DebugOverlayVulkan() noexcept;
 		std::expected<void, Error> Initialize(DebugOverlayVulkanCreateInfo const&);
-		void                       Render(VkCommandBuffer);
+		void                       Render(VkCommandBuffer, Renderer&);
 
 	private:
 		VkDevice         device{};

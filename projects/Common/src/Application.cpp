@@ -15,38 +15,7 @@ import ErrorHandling;
 
 namespace gg
 {
-	std::shared_ptr<Application> Application::instance{ nullptr };
-
-	std::shared_ptr<Application> Application::Init(
-		std::unique_ptr<Renderer>     renderer,
-		std::shared_ptr<TimeManager>  timeManager,
-		std::shared_ptr<InputManager> inputManager
-	)
-	{
-		BreakIfFalse(!Application::IsInitialized());
-		instance = std::make_shared<Application>(PassKey{}, std::move(renderer), timeManager, inputManager);
-		return instance;
-	}
-
-	void Application::Destroy()
-	{
-		BreakIfFalse(Application::IsInitialized());
-		instance.reset();
-	}
-
-	bool Application::IsInitialized()
-	{
-		return instance.get() != nullptr;
-	}
-
-	std::shared_ptr<Application> Application::Get()
-	{
-		BreakIfFalse(Application::IsInitialized());
-		return instance;
-	}
-
 	Application::Application(
-		PassKey,
 		std::unique_ptr<Renderer>     renderer,
 		std::shared_ptr<TimeManager>  timeManager,
 		std::shared_ptr<InputManager> inputManager

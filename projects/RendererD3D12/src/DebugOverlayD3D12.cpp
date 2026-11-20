@@ -72,7 +72,7 @@ namespace gg
 			ImGui::DestroyContext();
 	}
 
-	void DebugOverlayD3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList)
+	void DebugOverlayD3D12::Render(ComPtr<ID3D12GraphicsCommandList> commandList, Renderer& renderer)
 	{
 		PIXSetMarker(commandList.Get(), PIX_COLOR_DEFAULT, L"ImGUI");
 
@@ -82,7 +82,7 @@ namespace gg
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 
-		RenderDebugOverlay();
+		RenderDebugOverlay(renderer);
 
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 	}

@@ -16,19 +16,7 @@ namespace gg
 	export class Application
 	{
 	public:
-		static std::shared_ptr<Application> Init(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
-		static void                         Destroy();
-		static bool                         IsInitialized();
-		static std::shared_ptr<Application> Get();
-
-		/* Only Application can make a PassKey, so only Init() can create an Application,
-		   while std::make_shared can still call the public constructor. */
-		class PassKey
-		{
-			friend class Application;
-			PassKey() = default;
-		};
-		Application(PassKey, std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
+		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
 
 		~Application() noexcept;
 
@@ -50,8 +38,6 @@ namespace gg
 		std::shared_ptr<Renderer>     GetRenderer();
 
 	private:
-		static std::shared_ptr<Application> instance;
-
 		bool isPaused{ false };
 
 		std::shared_ptr<InputManager> inputManager;

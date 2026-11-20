@@ -2,7 +2,9 @@ module;
 #include <memory>
 export module DebugOverlay;
 
+import Renderer;
+
 export namespace gg
 {
-	void RenderDebugOverlay();
+	void RenderDebugOverlay(Renderer&);
 } // namespace gg

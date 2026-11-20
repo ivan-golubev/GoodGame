@@ -41,7 +41,7 @@ namespace
 			|| event.type == SDL_MOUSEWHEEL;
 	}
 
-	uint32_t MainLoop(std::shared_ptr<gg::Application> app, gg::RendererType& rendererType)
+	uint32_t MainLoop(gg::Application& app, gg::RendererType& rendererType)
 	{
 		using namespace gg;
 
@@ -67,11 +67,11 @@ namespace
 				{
 					uint8_t windowEvent{ event.window.event };
 					if (windowEvent == SDL_WINDOWEVENT_RESIZED)
-						app->OnWindowResized(event.window.data1, event.window.data2);
+						app.OnWindowResized(event.window.data1, event.window.data2);
 					else if (windowEvent == SDL_WINDOWEVENT_MINIMIZED)
-						app->OnWindowMinimized();
+						app.OnWindowMinimized();
 					else if (windowEvent == SDL_WINDOWEVENT_RESTORED)
-						app->OnWindowRestored();
+						app.OnWindowRestored();
 					else if (windowEvent == SDL_WINDOWEVENT_FOCUS_LOST && isMouseLook)
 					{
 						isMouseLook = false;
@@ -81,7 +81,7 @@ namespace
 				break;
 				case SDL_MOUSEMOTION:
 					if (isMouseLook)
-						app->OnMouseMoved(event.motion.xrel, event.motion.yrel);
+						app.OnMouseMoved(event.motion.xrel, event.motion.yrel);
 					break;
 				case SDL_KEYDOWN:
 					[[fallthrough]];
@@ -109,7 +109,7 @@ namespace
 						return rendererChangeRequested;
 					}
 					else
-						app->OnKeyPressed(key, event.type == SDL_KEYDOWN);
+						app.OnKeyPressed(key, event.type == SDL_KEYDOWN);
 					break;
 				}
 				default: // NOP
@@ -117,7 +117,7 @@ namespace
 				}
 			}
 			// All events processed - tick the world
-			if (auto const tickResult{ app->Tick() }; !tickResult)
+			if (auto const tickResult{ app.Tick() }; !tickResult)
 			{
 				DebugLog(DebugLevel::Error, tickResult.error().message);
 				return EXIT_FAILURE;
@@ -165,7 +165,7 @@ namespace
 				DebugLog(DebugLevel::Error, appResult.error().message);
 				return EXIT_FAILURE;
 			}
-			std::shared_ptr<Application> app{ std::move(*appResult) };
+			std::unique_ptr<Application> app{ std::move(*appResult) };
 			DebugLog(DebugLevel::Info, "Successfully initialized the application");
 
 			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
@@ -186,8 +186,7 @@ namespace
 					handleAssetLoadError(result.error());
 			}
 
-			uint32_t status{ MainLoop(app, rendererType) };
-			Application::Destroy();
+			uint32_t status{ MainLoop(*app, rendererType) };
 
 			if (status != EXIT_SUCCESS)
 				return status;

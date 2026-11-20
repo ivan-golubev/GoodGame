@@ -37,17 +37,19 @@ namespace gg
 	export class RendererD3D12 : public Renderer
 	{
 	public:
-		RendererD3D12() = default;
+		RendererD3D12();
 		~RendererD3D12() noexcept;
 		std::expected<void, Error> Initialize(RendererSettings const&) override;
 
-		static std::shared_ptr<RendererD3D12> Get();
+		/* The live renderer, for the objects it creates. Set by the constructor, cleared by the destructor. */
+		static RendererD3D12& Get();
 
 		RendererD3D12(RendererD3D12 const&)            = delete;
 		RendererD3D12& operator=(RendererD3D12 const&) = delete;
 
-		RendererD3D12(RendererD3D12&&) noexcept            = default;
-		RendererD3D12& operator=(RendererD3D12&&) noexcept = default;
+		/* Not movable: Get() points at this object */
+		RendererD3D12(RendererD3D12&&)            = delete;
+		RendererD3D12& operator=(RendererD3D12&&) = delete;
 
 		std::shared_ptr<Camera> GetCamera() override;
 		RendererType            GetType() const override;
@@ -85,6 +87,8 @@ namespace gg
 		);
 
 	private:
+		static RendererD3D12* current; /* non-owning */
+
 		std::expected<void, Error> PopulateCommandList();
 		std::expected<void, Error> WaitForPreviousFrame();
 		std::expected<void, Error> ResizeRenderTargets();

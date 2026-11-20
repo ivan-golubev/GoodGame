@@ -36,17 +36,19 @@ namespace gg
 	export class RendererVulkan : public Renderer
 	{
 	public:
-		RendererVulkan() = default;
+		RendererVulkan();
 		~RendererVulkan() noexcept;
 		std::expected<void, Error> Initialize(RendererSettings const&) override;
 
-		static std::shared_ptr<RendererVulkan> Get();
+		/* The live renderer, for the objects it creates. Set by the constructor, cleared by the destructor. */
+		static RendererVulkan& Get();
 
 		RendererVulkan(RendererVulkan const&)            = delete;
 		RendererVulkan& operator=(RendererVulkan const&) = delete;
 
-		RendererVulkan(RendererVulkan&&) noexcept            = default;
-		RendererVulkan& operator=(RendererVulkan&&) noexcept = default;
+		/* Not movable: Get() points at this object */
+		RendererVulkan(RendererVulkan&&)            = delete;
+		RendererVulkan& operator=(RendererVulkan&&) = delete;
 
 		std::shared_ptr<Camera> GetCamera() override;
 		RendererType            GetType() const override;
@@ -93,6 +95,8 @@ namespace gg
 		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name);
 
 	private:
+		static RendererVulkan* current; /* non-owning */
+
 		struct QueueFamilyIndices
 		{
 			std::optional<uint32_t> graphicsFamily;

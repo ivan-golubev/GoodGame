@@ -11,7 +11,6 @@ module;
 module Camera;
 
 import Input;
-import Application;
 
 namespace gg
 {

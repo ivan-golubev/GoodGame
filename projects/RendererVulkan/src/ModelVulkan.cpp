@@ -100,8 +100,8 @@ namespace gg
 			}
 		} staging{ device };
 
-		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		auto                            stagingBufferResult{ renderer->CreateBuffer(
+		RendererVulkan& renderer{ RendererVulkan::Get() };
+		auto            stagingBufferResult{ renderer.CreateBuffer(
 			staging.buffer,
 			staging.memory,
 			vertexBufferSizeBytes,
@@ -124,7 +124,7 @@ namespace gg
 		VkBufferUsageFlagBits const usage{ static_cast<VkBufferUsageFlagBits>(
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
 		) };
-		auto                        vertexBufferResult{ renderer->CreateBuffer(
+		auto                        vertexBufferResult{ renderer.CreateBuffer(
 			vertexBuffer,
 			vertexBufferMemory,
 			vertexBufferSizeBytes,
@@ -133,17 +133,17 @@ namespace gg
 		) };
 		if (!vertexBufferResult)
 			return std::unexpected(vertexBufferResult.error());
-		if (auto result{ renderer->CopyBuffer(staging.buffer, vertexBuffer, vertexBufferSizeBytes) }; !result)
+		if (auto result{ renderer.CopyBuffer(staging.buffer, vertexBuffer, vertexBufferSizeBytes) }; !result)
 			return std::unexpected(result.error());
 		return {};
 	}
 
 	std::expected<void, Error> ModelVulkan::LoadTextures()
 	{
-		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
+		RendererVulkan& renderer{ RendererVulkan::Get() };
 		for (std::string const& textureName : textureNames)
 		{
-			auto textureResult{ renderer->LoadTexture(textureName) };
+			auto textureResult{ renderer.LoadTexture(textureName) };
 			if (!textureResult)
 				return std::unexpected(textureResult.error());
 			textures.emplace_back(std::move(*textureResult));
@@ -220,7 +220,7 @@ namespace gg
 			.stencilTestEnable     = VK_FALSE,
 		};
 
-		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
+		auto result{ RendererVulkan::Get().CreateGraphicsPipeline(
 			shader->GetVertexShader(),
 			shader->GetFragmentShader(),
 			vertexInputInfo,
@@ -245,10 +245,10 @@ namespace gg
 
 	std::expected<void, Error> ModelVulkan::CreateUniformBuffers()
 	{
-		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
+		RendererVulkan& renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			auto mvpBufferResult{ renderer->CreateBuffer(
+			auto mvpBufferResult{ renderer.CreateBuffer(
 				uniformBuffersMVP[i],
 				uniformBuffersMemoryMVP[i],
 				sizeof(ModelViewProjection),
@@ -257,7 +257,7 @@ namespace gg
 			) };
 			if (!mvpBufferResult)
 				return std::unexpected(mvpBufferResult.error());
-			auto dirLightBufferResult{ renderer->CreateBuffer(
+			auto dirLightBufferResult{ renderer.CreateBuffer(
 				uniformBuffersDirLight[i],
 				uniformBuffersMemoryDirLight[i],
 				sizeof(DirectionalLight),

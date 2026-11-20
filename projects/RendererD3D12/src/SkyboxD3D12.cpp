@@ -72,7 +72,7 @@ namespace gg
 		for (size_t i{}; i < faceCount; ++i)
 			faces[i] = textures[i].get();
 
-		auto uploadResult{ RendererD3D12::Get()->UploadTexture(
+		auto uploadResult{ RendererD3D12::Get().UploadTexture(
 			faces,
 			D3D12_SRV_DIMENSION_TEXTURECUBE,
 			srvHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -195,7 +195,7 @@ namespace gg
 		depthStencil.DepthFunc      = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
 		std::wstring const nameW{ name.begin(), name.end() };
-		auto               result{ RendererD3D12::Get()->CreateGraphicsPipeline(
+		auto               result{ RendererD3D12::Get().CreateGraphicsPipeline(
 			CD3DX12_SHADER_BYTECODE(shader->GetVertexShader().Get()),
 			CD3DX12_SHADER_BYTECODE(shader->GetFragmentShader().Get()),
 			inputLayout,

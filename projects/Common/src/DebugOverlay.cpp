@@ -8,7 +8,6 @@ import SettingsRenderer;
 import Camera;
 import Lighting;
 import Renderer;
-import Application;
 
 namespace
 {
@@ -31,16 +30,14 @@ namespace
 
 namespace gg
 {
-	void RenderDebugOverlay()
+	void RenderDebugOverlay(Renderer& renderer)
 	{
 		ImGui::NewFrame();
 		ImGui::Begin("Renderer settings");
 
-		std::shared_ptr<Application> app{ Application::Get() };
-		std::shared_ptr<Renderer>    renderer{ app->GetRenderer() };
-		std::shared_ptr<Camera>      camera{ renderer->GetCamera() };
+		std::shared_ptr<Camera> camera{ renderer.GetCamera() };
 
-		RendererType const rendererType{ renderer->GetType() };
+		RendererType const rendererType{ renderer.GetType() };
 		ImGui::TextColored(rendererNameColor[rendererType], "Renderer: %s", ToString(rendererType).c_str());
 
 		if (ImGui::CollapsingHeader("Light settings", ImGuiTreeNodeFlags_CollapsingHeader | ImGuiTreeNodeFlags_DefaultOpen))

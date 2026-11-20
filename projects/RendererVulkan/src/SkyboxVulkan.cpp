@@ -51,7 +51,7 @@ namespace gg
 			return std::unexpected(result.error());
 		if (auto result{ CreateTextureImageView() }; !result)
 			return std::unexpected(result.error());
-		auto samplerResult{ RendererVulkan::Get()->CreateTextureSampler() };
+		auto samplerResult{ RendererVulkan::Get().CreateTextureSampler() };
 		if (!samplerResult)
 			return std::unexpected(samplerResult.error());
 		textureSampler = *samplerResult;
@@ -103,10 +103,10 @@ namespace gg
 
 	std::expected<void, Error> SkyboxVulkan::CreateUniformBuffers()
 	{
-		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
+		RendererVulkan& renderer{ RendererVulkan::Get() };
 		for (size_t i{ 0 }; i < maxFramesInFlight; ++i)
 		{
-			auto cameraBufferResult{ renderer->CreateBuffer(
+			auto cameraBufferResult{ renderer.CreateBuffer(
 				uniformBuffersCamera[i],
 				uniformBuffersMemoryCamera[i],
 				sizeof(SkyboxCamera),
@@ -210,7 +210,7 @@ namespace gg
 			.stencilTestEnable     = VK_FALSE,
 		};
 
-		auto result{ RendererVulkan::Get()->CreateGraphicsPipeline(
+		auto result{ RendererVulkan::Get().CreateGraphicsPipeline(
 			shader->GetVertexShader(),
 			shader->GetFragmentShader(),
 			vertexInputInfo,
@@ -261,9 +261,9 @@ namespace gg
 
 	std::expected<void, Error> SkyboxVulkan::CreateTextureImage()
 	{
-		std::shared_ptr<RendererVulkan> renderer{ RendererVulkan::Get() };
-		VkDeviceSize const              layerSize{ textures[0]->SizeBytes() };
-		VkDeviceSize const              imageSize{ layerSize * textures.size() };
+		RendererVulkan&    renderer{ RendererVulkan::Get() };
+		VkDeviceSize const layerSize{ textures[0]->SizeBytes() };
+		VkDeviceSize const imageSize{ layerSize * textures.size() };
 		struct StagingResources
 		{
 			VkDevice       device;
@@ -275,7 +275,7 @@ namespace gg
 				if (memory) vkFreeMemory(device, memory, nullptr);
 			}
 		} staging{ device };
-		auto stagingBufferResult{ renderer->CreateBuffer(
+		auto stagingBufferResult{ renderer.CreateBuffer(
 			staging.buffer,
 			staging.memory,
 			imageSize,
@@ -319,7 +319,7 @@ namespace gg
 
 		VkMemoryRequirements requirements{};
 		vkGetImageMemoryRequirements(device, textureImage, &requirements);
-		auto memoryTypeResult{ renderer->FindMemoryType(requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) };
+		auto memoryTypeResult{ renderer.FindMemoryType(requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) };
 		if (!memoryTypeResult)
 			return std::unexpected(memoryTypeResult.error());
 		VkMemoryAllocateInfo allocationInfo{
@@ -360,7 +360,7 @@ namespace gg
 			sourceAccess      = VK_ACCESS_TRANSFER_WRITE_BIT;
 			destinationAccess = VK_ACCESS_SHADER_READ_BIT;
 		}
-		auto commandResult{ RendererVulkan::Get()->BeginSingleTimeCommands() };
+		auto commandResult{ RendererVulkan::Get().BeginSingleTimeCommands() };
 		if (!commandResult) return std::unexpected(commandResult.error());
 		VkImageMemoryBarrier barrier{
 			.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -380,12 +380,12 @@ namespace gg
 			},
 		};
 		vkCmdPipelineBarrier(*commandResult, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-		return RendererVulkan::Get()->EndSingleTimeCommands(*commandResult);
+		return RendererVulkan::Get().EndSingleTimeCommands(*commandResult);
 	}
 
 	std::expected<void, Error> SkyboxVulkan::CopyBufferToImage(VkBuffer buffer, uint32_t width, uint32_t height)
 	{
-		auto commandResult{ RendererVulkan::Get()->BeginSingleTimeCommands() };
+		auto commandResult{ RendererVulkan::Get().BeginSingleTimeCommands() };
 		if (!commandResult) return std::unexpected(commandResult.error());
 		std::array<VkBufferImageCopy, 6> regions{};
 		VkDeviceSize                     layerSize{ textures[0]->SizeBytes() };
@@ -405,7 +405,7 @@ namespace gg
 			static_cast<uint32_t>(regions.size()),
 			regions.data()
 		);
-		return RendererVulkan::Get()->EndSingleTimeCommands(*commandResult);
+		return RendererVulkan::Get().EndSingleTimeCommands(*commandResult);
 	}
 
 	std::expected<void, Error> SkyboxVulkan::CreateTextureImageView()

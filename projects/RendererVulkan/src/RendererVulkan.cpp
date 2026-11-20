@@ -21,7 +21,6 @@ module;
 #include <WinPixEventRuntime/pix3.h>
 module RendererVulkan;
 
-import Application;
 import Camera;
 import DebugOverlayVulkan;
 import ErrorHandling;
@@ -179,11 +178,18 @@ namespace gg
 		return camera;
 	}
 
-	std::shared_ptr<RendererVulkan> RendererVulkan::Get()
+	RendererVulkan* RendererVulkan::current{ nullptr };
+
+	RendererVulkan::RendererVulkan()
 	{
-		std::shared_ptr<Application>    app{ Application::Get() };
-		std::shared_ptr<RendererVulkan> renderer{ dynamic_pointer_cast<RendererVulkan>(app->GetRenderer()) };
-		return renderer;
+		BreakIfFalse(current == nullptr);
+		current = this;
+	}
+
+	RendererVulkan& RendererVulkan::Get()
+	{
+		BreakIfFalse(current != nullptr);
+		return *current;
 	}
 
 	std::expected<void, Error> RendererVulkan::CreateVkInstance(
@@ -1066,6 +1072,8 @@ namespace gg
 		if (instance && surface) vkDestroySurfaceKHR(instance, surface, nullptr);
 		if (device) vkDestroyDevice(device, nullptr);
 		if (instance) vkDestroyInstance(instance, nullptr);
+
+		current = nullptr;
 	}
 
 	void RendererVulkan::OnWindowResized(uint32_t width, uint32_t height)
@@ -1262,7 +1270,7 @@ namespace gg
 		if (skybox)
 			skybox->Draw(commandBuffer, currentFrame, *camera);
 
-		debugOverlay->Render(commandBuffer);
+		debugOverlay->Render(commandBuffer, *this);
 
 		vkCmdEndRenderPass(commandBuffer);
 		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)

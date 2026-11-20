@@ -20,7 +20,6 @@ module;
 #include <wrl.h>
 module RendererD3D12;
 
-import Application;
 import Camera;
 import D3DHelpers;
 import DebugOverlayD3D12;
@@ -884,13 +883,22 @@ namespace gg
 		skybox.reset();
 
 		debugOverlay.reset();
+
+		current = nullptr;
 	}
 
-	std::shared_ptr<RendererD3D12> RendererD3D12::Get()
+	RendererD3D12* RendererD3D12::current{ nullptr };
+
+	RendererD3D12::RendererD3D12()
 	{
-		std::shared_ptr<Application>   app{ Application::Get() };
-		std::shared_ptr<RendererD3D12> renderer{ dynamic_pointer_cast<RendererD3D12>(app->GetRenderer()) };
-		return renderer;
+		BreakIfFalse(current == nullptr);
+		current = this;
+	}
+
+	RendererD3D12& RendererD3D12::Get()
+	{
+		BreakIfFalse(current != nullptr);
+		return *current;
 	}
 
 	void RendererD3D12::OnWindowResized(uint32_t width, uint32_t height)
@@ -1003,7 +1011,7 @@ namespace gg
 			if (skybox)
 				skybox->Draw(commandList.Get(), *camera);
 
-			debugOverlay->Render(commandList);
+			debugOverlay->Render(commandList, *this);
 
 			/* Indicate that the back buffer will now be used to present. */
 			barrier = CD3DX12_RESOURCE_BARRIER::Transition(
