@@ -15,17 +15,17 @@ namespace gg
 
 	/* Taken from Microsoft's DirectX-Graphics-Samples  */
 	void GetHardwareAdapter(
-		_In_ IDXGIFactory1*                       pFactory,
-		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
+		_In_ IDXGIFactory1*                       factory,
+		_Outptr_result_maybenull_ IDXGIAdapter1** outAdapter,
 		bool                                      requestHighPerformanceAdapter
 	)
 	{
-		*ppAdapter = nullptr;
+		*outAdapter = nullptr;
 
 		ComPtr<IDXGIAdapter1> adapter;
 		ComPtr<IDXGIFactory6> factory6;
 
-		if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
+		if (SUCCEEDED(factory->QueryInterface(IID_PPV_ARGS(&factory6))))
 		{
 			for (
 				UINT adapterIndex{ 0 };
@@ -57,7 +57,7 @@ namespace gg
 
 		if (adapter.Get() == nullptr)
 		{
-			for (UINT adapterIndex{ 0 }; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
+			for (UINT adapterIndex{ 0 }; SUCCEEDED(factory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
 			{
 				DXGI_ADAPTER_DESC1 desc;
 				adapter->GetDesc1(&desc);
@@ -77,7 +77,7 @@ namespace gg
 				}
 			}
 		}
-		*ppAdapter = adapter.Detach();
+		*outAdapter = adapter.Detach();
 	}
 
 	void SetName(ID3D12Object* object, std::wstring const& name)
@@ -88,19 +88,19 @@ namespace gg
 		}
 	}
 
-	std::wstring GetName(ID3D12Object* pObject)
+	std::wstring GetName(ID3D12Object* object)
 	{
 		if constexpr (IsFinal())
 			return {};
 		else
 		{
 			uint32_t size{ 0 };
-			if (FAILED(pObject->GetPrivateData(WKPDID_D3DDebugObjectNameW, &size, nullptr)))
+			if (FAILED(object->GetPrivateData(WKPDID_D3DDebugObjectNameW, &size, nullptr)))
 			{
 				return L"Unnamed";
 			}
 			std::wstring name(size, 0);
-			if (FAILED(pObject->GetPrivateData(WKPDID_D3DDebugObjectNameW, &size, name.data())))
+			if (FAILED(object->GetPrivateData(WKPDID_D3DDebugObjectNameW, &size, name.data())))
 			{
 				return L"Unnamed";
 			}
