@@ -3,8 +3,8 @@
 
 VK_BINDING(0) ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
 VK_BINDING(1) ConstantBuffer<DirectionalLight> DirectionalLightCB : register(b1);
-VK_BINDING(2) Texture2D    texture0 : register(t0);
-VK_BINDING(2) SamplerState sampler0 : register(s0);
+VK_BINDING(2) Texture2D    diffuseTexture : register(t0);
+VK_BINDING(2) SamplerState linearSampler : register(s0);
 
 struct VSInput
 {
@@ -39,7 +39,7 @@ struct PSInput
 
 float4 ps_main(PSInput input) : SV_Target
 {
-	float4 textureColor = texture0.Sample(sampler0, input.texCoord);
+	float4 textureColor = diffuseTexture.Sample(linearSampler, input.texCoord);
 
 	float3 viewDir = (float3) normalize(ModelViewProjectionCB.viewPosition - input.position);
 	float4 lightColor = BlinnPhong((float3)input.normal, viewDir, DirectionalLightCB);

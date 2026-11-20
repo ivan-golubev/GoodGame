@@ -7,8 +7,8 @@
 // Camera data for the sky: inverse projection and the camera's rotation (no translation).
 VK_BINDING(0) ConstantBuffer<SkyboxCamera> SkyboxCameraCB : register(b0);
 // Cube map with its sampler; combined image sampler at binding 2 in Vulkan.
-VK_BINDING(2) TextureCube  texture0 : register(t0);
-VK_BINDING(2) SamplerState sampler0 : register(s0);
+VK_BINDING(2) TextureCube  skyboxTexture : register(t0);
+VK_BINDING(2) SamplerState linearSampler : register(s0);
 
 struct VSOutput
 {
@@ -49,5 +49,5 @@ float4 ps_main(VSOutput input) : SV_Target
 	float3 worldDirection = mul((float3x3)SkyboxCameraCB.invViewRotation, viewDirection);
 
 	// Cube map lookup by direction; the hardware picks the face from the dominant axis.
-	return texture0.Sample(sampler0, normalize(worldDirection));
+	return skyboxTexture.Sample(linearSampler, normalize(worldDirection));
 }
