@@ -1,4 +1,4 @@
-"""Run clang-format and clang-tidy over the project's own C++ sources.
+"""Run clang-format, the convention checker (tools/check_conventions.py) and clang-tidy over the project's own C++ sources.
 
 Only files under projects/ are checked; third-party code (lib/, packages/) is skipped.
 
@@ -183,11 +183,26 @@ def run_tidy(clang_tidy: str, files: list[Path], build_path: str | None, jobs: i
 	return False
 
 
+def run_conventions(files: list[Path]) -> bool:
+	import check_conventions
+
+	print(f"conventions: checking {len(files)} file(s)")
+	findings = check_conventions.check_files(files)
+	for finding in findings:
+		print(f"  {finding}")
+	if not findings:
+		print("conventions: OK")
+		return True
+	print(f"conventions: {len(findings)} finding(s) (rules: python tools/check_conventions.py --help)")
+	return False
+
+
 def main() -> int:
 	parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 	parser.add_argument("files", nargs="*", type=Path, help="files to check (default: all C++ files under projects/)")
 	parser.add_argument("--format", action="store_true", help="run only clang-format")
 	parser.add_argument("--tidy", action="store_true", help="run only clang-tidy")
+	parser.add_argument("--conventions", action="store_true", help="run only tools/check_conventions.py")
 	parser.add_argument("--fix", action="store_true", help="apply clang-format changes instead of reporting them")
 	parser.add_argument("--clang-format", default="clang-format", help="clang-format executable (name on PATH or full path)")
 	parser.add_argument("--clang-tidy", default="clang-tidy", help="clang-tidy executable (name on PATH or full path)")
@@ -195,7 +210,7 @@ def main() -> int:
 	parser.add_argument("-j", "--jobs", type=int, default=os.cpu_count() or 1, help="parallel jobs (default: CPU count)")
 	args = parser.parse_args()
 
-	run_both = not args.format and not args.tidy
+	run_all = not args.format and not args.tidy and not args.conventions
 	if args.files:
 		files = [p.resolve() for p in args.files]
 		skipped = [p for p in files if not is_project_source(p)]
@@ -211,9 +226,11 @@ def main() -> int:
 
 	try:
 		ok = True
-		if args.format or run_both:
+		if args.format or run_all:
 			ok &= run_format(find_tool(args.clang_format), files, args.fix, args.jobs)
-		if args.tidy or run_both:
+		if args.conventions or run_all:
+			ok &= run_conventions(files)
+		if args.tidy or run_all:
 			ok &= run_tidy(find_tool(args.clang_tidy), files, args.build_path, args.jobs)
 	except FileNotFoundError as error:
 		print(f"error: {error}", file=sys.stderr)

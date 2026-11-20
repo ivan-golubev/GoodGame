@@ -204,6 +204,16 @@ def check_file(path: Path, rules: set[str], max_columns: int, tab_width: int, ab
 	return findings
 
 
+def check_files(files: list[Path], max_columns: int = 140, tab_width: int = 4) -> list[Finding]:
+	"""Check files with the default rules. Used by code_checks.py and the Claude Code hook."""
+	rules = set(ALL_RULES) - DEFAULT_OFF
+	abbreviations = set(naming_abbreviations.read_abbreviations())
+	findings = []
+	for path in files:
+		findings += check_file(path, rules, max_columns, tab_width, abbreviations)
+	return findings
+
+
 def main() -> int:
 	parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 	parser.add_argument("files", nargs="*", type=Path, help="files to check (default: all C++ files under projects/)")
