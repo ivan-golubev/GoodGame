@@ -26,10 +26,9 @@ namespace gg
 	ModelVulkan::ModelVulkan(
 		std::string const&                   modelRelativePath,
 		std::shared_ptr<ShaderProgram>       s,
-		glm::vec3&                           position,
 		std::shared_ptr<DeviceContextVulkan> c
 	)
-		: Model{ modelRelativePath, s, position }
+		: Model{ modelRelativePath, s }
 		, context{ c }
 	{
 	}
@@ -354,10 +353,15 @@ namespace gg
 		return {};
 	}
 
-	void ModelVulkan::UpdateUniformBuffers(uint32_t frame, Camera const& camera, DirectionalLight const& light, double currentTimeSec)
+	void ModelVulkan::UpdateUniformBuffers(
+		uint32_t                frame,
+		glm::mat4x4 const&      transform,
+		Camera const&           camera,
+		DirectionalLight const& light
+	)
 	{
 		{ /* MVP matrix */
-			ModelViewProjection const mvpMatrices{ CalculateModelViewProjection(translation, currentTimeSec, camera) };
+			ModelViewProjection const mvpMatrices{ CalculateModelViewProjection(transform, camera) };
 			void*                     data;
 			vkMapMemory(context->GetDevice(), uniformBuffersMemoryMVP[frame], 0, sizeof(ModelViewProjection), 0, &data);
 			memcpy(data, &mvpMatrices, sizeof(ModelViewProjection));
@@ -374,12 +378,12 @@ namespace gg
 	void ModelVulkan::Draw(
 		VkCommandBuffer         commandBuffer,
 		uint32_t                frame,
+		glm::mat4x4 const&      transform,
 		Camera const&           camera,
-		DirectionalLight const& light,
-		double                  currentTimeSec
+		DirectionalLight const& light
 	)
 	{
-		UpdateUniformBuffers(frame, camera, light, currentTimeSec);
+		UpdateUniformBuffers(frame, transform, camera, light);
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.pipeline);
 		vkCmdBindDescriptorSets(

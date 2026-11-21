@@ -9,6 +9,7 @@ module;
 #include <optional>
 #include <SDL2/SDL_video.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <vulkan/vulkan.h>
 export module RendererVulkan;
@@ -22,7 +23,9 @@ import GraphicsPipelineVulkan;
 import Input;
 import Model;
 import Renderer;
+import ObjectId;
 import SettingsRenderer;
+import ShaderProgram;
 import SkyboxVulkan;
 import Texture;
 import TimeManager;
@@ -47,19 +50,16 @@ namespace gg
 
 		RendererType GetType() const override;
 
-		void                                                 OnWindowResized(uint32_t width, uint32_t height) override;
-		std::expected<void, Error>                           Render(Scene&) override;
-		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
+		void                       OnWindowResized(uint32_t width, uint32_t height) override;
+		std::expected<void, Error> Render(Scene&) override;
 
-		std::expected<void, Error> LoadModel(
-			std::string const& modelRelativePath,
-			std::string const& shaderName,
-			glm::vec3&         position
-		) override;
-
-		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
+		std::vector<Error> LoadScene(Scene const&) override;
 
 	private:
+		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName);
+		std::expected<std::shared_ptr<ModelVulkan>, Error>   LoadModel(SceneModel const&);
+		std::expected<std::unique_ptr<SkyboxVulkan>, Error>  LoadSkybox(SceneSkybox const&);
+
 		struct QueueFamilyIndices
 		{
 			std::optional<uint32_t> graphicsFamily;
@@ -133,10 +133,9 @@ namespace gg
 
 		VkDescriptorPool descriptorPool{};
 
-		std::vector<std::shared_ptr<ModelVulkan>> models;
-		std::shared_ptr<TimeManager>              timeManager;
-		std::unique_ptr<DebugOverlayVulkan>       debugOverlay;
-		std::unique_ptr<SkyboxVulkan>             skybox;
+		std::unordered_map<ObjectId, std::shared_ptr<ModelVulkan>>  models; /* by scene object id */
+		std::unique_ptr<DebugOverlayVulkan>                         debugOverlay;
+		std::unordered_map<ObjectId, std::unique_ptr<SkyboxVulkan>> skyboxes; /* by scene object id */
 
 		std::shared_ptr<DeviceContextVulkan> context;
 		VkInstance                           instance{};

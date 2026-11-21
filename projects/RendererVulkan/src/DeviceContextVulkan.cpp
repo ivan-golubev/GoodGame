@@ -35,11 +35,10 @@ namespace gg
 				.message = "Failed to create Vulkan command pool.",
 			});
 		}
-		return std::make_shared<DeviceContextVulkan>(PassKey{}, physicalDevice, device, graphicsQueue, commandPool);
+		return std::make_shared<DeviceContextVulkan>(physicalDevice, device, graphicsQueue, commandPool);
 	}
 
 	DeviceContextVulkan::DeviceContextVulkan(
-		PassKey,
 		VkPhysicalDevice physicalDevice,
 		VkDevice         device,
 		VkQueue          graphicsQueue,

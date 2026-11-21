@@ -92,7 +92,6 @@ namespace gg
 		width           = rs.width;
 		height          = rs.height;
 		windowHandleSDL = rs.windowHandle;
-		timeManager     = rs.timeManager;
 		uint32_t extensionCount;
 		if (!SDL_Vulkan_GetInstanceExtensions(windowHandleSDL, &extensionCount, nullptr))
 			return std::unexpected(Error{
@@ -722,7 +721,7 @@ namespace gg
 	{
 		if (auto result{ RecreateSwapChain() }; !result)
 			return std::unexpected(result.error());
-		scene.camera.UpdateProjectionMatrix(width, height);
+		scene.GetCamera().UpdateProjectionMatrix(width, height);
 		isWindowResized = false;
 		return {};
 	}
@@ -756,10 +755,15 @@ namespace gg
 		if (auto result{ CreateImageViews() }; !result) return std::unexpected(result.error());
 		if (auto result{ CreateRenderPass() }; !result) return std::unexpected(result.error());
 		if (auto result{ depthBuffer->Create(swapChainExtent) }; !result) return std::unexpected(result.error());
-		if (skybox)
-			if (auto result{ skybox->CreatePipeline(GetRenderTarget()) }; !result) return std::unexpected(result.error());
-		for (auto model : models)
+		for (auto const& [id, skybox] : skyboxes)
+		{
+			if (auto result{ skybox->CreatePipeline(GetRenderTarget()) }; !result)
+				return std::unexpected(result.error());
+		}
+		for (auto const& [id, model] : models)
+		{
 			if (auto result{ model->CreatePipeline(GetRenderTarget()) }; !result) return std::unexpected(result.error());
+		}
 		if (auto result{ CreateFrameBuffers() }; !result) return std::unexpected(result.error());
 		return {};
 	}
@@ -786,7 +790,7 @@ namespace gg
 
 		/* destroys the associated shaders and textures */
 		models.clear();
-		skybox.reset();
+		skyboxes.clear();
 
 		debugOverlay.reset();
 		if (context && descriptorPool) vkDestroyDescriptorPool(context->GetDevice(), descriptorPool, nullptr);
@@ -868,39 +872,65 @@ namespace gg
 			shaderName,
 			shaderExtensionVulkan
 		) };
-		auto              shader{ std::make_unique<ShaderProgramVulkan>(ShaderProgramVulkan::PassKey{}, context->GetDevice()) };
+		auto              shader{ std::make_unique<ShaderProgramVulkan>(context->GetDevice()) };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
-	std::expected<void, Error> RendererVulkan::LoadModel(
-		std::string const& modelRelativePath,
-		std::string const& shaderName,
-		glm::vec3&         position
-	)
+	std::expected<std::shared_ptr<ModelVulkan>, Error> RendererVulkan::LoadModel(SceneModel const& sceneModel)
 	{
-		auto shaderResult{ LoadShader(shaderName) };
+		std::string const& modelRelativePath{ sceneModel.GetModelRelativePath() };
+		std::string const& shaderName{ sceneModel.GetShaderName() };
+		auto               shaderResult{ LoadShader(shaderName) };
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		std::shared_ptr<ModelVulkan>   model{ std::make_shared<ModelVulkan>(modelRelativePath, shader, position, context) };
+		std::shared_ptr<ModelVulkan>   model{ std::make_shared<ModelVulkan>(modelRelativePath, shader, context) };
 		if (auto const result{ model->Initialize(descriptorPool, GetRenderTarget()) }; !result)
 			return std::unexpected(result.error());
-		models.push_back(model);
-		return {};
+		return model;
 	}
 
-	std::expected<void, Error> RendererVulkan::LoadSkybox(std::string const& name, std::string const& shaderName)
+	std::expected<std::unique_ptr<SkyboxVulkan>, Error> RendererVulkan::LoadSkybox(SceneSkybox const& sceneSkybox)
 	{
-		auto shaderResult{ LoadShader(shaderName) };
+		std::string const& name{ sceneSkybox.GetName() };
+		std::string const& shaderName{ sceneSkybox.GetShaderName() };
+		auto               shaderResult{ LoadShader(shaderName) };
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		skybox = std::make_unique<SkyboxVulkan>(name, shader, context);
-		if (auto result{ skybox->Initialize(descriptorPool, GetRenderTarget()) }; !result)
+		auto                           newSkybox{ std::make_unique<SkyboxVulkan>(name, shader, context) };
+		if (auto result{ newSkybox->Initialize(descriptorPool, GetRenderTarget()) }; !result)
 			return std::unexpected(result.error());
-		return {};
+		return newSkybox;
+	}
+
+	std::vector<Error> RendererVulkan::LoadScene(Scene const& scene)
+	{
+		/* GPU models and skyboxes are kept by their scene object's id. One that fails to load has no entry
+		   and is skipped when drawing. */
+		BreakIfFalse(models.empty() && skyboxes.empty());
+		std::vector<Error> errors;
+		if (scene.GetSkybox())
+		{
+			auto skyboxResult{ LoadSkybox(*scene.GetSkybox()) };
+			if (!skyboxResult)
+				errors.push_back(skyboxResult.error());
+			else
+				skyboxes.emplace(scene.GetSkybox()->GetId(), std::move(*skyboxResult));
+		}
+		for (SceneModel const& sceneModel : scene.GetModels())
+		{
+			auto modelResult{ LoadModel(sceneModel) };
+			if (!modelResult)
+			{
+				errors.push_back(modelResult.error());
+				continue;
+			}
+			models.emplace(sceneModel.GetId(), std::move(*modelResult));
+		}
+		return errors;
 	}
 
 	RenderTargetVulkan RendererVulkan::GetRenderTarget() const
@@ -976,13 +1006,20 @@ namespace gg
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		double const currentTimeSec{ timeManager->GetCurrentTimeSec() };
-		for (std::shared_ptr<ModelVulkan> model : models)
-			model->Draw(commandBuffer, currentFrame, scene.camera, scene.light, currentTimeSec);
+		for (SceneModel const& sceneModel : scene.GetModels())
+		{
+			auto const found{ models.find(sceneModel.GetId()) };
+			if (found == models.end())
+				continue; /* failed to load */
+			found->second->Draw(commandBuffer, currentFrame, sceneModel.transform, scene.GetCamera(), scene.light);
+		}
 
 		/* After the models: the sky only fills pixels the depth test leaves at the far plane. */
-		if (skybox)
-			skybox->Draw(commandBuffer, currentFrame, scene.camera);
+		if (scene.GetSkybox())
+		{
+			if (auto const found{ skyboxes.find(scene.GetSkybox()->GetId()) }; found != skyboxes.end())
+				found->second->Draw(commandBuffer, currentFrame, scene.GetCamera());
+		}
 
 		debugOverlay->Render(commandBuffer, *this, scene);
 

@@ -59,7 +59,6 @@ namespace gg
 		}
 
 		return std::make_shared<DeviceContextD3D12>(
-			PassKey{},
 			std::move(device),
 			std::move(commandQueue),
 			std::move(uploadAllocator),
@@ -70,7 +69,6 @@ namespace gg
 	}
 
 	DeviceContextD3D12::DeviceContextD3D12(
-		PassKey,
 		ComPtr<ID3D12Device4>             device,
 		ComPtr<ID3D12CommandQueue>        commandQueue,
 		ComPtr<ID3D12CommandAllocator>    uploadAllocator,

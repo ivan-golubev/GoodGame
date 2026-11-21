@@ -30,13 +30,7 @@ export namespace gg
 			VkQueue  graphicsQueue
 		);
 
-		/* Only Create() can make a PassKey */
-		class PassKey
-		{
-			friend class DeviceContextVulkan;
-			PassKey() = default;
-		};
-		DeviceContextVulkan(PassKey, VkPhysicalDevice, VkDevice, VkQueue graphicsQueue, VkCommandPool);
+		DeviceContextVulkan(VkPhysicalDevice, VkDevice, VkQueue graphicsQueue, VkCommandPool);
 		~DeviceContextVulkan() noexcept;
 
 		DeviceContextVulkan(DeviceContextVulkan const&)            = delete;

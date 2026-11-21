@@ -3,12 +3,14 @@
 #include <cstdlib>
 #include <exception>
 #include <format>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <imgui/backends/imgui_impl_sdl2.h>
 #include <memory>
 #include <SDL2/SDL.h>
 #include <thread>
+#include <tuple>
 
 import Application;
 import ApplicationSettings;
@@ -126,7 +128,33 @@ namespace
 		return EXIT_SUCCESS;
 	}
 
-	uint32_t RunApplication(uint32_t width, uint32_t height, gg::RendererType& rendererType)
+	/* What the game shows. Added once: the scene is kept when the renderer is switched. */
+	void AddSceneContents(gg::Scene& scene)
+	{
+		using namespace gg;
+		scene.SetSkybox("water", "skybox");
+		scene.AddModel(
+			"assets/models/textured_cube.glb",
+			"textured_surface",
+			glm::translate(glm::mat4x4{ 1.f }, glm::vec3{ -2.f, 0.f, 0.f })
+		);
+		scene.AddModel(
+			"assets/models/textured_cone.glb",
+			"textured_surface",
+			glm::translate(glm::mat4x4{ 1.f }, glm::vec3{ 2.f, 0.f, 0.f })
+		);
+	}
+
+	/* Releases the application's renderer when leaving the scope. Declared after the window, so the renderer
+	   goes before the window it renders into, on every path out. */
+	struct RendererScope
+	{
+		gg::Application& app;
+		~RendererScope() { std::ignore = app.SetRenderer(nullptr); }
+	};
+
+	/* Runs the application with one renderer and its window until the user quits or switches renderer. */
+	uint32_t RunRenderer(gg::Application& app, uint32_t width, uint32_t height, gg::RendererType& rendererType)
 	{
 		using namespace gg;
 		auto destroyWindow = [](SDL_Window* window) noexcept
@@ -151,6 +179,7 @@ namespace
 			return EXIT_FAILURE;
 		}
 
+		RendererScope const rendererScope{ app };
 		try
 		{
 			ApplicationSettings const appSettings{
@@ -159,44 +188,24 @@ namespace
 				.windowHandle = window.get(),
 				.rendererType = rendererType,
 			};
-			auto appResult{ MakeApplication(appSettings) };
-			if (!appResult)
+			auto rendererResult{ MakeRenderer(appSettings) };
+			if (!rendererResult)
 			{
-				DebugLog(DebugLevel::Error, appResult.error().message);
+				DebugLog(DebugLevel::Error, rendererResult.error().message);
 				return EXIT_FAILURE;
 			}
-			std::unique_ptr<Application> app{ std::move(*appResult) };
-			DebugLog(DebugLevel::Info, "Successfully initialized the application");
-
-			std::shared_ptr<Renderer> renderer{ app->GetRenderer() };
-			auto                      handleAssetLoadError = [](Error const& error)
-			{
+			/* Assets that fail to load are reported and left out; the rest of the scene still renders */
+			for (Error const& error : app.SetRenderer(std::move(*rendererResult)))
 				DebugLog(DebugLevel::Error, error.message);
-			};
-			if (auto const skyboxResult{ renderer->LoadSkybox("water", "skybox") }; !skyboxResult)
-				handleAssetLoadError(skyboxResult.error());
-			{
-				glm::vec3 position{ -2.f, 0.f, 0.f };
-				if (auto const result{ renderer->LoadModel("assets/models/textured_cube.glb", "textured_surface", position) }; !result)
-					handleAssetLoadError(result.error());
-			}
-			{
-				glm::vec3 position{ 2.f, 0.f, 0.f };
-				if (auto const result{ renderer->LoadModel("assets/models/textured_cone.glb", "textured_surface", position) }; !result)
-					handleAssetLoadError(result.error());
-			}
+			DebugLog(DebugLevel::Info, std::format("Running with the {} renderer", ToString(rendererType)));
 
-			uint32_t status{ MainLoop(*app, rendererType) };
-
-			if (status != EXIT_SUCCESS)
-				return status;
+			return MainLoop(app, rendererType);
 		}
 		catch (std::exception const& e)
 		{
 			DebugLog(DebugLevel::Error, e.what());
 			return EXIT_FAILURE;
 		}
-		return EXIT_SUCCESS;
 	}
 
 } // namespace
@@ -216,9 +225,13 @@ int main()
 	constexpr uint32_t height{ 1080 };
 	RendererType       rendererType{ RendererType::Vulkan };
 	uint32_t           status{ 0 };
+
+	/* One application for the whole run: switching renderer keeps its scene, camera and light */
+	Application application;
+	AddSceneContents(application.GetScene());
 	do
 	{
-		status = RunApplication(width, height, rendererType);
+		status = RunRenderer(application, width, height, rendererType);
 	} while (status == rendererChangeRequested);
 	return status;
 }

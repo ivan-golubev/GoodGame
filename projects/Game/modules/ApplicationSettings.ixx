@@ -5,7 +5,7 @@ module;
 #include <string>
 export module ApplicationSettings;
 
-import Application;
+import Renderer;
 import ErrorHandling;
 import SettingsRenderer;
 
@@ -19,5 +19,6 @@ export namespace gg
 		RendererType rendererType;
 	};
 
-	std::expected<std::unique_ptr<Application>, Error> MakeApplication(ApplicationSettings const&);
+	/* Creates and initializes the renderer the settings ask for, rendering into the settings' window */
+	std::expected<std::unique_ptr<Renderer>, Error> MakeRenderer(ApplicationSettings const&);
 } // namespace gg

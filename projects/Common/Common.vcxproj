@@ -131,6 +131,7 @@
     <ClCompile Include="modules\Lighting.ixx" />
     <ClCompile Include="modules\Logging.ixx" />
     <ClCompile Include="modules\Model.ixx" />
+    <ClCompile Include="modules\ObjectId.ixx" />
     <ClCompile Include="modules\Renderer.ixx" />
     <ClCompile Include="modules\SettingsRenderer.ixx" />
     <ClCompile Include="modules\ShaderProgram.ixx" />

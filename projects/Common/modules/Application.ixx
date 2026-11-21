@@ -4,6 +4,7 @@ module;
 #include <memory>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_video.h>
+#include <vector>
 #include <windows.h>
 export module Application;
 
@@ -17,7 +18,8 @@ namespace gg
 	export class Application
 	{
 	public:
-		Application(std::unique_ptr<Renderer>, std::shared_ptr<TimeManager>, std::shared_ptr<InputManager>);
+		/* Creates the input and time managers and the scene. A renderer is attached with SetRenderer. */
+		Application();
 
 		~Application() noexcept;
 
@@ -34,17 +36,20 @@ namespace gg
 		void                       OnKeyPressed(SDL_Keycode, bool isDown);
 		void                       OnMouseMoved(int32_t deltaX, int32_t deltaY);
 
-		std::shared_ptr<InputManager> GetInputManager();
-		std::shared_ptr<TimeManager>  GetTimeManager();
-		std::shared_ptr<Renderer>     GetRenderer();
+		Scene& GetScene();
+
+		/* Attaches the renderer that draws the scene from now on and creates its GPU resources for the scene's
+		   contents. Returns the errors of entries that could not be loaded; they are skipped when drawing.
+		   nullptr releases the current renderer, which must happen before its window is destroyed. */
+		std::vector<Error> SetRenderer(std::unique_ptr<Renderer>);
 
 	private:
 		bool isPaused{ false };
 
 		std::shared_ptr<InputManager> inputManager;
 		std::shared_ptr<TimeManager>  timeManager;
-		std::shared_ptr<Renderer>     renderer;
+		std::unique_ptr<Renderer>     renderer;
 
-		Scene scene; /* the camera and what the renderer shows */
+		Scene scene; /* outlives renderer switches, so the camera, light and models are kept */
 	};
 } // namespace gg

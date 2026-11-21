@@ -23,10 +23,9 @@ export namespace gg
 {
 	struct RendererSettings
 	{
-		uint32_t                     width;
-		uint32_t                     height;
-		SDL_Window*                  windowHandle;
-		std::shared_ptr<TimeManager> timeManager;
+		uint32_t    width;
+		uint32_t    height;
+		SDL_Window* windowHandle;
 	};
 
 	class Renderer
@@ -44,19 +43,14 @@ export namespace gg
 		virtual RendererType               GetType() const                     = 0;
 		virtual std::expected<void, Error> Initialize(RendererSettings const&) = 0;
 
-		virtual void                                                 OnWindowResized(uint32_t width, uint32_t height) = 0;
-		virtual std::expected<void, Error>                           Render(Scene&)                                   = 0;
-		virtual std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName)        = 0;
+		virtual void                       OnWindowResized(uint32_t width, uint32_t height) = 0;
+		virtual std::expected<void, Error> Render(Scene&)                                   = 0;
 
-		virtual std::expected<void, Error> LoadModel(
-			std::string const& modelRelativePath,
-			std::string const& shaderName,
-			glm::vec3&         position
-		) = 0;
-
-		virtual std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) = 0;
+		/* Creates the GPU resources for the scene's models and skybox. Returns the errors of entries that could
+		   not be loaded; those are skipped when drawing. */
+		virtual std::vector<Error> LoadScene(Scene const&) = 0;
 	};
 
-	ModelViewProjection CalculateModelViewProjection(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const&);
+	ModelViewProjection CalculateModelViewProjection(glm::mat4x4 const& modelTransform, Camera const&);
 	SkyboxCamera        CalculateSkyboxCamera(Camera const&);
 } // namespace gg

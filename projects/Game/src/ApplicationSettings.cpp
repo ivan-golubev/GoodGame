@@ -4,27 +4,21 @@ module;
 #include <utility>
 module ApplicationSettings;
 
-import Application;
 import GlobalSettings;
-import Input;
 import Renderer;
 import RendererVulkan;
 import RendererD3D12;
-import TimeManager;
 
 using gg::RendererVulkan;
 
 namespace gg
 {
-	std::expected<std::unique_ptr<Application>, Error> MakeApplication(ApplicationSettings const& s)
+	std::expected<std::unique_ptr<Renderer>, Error> MakeRenderer(ApplicationSettings const& s)
 	{
-		std::shared_ptr<TimeManager>  timeManager{ std::make_shared<TimeManager>() };
-		std::shared_ptr<InputManager> inputManager{ std::make_shared<InputManager>() };
-		RendererSettings const        rendererSettings{
+		RendererSettings const rendererSettings{
 			.width        = s.width,
 			.height       = s.height,
 			.windowHandle = s.windowHandle,
-			.timeManager  = timeManager,
 		};
 
 		std::unique_ptr<Renderer> renderer{
@@ -35,6 +29,6 @@ namespace gg
 
 		if (auto result{ renderer->Initialize(rendererSettings) }; !result)
 			return std::unexpected(result.error());
-		return std::make_unique<Application>(std::move(renderer), timeManager, inputManager);
+		return renderer;
 	}
 } // namespace gg

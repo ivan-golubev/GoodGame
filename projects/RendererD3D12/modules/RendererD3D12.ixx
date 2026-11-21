@@ -11,6 +11,7 @@ module;
 #include <SDL2/SDL_video.h>
 #include <span>
 #include <string>
+#include <unordered_map>
 #include <wrl.h>
 export module RendererD3D12;
 
@@ -23,9 +24,10 @@ import Input;
 import Model;
 import ModelD3D12;
 import Renderer;
+import ObjectId;
 import SettingsRenderer;
+import ShaderProgram;
 import SkyboxD3D12;
-import Texture;
 import TimeManager;
 import Vertex;
 
@@ -48,31 +50,22 @@ namespace gg
 
 		RendererType GetType() const override;
 
-		void                                                 OnWindowResized(uint32_t width, uint32_t height) override;
-		std::expected<void, Error>                           Render(Scene&) override;
-		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName) override;
+		void                       OnWindowResized(uint32_t width, uint32_t height) override;
+		std::expected<void, Error> Render(Scene&) override;
 
-		std::expected<void, Error> LoadModel(
-			std::string const& modelRelativePath,
-			std::string const& shaderName,
-			glm::vec3&         position
-		) override;
-
-		std::expected<void, Error> LoadSkybox(std::string const& name, std::string const& shaderName) override;
+		std::vector<Error> LoadScene(Scene const&) override;
 
 	private:
+		std::expected<std::shared_ptr<ShaderProgram>, Error> LoadShader(std::string const& shaderName);
+		std::expected<std::shared_ptr<ModelD3D12>, Error>    LoadModel(SceneModel const&);
+		std::expected<std::unique_ptr<SkyboxD3D12>, Error>   LoadSkybox(SceneSkybox const&);
+
 		std::expected<void, Error> CreateDeviceContext(IDXGIFactory4*);
 		std::expected<void, Error> PopulateCommandList(Scene&);
 		std::expected<void, Error> WaitForPreviousFrame();
 		std::expected<void, Error> ResizeRenderTargets();
 		std::expected<void, Error> ResizeDepthBuffer();
 		std::expected<void, Error> ResizeWindow();
-
-		std::expected<void, Error> CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model);
-		std::expected<void, Error> CreateVertexBuffer(std::shared_ptr<ModelD3D12>);
-		std::expected<void, Error> LoadTextures(std::shared_ptr<ModelD3D12>);
-
-		std::expected<std::shared_ptr<Texture>, Error> LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap);
 
 		uint32_t    width{};
 		uint32_t    height{};
@@ -103,16 +96,17 @@ namespace gg
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 		uint32_t                      dsvDescriptorSize{};
 
-		std::vector<std::shared_ptr<ModelD3D12>> models;
-		std::unique_ptr<SkyboxD3D12>             skybox;
-		std::shared_ptr<TimeManager>             timeManager;
-		std::unique_ptr<DebugOverlayD3D12>       debugOverlay;
+		std::unordered_map<ObjectId, std::shared_ptr<ModelD3D12>>  models; /* by scene object id */
+		std::unordered_map<ObjectId, std::unique_ptr<SkyboxD3D12>> skyboxes; /* by scene object id */
+		std::unique_ptr<DebugOverlayD3D12>                         debugOverlay;
 
 		/* Synchronization objects */
 		ComPtr<ID3D12Fence> fence;
 		uint64_t            fenceValue{ 0 };
 		HANDLE              fenceEvent{ nullptr };
-		// TODO: there should be two fences and two fence values
+		// TODO: Render waits for the GPU after every Present, so only one frame is in flight. To overlap CPU and
+		// GPU, keep one command allocator and one fence value per frame slot (one fence is enough) and wait only
+		// for the slot about to be reused. Shutdown and resize still flush the whole queue.
 	};
 
 } // namespace gg

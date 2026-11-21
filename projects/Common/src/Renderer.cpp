@@ -15,14 +15,11 @@ import ShaderProgram;
 
 namespace gg
 {
-	ModelViewProjection CalculateModelViewProjection(glm::mat4x4 modelTranslation, double currentTimeSec, Camera const& camera)
+	ModelViewProjection CalculateModelViewProjection(glm::mat4x4 const& modelTransform, Camera const& camera)
 	{
-		/* Rotate the model */
-		float             rotation{ static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> * currentTimeSec) };
-		glm::mat4x4 const modelMatrix{ glm::rotate(modelTranslation, rotation, glm::vec3(1.f, 0.f, 1.f)) };
 		return ModelViewProjection{
-			.MVP          = camera.GetProjectionMatrix() * camera.GetViewMatrix() * modelMatrix,
-			.model        = modelMatrix,
+			.MVP          = camera.GetProjectionMatrix() * camera.GetViewMatrix() * modelTransform,
+			.model        = modelTransform,
 			.viewPosition = camera.GetPositionVec4(),
 		};
 	}

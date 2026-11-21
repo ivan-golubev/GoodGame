@@ -29,7 +29,7 @@ namespace gg
 		ImGui::NewFrame();
 		ImGui::Begin("Renderer settings");
 
-		Camera& camera{ scene.camera };
+		Camera& camera{ scene.GetCamera() };
 
 		RendererType const rendererType{ renderer.GetType() };
 		ImGui::TextColored(rendererNameColor[rendererType], "Renderer: %s", ToString(rendererType).c_str());

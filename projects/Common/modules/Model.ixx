@@ -34,16 +34,13 @@ export namespace gg
 
 	struct Model
 	{
-		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>, glm::vec3& position);
+		Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram>);
 		virtual ~Model() noexcept      = default;
 		Model(Model const&)            = delete;
 		Model& operator=(Model const&) = delete;
 		Model(Model&&) noexcept;
 		Model& operator=(Model&&) noexcept;
 
-		glm::mat4x4 translation{};
-
-		void                       SetPosition(glm::vec3& position);
 		std::expected<void, Error> Initialize();
 
 		std::shared_ptr<ShaderProgram>        shaderProgram;

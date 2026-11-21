@@ -73,7 +73,7 @@ namespace
 
 namespace gg
 {
-	ShaderProgramVulkan::ShaderProgramVulkan(PassKey, VkDevice d)
+	ShaderProgramVulkan::ShaderProgramVulkan(VkDevice d)
 		: device{ d }
 	{
 	}

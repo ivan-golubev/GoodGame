@@ -24,8 +24,9 @@ namespace gg
 
 	constexpr glm::vec3 up{ 0.f, 1.f, 0.f };
 
-	Camera::Camera(std::shared_ptr<InputManager> inputManager)
-		: inputManager{ inputManager }
+	Camera::Camera(ObjectId objectId, std::shared_ptr<InputManager> inputManager)
+		: id{ objectId }
+		, inputManager{ inputManager }
 	{
 	}
 

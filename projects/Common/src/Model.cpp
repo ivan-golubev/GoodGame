@@ -144,9 +144,8 @@ namespace gg
 		return *this;
 	}
 
-	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s, glm::vec3& position)
-		: translation{ glm::translate(glm::identity<glm::mat4x4>(), position) }
-		, shaderProgram{ s }
+	Model::Model(std::string const& modelRelativePath, std::shared_ptr<ShaderProgram> s)
+		: shaderProgram{ s }
 		, modelAbsolutePath{ std::filesystem::absolute(modelRelativePath).generic_string() }
 	{
 	}
@@ -180,8 +179,7 @@ namespace gg
 	}
 
 	Model::Model(Model&& other) noexcept
-		: translation{ other.translation }
-		, shaderProgram{ std::move(other.shaderProgram) }
+		: shaderProgram{ std::move(other.shaderProgram) }
 		, textureNames{ std::move(other.textureNames) }
 		, textures{ std::move(other.textures) }
 		, meshes{ std::move(other.meshes) }
@@ -194,7 +192,6 @@ namespace gg
 	{
 		if (this != &other)
 		{
-			translation       = other.translation;
 			shaderProgram     = std::move(other.shaderProgram);
 			textureNames      = std::move(other.textureNames);
 			textures          = std::move(other.textures);
@@ -203,11 +200,6 @@ namespace gg
 			modelAbsolutePath = std::move(other.modelAbsolutePath);
 		}
 		return *this;
-	}
-
-	void Model::SetPosition(glm::vec3& position)
-	{
-		translation = glm::translate(glm::identity<glm::mat4x4>(), position);
 	}
 
 } // namespace gg

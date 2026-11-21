@@ -6,6 +6,7 @@ module;
 #include <memory>
 export module Camera;
 
+export import ObjectId;
 import Input;
 
 export namespace gg
@@ -13,7 +14,8 @@ export namespace gg
 	class Camera
 	{
 	public:
-		Camera(std::shared_ptr<InputManager>);
+		Camera(ObjectId, std::shared_ptr<InputManager>);
+		ObjectId           GetId() const { return id; }
 		void               UpdateCamera(std::chrono::nanoseconds deltaTime);
 		void               UpdateProjectionMatrix(uint32_t width, uint32_t height);
 		glm::mat4x4 const& GetViewMatrix() const;
@@ -25,6 +27,8 @@ export namespace gg
 		float*     GetYaw(); /* radians, 0 = looking along +Z, positive = turned right */
 		float*     GetPitch(); /* radians, 0 = level, positive = looking up */
 	private:
+		ObjectId id{ noObjectId };
+
 		glm::mat4x4 projectionMatrix{};
 		glm::mat4x4 viewMatrix{};
 

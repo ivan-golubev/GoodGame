@@ -22,7 +22,9 @@ C++ types that mirror a constant buffer have **no** suffix. Examples: `SkyboxCam
 
 **No Hungarian notation.** Names don't encode their type: no `p`/`pp`/`lp` for pointers, `sz`, `dw`, `h`, or `m_`/`g_`/`s_` scope prefixes. Write `factory`, `heaps`, `commandLists`, not `pFactory`, `ppHeaps`. Output parameters use an `out` prefix (`outBuffer`). Fields of API structs (`desc.pData`) keep their API names.
 
-**No naked `new`; raw pointers never own.** Create objects with `std::make_unique` / `std::make_shared`. When only one class may create an object, give it a `PassKey` (see `ShaderProgramD3D12`) instead of a private constructor. Own C and COM resources with `std::unique_ptr` and a deleter, or `ComPtr`. Raw pointers are fine for non-owning access (API handles, `.Get()`, observers).
+**No naked `new`; raw pointers never own.** Create objects with `std::make_unique` / `std::make_shared`. Own C and COM resources with `std::unique_ptr` and a deleter, or `ComPtr`. Raw pointers are fine for non-owning access (API handles, `.Get()`, observers).
+
+**Don't limit who can create an object.** Constructors are public: no `PassKey`, and no private constructor opened to one class with `friend`. A factory such as `DeviceContextVulkan::Create()` can still be the usual way to build an object. Protect invariants with read-only access instead: a private member with a getter, like the scene objects' ids (`SceneModel::GetId()`).
 
 ## State, constants and errors
 

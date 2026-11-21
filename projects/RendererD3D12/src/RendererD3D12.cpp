@@ -36,8 +36,6 @@ import SettingsD3D12;
 import ShaderProgram;
 import ShaderProgramD3D12;
 import SkyboxD3D12;
-import TextureD3D12;
-import Vertex;
 
 using Microsoft::WRL::ComPtr;
 namespace
@@ -59,7 +57,6 @@ namespace gg
 		height          = rs.height;
 		windowHandleSDL = rs.windowHandle;
 		windowHandle    = GetWindowHandle(rs.windowHandle);
-		timeManager     = rs.timeManager;
 		scissorRect     = {
 			D3D12_DEFAULT_SCISSOR_STARTX,
 			D3D12_DEFAULT_SCISSOR_STARTY,
@@ -270,60 +267,6 @@ namespace gg
 		return RendererType::D3D12;
 	}
 
-	std::expected<void, Error> RendererD3D12::CreateGraphicsPipeline(std::shared_ptr<ModelD3D12> model)
-	{
-		BreakIfFalse(model->shaderProgram.get());
-		ShaderProgramD3D12* shaderProgram{ dynamic_cast<ShaderProgramD3D12*>(model->shaderProgram.get()) };
-
-		/* Specify the input layout */
-		D3D12_INPUT_ELEMENT_DESC const inputLayout[]{
-			{
-				.SemanticName         = "POSITION",
-				.SemanticIndex        = 0,
-				.Format               = DXGI_FORMAT_R32G32B32A32_FLOAT,
-				.InputSlot            = 0,
-				.AlignedByteOffset    = D3D12_APPEND_ALIGNED_ELEMENT,
-				.InputSlotClass       = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-				.InstanceDataStepRate = 0,
-			},
-			{
-				.SemanticName         = "NORMAL",
-				.SemanticIndex        = 0,
-				.Format               = DXGI_FORMAT_R32G32B32A32_FLOAT,
-				.InputSlot            = 0,
-				.AlignedByteOffset    = D3D12_APPEND_ALIGNED_ELEMENT,
-				.InputSlotClass       = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-				.InstanceDataStepRate = 0,
-			},
-			{
-				.SemanticName         = "TEXCOORD",
-				.SemanticIndex        = 0,
-				.Format               = DXGI_FORMAT_R32G32_FLOAT,
-				.InputSlot            = 0,
-				.AlignedByteOffset    = D3D12_APPEND_ALIGNED_ELEMENT,
-				.InputSlotClass       = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-				.InstanceDataStepRate = 0,
-			}
-		};
-
-		std::string const  psoName{ std::format("PSO_Model_{}", model->name) };
-		std::wstring const psoNameW{ psoName.begin(), psoName.end() };
-
-		auto result{ context->CreateGraphicsPipeline(
-			CD3DX12_SHADER_BYTECODE(shaderProgram->GetVertexShader().Get()),
-			CD3DX12_SHADER_BYTECODE(shaderProgram->GetFragmentShader().Get()),
-			D3D12_INPUT_LAYOUT_DESC{ .pInputElementDescs = inputLayout, .NumElements = _countof(inputLayout) },
-			D3D12_CULL_MODE_BACK,
-			CD3DX12_DEPTH_STENCIL_DESC1{ D3D12_DEFAULT },
-			rootSignature.Get(),
-			psoNameW
-		) };
-		if (!result)
-			return std::unexpected(std::move(result.error()));
-		model->pipelineState = std::move(*result);
-		return {};
-	}
-
 	std::expected<std::shared_ptr<ShaderProgram>, Error> RendererD3D12::LoadShader(std::string const& shaderName)
 	{
 		std::string const vertexShaderRelativePath{ std::format(
@@ -338,127 +281,65 @@ namespace gg
 			shaderName,
 			shaderExtensionD3D12
 		) };
-		auto              shader{ std::make_unique<ShaderProgramD3D12>(ShaderProgramD3D12::PassKey{}) };
+		auto              shader{ std::make_unique<ShaderProgramD3D12>() };
 		if (auto const result{ shader->Initialize(vertexShaderRelativePath, fragmentShaderRelativePath) }; !result)
 			return std::unexpected(result.error());
 		return std::shared_ptr<ShaderProgram>{ std::move(shader) };
 	}
 
-	std::expected<void, Error> RendererD3D12::LoadTextures(std::shared_ptr<ModelD3D12> model)
+	std::expected<std::unique_ptr<SkyboxD3D12>, Error> RendererD3D12::LoadSkybox(SceneSkybox const& sceneSkybox)
 	{
-		for (std::string const& textureName : model->textureNames)
-		{
-			auto textureResult{ LoadTexture(textureName, model->srvHeap) };
-			if (!textureResult)
-				return std::unexpected(textureResult.error());
-			model->textures.emplace_back(std::move(*textureResult));
-		}
-		return {};
-	}
-
-	std::expected<std::shared_ptr<Texture>, Error> RendererD3D12::LoadTexture(std::string const& name, ComPtr<ID3D12DescriptorHeap> srvHeap)
-	{
-		std::string const             textureRelativePath{ std::format("{}/{}.{}", texturesLocation, name, texturesExtension) };
-		std::unique_ptr<TextureD3D12> texture{ std::make_unique<TextureD3D12>(textureRelativePath) };
-		std::wstring const            textureName{ texture->GetName() };
-		if (auto const result{ texture->Initialize() }; !result)
-			return std::unexpected(result.error());
-
-		std::array<Texture const*, 1> const images{ texture.get() };
-		auto                                uploadResult{ context->UploadTexture(
-			images,
-			D3D12_SRV_DIMENSION_TEXTURE2D,
-			srvHeap->GetCPUDescriptorHandleForHeapStart(),
-			textureName,
-			textureRelativePath
-		) };
-		if (!uploadResult)
-			return std::unexpected(std::move(uploadResult.error()));
-		texture->texture = std::move(*uploadResult);
-
-		return std::shared_ptr<Texture>{ std::move(texture) };
-	}
-
-	std::expected<void, Error> RendererD3D12::LoadSkybox(std::string const& name, std::string const& shaderName)
-	{
-		auto shaderResult{ LoadShader(shaderName) };
+		std::string const& name{ sceneSkybox.GetName() };
+		std::string const& shaderName{ sceneSkybox.GetShaderName() };
+		auto               shaderResult{ LoadShader(shaderName) };
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 
 		std::unique_ptr<SkyboxD3D12> newSkybox{ std::make_unique<SkyboxD3D12>(name, std::move(*shaderResult), context) };
 		if (auto result{ newSkybox->Initialize() }; !result)
 			return std::unexpected(result.error());
-		skybox = std::move(newSkybox);
-		return {};
+		return newSkybox;
 	}
 
-	std::expected<void, Error> RendererD3D12::LoadModel(
-		std::string const& modelRelativePath,
-		std::string const& shaderName,
-		glm::vec3&         position
-	)
+	std::vector<Error> RendererD3D12::LoadScene(Scene const& scene)
 	{
-		auto shaderResult{ LoadShader(shaderName) };
+		/* GPU models and skyboxes are kept by their scene object's id. One that fails to load has no entry
+		   and is skipped when drawing. */
+		BreakIfFalse(models.empty() && skyboxes.empty());
+		std::vector<Error> errors;
+		if (scene.GetSkybox())
+		{
+			auto skyboxResult{ LoadSkybox(*scene.GetSkybox()) };
+			if (!skyboxResult)
+				errors.push_back(skyboxResult.error());
+			else
+				skyboxes.emplace(scene.GetSkybox()->GetId(), std::move(*skyboxResult));
+		}
+		for (SceneModel const& sceneModel : scene.GetModels())
+		{
+			auto modelResult{ LoadModel(sceneModel) };
+			if (!modelResult)
+			{
+				errors.push_back(modelResult.error());
+				continue;
+			}
+			models.emplace(sceneModel.GetId(), std::move(*modelResult));
+		}
+		return errors;
+	}
+
+	std::expected<std::shared_ptr<ModelD3D12>, Error> RendererD3D12::LoadModel(SceneModel const& sceneModel)
+	{
+		std::string const& modelRelativePath{ sceneModel.GetModelRelativePath() };
+		std::string const& shaderName{ sceneModel.GetShaderName() };
+		auto               shaderResult{ LoadShader(shaderName) };
 		if (!shaderResult)
 			return std::unexpected(shaderResult.error());
 		std::shared_ptr<ShaderProgram> shader{ std::move(*shaderResult) };
-		std::shared_ptr<ModelD3D12>    model{ std::make_shared<ModelD3D12>(modelRelativePath, shader, position) };
-		if (auto const result{ model->Initialize() }; !result)
+		std::shared_ptr<ModelD3D12>    model{ std::make_shared<ModelD3D12>(modelRelativePath, shader) };
+		if (auto const result{ model->Initialize(*context, rootSignature) }; !result)
 			return std::unexpected(result.error());
-
-		if (auto result{ CreateGraphicsPipeline(model) }; !result)
-			return std::unexpected(result.error());
-		if (auto result{ CreateVertexBuffer(model) }; !result)
-			return std::unexpected(result.error());
-
-		{ /* Create  a shader resource view (SRV) heap for textures */
-			D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{
-				.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-				.NumDescriptors = 1,
-				.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-			};
-			HRESULT const d3d12CreateModelTextureDescriptorHeapResult{ context->GetDevice()->CreateDescriptorHeap(
-				&srvHeapDesc,
-				IID_PPV_ARGS(&model->srvHeap)
-			) };
-			D3D12_CHECK_HRESULT(
-				d3d12CreateModelTextureDescriptorHeapResult,
-				ErrorCode::D3D12InitializationFailed,
-				"create model texture descriptor heap"
-			);
-
-			std::wstring const resourceName{ model->name.begin(), model->name.end() };
-			SetName(model->srvHeap.Get(), std::format(L"SRV_DescriptorHeap_Model_{}", resourceName));
-		}
-		if (auto const result{ LoadTextures(model) }; !result)
-			return std::unexpected(result.error());
-
-		models.push_back(model);
-		return {};
-	}
-
-	std::expected<void, Error> RendererD3D12::CreateVertexBuffer(std::shared_ptr<ModelD3D12> model)
-	{
-		// TODO: handle multiple meshes properly, need to create multiple Vertex Buffers
-		BreakIfFalse(model->meshes.size() < 2);
-		Mesh const& mesh{ model->meshes[0] };
-
-		uint64_t const vertexBufferSizeBytes{ mesh.VerticesSizeBytes() };
-		if (auto result{ context->UploadBuffer(
-				model->vertexBuffer,
-				model->vertexBufferUpload,
-				mesh.vertices.data(),
-				vertexBufferSizeBytes,
-				std::format(L"Vertex_Model_{}", std::wstring{ model->name.begin(), model->name.end() })
-			) };
-		    !result)
-			return std::unexpected(result.error());
-
-		/* Init the Vertex buffer view */
-		model->vertexBufferView.BufferLocation = model->vertexBuffer->GetGPUVirtualAddress();
-		model->vertexBufferView.SizeInBytes    = static_cast<uint32_t>(vertexBufferSizeBytes);
-		model->vertexBufferView.StrideInBytes  = sizeof(Vertex);
-		return {};
+		return model;
 	}
 
 	std::expected<void, Error> RendererD3D12::ResizeWindow()
@@ -551,7 +432,7 @@ namespace gg
 
 		/* destroys the associated shaders and textures */
 		models.clear();
-		skybox.reset();
+		skyboxes.clear();
 
 		debugOverlay.reset();
 
@@ -573,7 +454,7 @@ namespace gg
 		{
 			if (auto result{ ResizeWindow() }; !result)
 				return std::unexpected(result.error());
-			scene.camera.UpdateProjectionMatrix(width, height);
+			scene.GetCamera().UpdateProjectionMatrix(width, height);
 		}
 
 		/* Record all the commands we need to render the scene into the command list. */
@@ -690,31 +571,20 @@ namespace gg
 			commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-			/* Set per-model state and draw each */
-			for (std::shared_ptr<ModelD3D12> model : models)
+			for (SceneModel const& sceneModel : scene.GetModels())
 			{
-				commandList->SetPipelineState(model->pipelineState.Get());
-				commandList->SetGraphicsRootSignature(rootSignature.Get());
-
-				ID3D12DescriptorHeap* heaps[]{ model->srvHeap.Get() };
-				commandList->SetDescriptorHeaps(_countof(heaps), heaps);
-
-				ModelViewProjection mvpMatrices{
-					CalculateModelViewProjection(model->translation, timeManager->GetCurrentTimeSec(), scene.camera)
-				};
-				commandList->SetGraphicsRoot32BitConstants(0, sizeof(ModelViewProjection) / sizeof(float), &mvpMatrices, 0);
-				commandList->SetGraphicsRoot32BitConstants(1, sizeof(DirectionalLight) / sizeof(float), &scene.light, 0);
-				commandList->SetGraphicsRootDescriptorTable(2, model->srvHeap->GetGPUDescriptorHandleForHeapStart());
-				commandList->IASetVertexBuffers(0, 1, &model->vertexBufferView);
-
-				/* Record commands */
-				for (auto& m : model->meshes)
-					commandList->DrawInstanced(m.GetVertexCount(), 1, 0, 0);
+				auto const found{ models.find(sceneModel.GetId()) };
+				if (found == models.end())
+					continue; /* failed to load */
+				found->second->Draw(commandList.Get(), sceneModel.transform, scene.GetCamera(), scene.light);
 			}
 
 			/* After the models: the sky only fills pixels the depth test leaves at the far plane. */
-			if (skybox)
-				skybox->Draw(commandList.Get(), scene.camera);
+			if (scene.GetSkybox())
+			{
+				if (auto const found{ skyboxes.find(scene.GetSkybox()->GetId()) }; found != skyboxes.end())
+					found->second->Draw(commandList.Get(), scene.GetCamera());
+			}
 
 			debugOverlay->Render(commandList, *this, scene);
 

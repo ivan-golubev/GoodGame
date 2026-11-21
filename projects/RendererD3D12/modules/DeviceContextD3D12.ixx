@@ -25,14 +25,7 @@ export namespace gg
 	public:
 		static std::expected<std::shared_ptr<DeviceContextD3D12>, Error> Create(ComPtr<ID3D12Device4>, ComPtr<ID3D12CommandQueue>);
 
-		/* Only Create() can make a PassKey */
-		class PassKey
-		{
-			friend class DeviceContextD3D12;
-			PassKey() = default;
-		};
 		DeviceContextD3D12(
-			PassKey,
 			ComPtr<ID3D12Device4>,
 			ComPtr<ID3D12CommandQueue>,
 			ComPtr<ID3D12CommandAllocator>,

@@ -34,6 +34,9 @@
     <ClCompile Include="modules\Model.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="modules\ObjectId.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
     <ClCompile Include="modules\Skybox.ixx">
       <Filter>Modules</Filter>
     </ClCompile>

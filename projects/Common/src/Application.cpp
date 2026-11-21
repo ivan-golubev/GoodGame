@@ -1,10 +1,15 @@
 module;
+#include <chrono>
 #include <cstdint>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
+#include <numbers>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_video.h>
+#include <tuple>
 module Application;
 
 import Renderer;
@@ -12,18 +17,17 @@ import Input;
 import Logging;
 import TimeManager;
 import ErrorHandling;
+import SettingsRenderer;
+
+using namespace std::chrono_literals;
+using std::chrono::nanoseconds;
 
 namespace gg
 {
-	Application::Application(
-		std::unique_ptr<Renderer>     renderer,
-		std::shared_ptr<TimeManager>  timeManager,
-		std::shared_ptr<InputManager> inputManager
-	)
-		: renderer{ std::move(renderer) }
-		, inputManager{ inputManager }
-		, timeManager{ timeManager }
-		, scene{ this->inputManager }
+	Application::Application()
+		: inputManager{ std::make_shared<InputManager>() }
+		, timeManager{ std::make_shared<TimeManager>() }
+		, scene{ inputManager }
 	{
 	}
 
@@ -32,34 +36,41 @@ namespace gg
 		DebugLog(DebugLevel::Info, "Shutting down the application");
 	}
 
-	std::shared_ptr<TimeManager> Application::GetTimeManager()
+	Scene& Application::GetScene()
 	{
-		return timeManager;
+		return scene;
 	}
 
-	std::shared_ptr<InputManager> Application::GetInputManager()
+	std::vector<Error> Application::SetRenderer(std::unique_ptr<Renderer> newRenderer)
 	{
-		return inputManager;
-	}
-
-	std::shared_ptr<Renderer> Application::GetRenderer()
-	{
-		return renderer;
+		renderer = std::move(newRenderer);
+		if (!renderer)
+			return {};
+		/* Restart frame timing, so the time spent creating the renderer is not one long frame */
+		std::ignore = timeManager->Tick();
+		return renderer->LoadScene(scene);
 	}
 
 	std::expected<void, Error> Application::Tick()
 	{
-		if (isPaused)
+		if (isPaused || !renderer)
 			return {};
 
 		/* Game logic first, then draw the result */
-		scene.camera.UpdateCamera(timeManager->Tick());
+		nanoseconds const deltaTime{ timeManager->Tick() };
+		scene.GetCamera().UpdateCamera(deltaTime);
+
+		float const spinAngle{ static_cast<float>(cubeRotationSpeed * std::numbers::pi_v<double> * (deltaTime / 1.0s)) };
+		for (SceneModel& model : scene.GetModels())
+			model.transform = glm::rotate(model.transform, spinAngle, glm::vec3{ 1.f, 0.f, 1.f });
+
 		return renderer->Render(scene);
 	}
 
 	void Application::OnWindowResized(uint32_t width, uint32_t height)
 	{
-		renderer->OnWindowResized(width, height);
+		if (renderer)
+			renderer->OnWindowResized(width, height);
 	}
 
 	void Application::OnWindowMinimized()
